@@ -27,7 +27,8 @@
         "android.permission.health.READ_OXYGEN_SATURATION",
         "android.permission.health.READ_RESPIRATORY_RATE",
         "android.permission.health.READ_EXERCISE"
-      ]
+      ],
+      "package": "com.anonymous.healthconnectapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"

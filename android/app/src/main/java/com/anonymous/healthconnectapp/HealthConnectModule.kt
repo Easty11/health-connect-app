@@ -14,16 +14,21 @@ class HealthConnectModule(reactContext: ReactApplicationContext) :
     @ReactMethod
     fun openHealthConnectPermissions(promise: Promise) {
         try {
-            val intent = Intent("android.health.connect.action.MANAGE_HEALTH_PERMISSIONS")
-            intent.putExtra(
-                "android.health.connect.extra.PACKAGE_NAME",
-                reactApplicationContext.packageName
-            )
+            val intent = Intent("androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE")
+            intent.setPackage("com.google.android.healthconnect.controller")
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             reactApplicationContext.startActivity(intent)
             promise.resolve(true)
-        } catch (e: Exception) {
-            promise.reject("ERROR", e.message)
+        } catch (e1: Exception) {
+            try {
+                // Fallback for older Health Connect versions
+                val intent2 = Intent("android.health.connect.action.HEALTH_HOME_SETTINGS")
+                intent2.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                reactApplicationContext.startActivity(intent2)
+                promise.resolve(true)
+            } catch (e2: Exception) {
+                promise.reject("ERROR", e2.message)
+            }
         }
     }
 }

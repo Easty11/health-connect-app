@@ -101,6 +101,8 @@ const PERMISSIONS = [
 export const requestPermissions = async () => {
   try {
     await initialize();
+    // Small delay to ensure the client is fully ready after initialisation
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     const result = await requestPermission(PERMISSIONS);
     console.log('requestPermission result:', JSON.stringify(result));

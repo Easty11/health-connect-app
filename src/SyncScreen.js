@@ -4,7 +4,7 @@ import {
   ActivityIndicator, StyleSheet, useColorScheme, Alert, Linking,
 } from 'react-native';
 import { login, logout, getStoredToken, syncHealthData } from './api';
-import { requestPermissions, fetchAllData } from './healthConnect';
+import { requestPermissions, fetchAllData, openHealthConnectSettings } from './healthConnect';
 
 // ─── Theme ─────────────────────────────────────────────────────────────────
 
@@ -261,7 +261,7 @@ export default function SyncScreen() {
           </TouchableOpacity>
           {hcState === 'denied' && (
             <TouchableOpacity
-              onPress={() => Linking.openURL('package:com.google.android.apps.healthdata')}
+              onPress={() => openHealthConnectSettings()}
               style={styles.openSettingsBtn}
             >
               <Text style={[styles.openSettingsText, { color: t.accent }]}>

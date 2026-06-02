@@ -1,8 +1,12 @@
 import {
   initialize,
   requestPermission,
+  getGrantedPermissions,
+  openHealthConnectSettings,
   readRecords,
 } from 'react-native-health-connect';
+
+export { openHealthConnectSettings };
 
 const PERMISSIONS = [
   { accessType: 'read', recordType: 'Steps' },
@@ -33,18 +37,30 @@ function toTimeRange(startDate, endDate) {
 }
 
 export async function requestPermissions() {
+  // Step 1: initialise the SDK
   try {
-    await initialize();
+    const ok = await initialize();
+    console.log('Health Connect initialize:', ok);
   } catch (err) {
     console.error('Health Connect initialize() error:', err);
     return null;
   }
+
+  // Step 2: request the permission dialog
   try {
     const granted = await requestPermission(PERMISSIONS);
+    console.log('Health Connect granted permissions:', granted?.length ?? 0);
     return granted;
   } catch (err) {
     console.error('Health Connect requestPermission() error:', err);
-    return null;
+    // Even if the dialog throws, check what was previously granted
+    try {
+      const existing = await getGrantedPermissions();
+      console.log('Health Connect existing permissions:', existing?.length ?? 0);
+      return existing?.length > 0 ? existing : null;
+    } catch {
+      return null;
+    }
   }
 }
 

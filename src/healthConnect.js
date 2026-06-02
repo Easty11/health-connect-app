@@ -33,9 +33,19 @@ function toTimeRange(startDate, endDate) {
 }
 
 export async function requestPermissions() {
-  await initialize();
-  const granted = await requestPermission(PERMISSIONS);
-  return granted;
+  try {
+    await initialize();
+  } catch (err) {
+    console.error('Health Connect initialize() error:', err);
+    return null;
+  }
+  try {
+    const granted = await requestPermission(PERMISSIONS);
+    return granted;
+  } catch (err) {
+    console.error('Health Connect requestPermission() error:', err);
+    return null;
+  }
 }
 
 export async function fetchSleepData(startDate, endDate) {

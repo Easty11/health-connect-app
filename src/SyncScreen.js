@@ -59,9 +59,10 @@ function LoginForm({ onLogin, t }) {
     if (!email || !password) return;
     setLoading(true);
     setError('');
-    console.log('Attempting login with:', email);
+    const normEmail = email.toLowerCase().trim();
+    console.log('Attempting login with:', normEmail);
     try {
-      await login(email, password);
+      await login(normEmail, password);
       onLogin();
     } catch (err) {
       console.log('Response error:', err.response?.status, err.response?.data);
@@ -140,12 +141,16 @@ export default function SyncScreen() {
 
   // ── Step 1: user taps "Grant Health Connect Access" ──
   async function handleGrantPermissions() {
-    setHcState('granting');
     try {
-      await requestPermissions();
-      setHcState('granted');
-    } catch (err) {
-      console.warn('Permission error:', err);
+      setHcState('granting');
+      const result = await requestPermissions();
+      if (result) {
+        setHcState('granted');
+      } else {
+        setHcState('denied');
+      }
+    } catch (error) {
+      console.error('Health Connect permission error:', error);
       setHcState('denied');
     }
   }

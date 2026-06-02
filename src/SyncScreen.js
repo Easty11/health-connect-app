@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   ActivityIndicator, StyleSheet, useColorScheme, Alert, Linking,
@@ -28,15 +28,6 @@ function useTheme() {
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
-function StatRow({ label, value, colour, t }) {
-  return (
-    <View style={[styles.statRow, { borderBottomColor: t.border }]}>
-      <Text style={[styles.statLabel, { color: t.subtext }]}>{label}</Text>
-      <Text style={[styles.statValue, { color: colour ?? t.text }]}>{value}</Text>
-    </View>
-  );
-}
-
 function DataCard({ title, icon, count, lastReading, t }) {
   return (
     <View style={[styles.card, { backgroundColor: t.card, borderColor: t.border }]}>
@@ -49,11 +40,9 @@ function DataCard({ title, icon, count, lastReading, t }) {
           </View>
         )}
       </View>
-      {lastReading ? (
-        <Text style={[styles.cardSub, { color: t.subtext }]}>{lastReading}</Text>
-      ) : (
-        <Text style={[styles.cardSub, { color: t.subtext }]}>No data</Text>
-      )}
+      <Text style={[styles.cardSub, { color: t.subtext }]}>
+        {lastReading || 'No data'}
+      </Text>
     </View>
   );
 }
@@ -84,7 +73,7 @@ function LoginForm({ onLogin, t }) {
 
   return (
     <View style={styles.loginContainer}>
-      <Text style={[styles.loginTitle, { color: t.text }]}>Health &amp; Performance</Text>
+      <Text style={[styles.loginTitle, { color: t.text }]}>Health & Performance</Text>
       <Text style={[styles.loginSub, { color: t.subtext }]}>Sign in to sync your health data</Text>
 
       {error ? (
@@ -124,49 +113,71 @@ function LoginForm({ onLogin, t }) {
 
 // ─── Main sync screen ─────────────────────────────────────────────────────────
 
+// Possible states for Health Connect access
+// 'unknown'   — haven't asked yet (initial state after login)
+// 'granting'  — permission dialog in progress
+// 'granted'   — permissions obtained, ready to sync
+// 'denied'    — user declined
+
 export default function SyncScreen() {
   const t = useTheme();
   const [authed, setAuthed] = useState(false);
+  const [initLoading, setInitLoading] = useState(true);
+
+  // Health Connect flow
+  const [hcState, setHcState] = useState('unknown'); // unknown | granting | granted | denied
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState(null);
   const [syncData, setSyncData] = useState(null);
-  const [initLoading, setInitLoading] = useState(true);
+  const [syncError, setSyncError] = useState('');
 
-  // Check stored token on mount
+  // On mount: only check stored auth token — no Health Connect calls
   useEffect(() => {
-    getStoredToken().then((tok) => {
-      if (tok) {
-        setAuthed(true);
-        autoSync();
-      }
-    }).finally(() => setInitLoading(false));
+    getStoredToken()
+      .then((tok) => { if (tok) setAuthed(true); })
+      .finally(() => setInitLoading(false));
   }, []);
 
-  const autoSync = useCallback(async () => {
-    setSyncing(true);
+  // ── Step 1: user taps "Grant Health Connect Access" ──
+  async function handleGrantPermissions() {
+    setHcState('granting');
     try {
-      try {
-        await requestPermissions();
-      } catch (permErr) {
-        console.warn('Permission request error (continuing):', permErr);
-      }
+      await requestPermissions();
+      setHcState('granted');
+    } catch (err) {
+      console.warn('Permission error:', err);
+      setHcState('denied');
+    }
+  }
+
+  // ── Step 2: user taps "Sync Now" (only shown once granted) ──
+  async function handleSync() {
+    setSyncing(true);
+    setSyncError('');
+    try {
       const data = await fetchAllData(7);
       await syncHealthData(data);
       setSyncData(data);
       setLastSync(new Date());
     } catch (err) {
       console.warn('Sync error:', err);
+      setSyncError(err.message || 'Sync failed');
     } finally {
       setSyncing(false);
     }
-  }, []);
+  }
 
   function handleLogout() {
     Alert.alert('Sign out', 'Sign out of Health & Performance?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign out', style: 'destructive',
-        onPress: async () => { await logout(); setAuthed(false); setSyncData(null); },
+        onPress: async () => {
+          await logout();
+          setAuthed(false);
+          setSyncData(null);
+          setHcState('unknown');
+        },
       },
     ]);
   }
@@ -176,16 +187,16 @@ export default function SyncScreen() {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  function latestReading(arr, timeKey = 'time') {
-    if (!arr?.length) return null;
-    return arr[arr.length - 1][timeKey];
-  }
-
   function formatDt(iso) {
     if (!iso) return '—';
     return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
+  function latestTime(arr, key = 'time') {
+    return arr?.length ? arr[arr.length - 1][key] : null;
+  }
+
+  // ── Loading splash ──
   if (initLoading) {
     return (
       <View style={[styles.centred, { backgroundColor: t.bg }]}>
@@ -194,14 +205,16 @@ export default function SyncScreen() {
     );
   }
 
+  // ── Login ──
   if (!authed) {
     return (
       <View style={[styles.centred, { backgroundColor: t.bg }]}>
-        <LoginForm t={t} onLogin={() => { setAuthed(true); autoSync(); }} />
+        <LoginForm t={t} onLogin={() => setAuthed(true)} />
       </View>
     );
   }
 
+  // ── Authenticated sync screen ──
   return (
     <ScrollView style={{ backgroundColor: t.bg }} contentContainerStyle={styles.container}>
       {/* Header */}
@@ -217,23 +230,59 @@ export default function SyncScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Sync button */}
-      <TouchableOpacity
-        style={[styles.syncBtn, { opacity: syncing ? 0.7 : 1 }]}
-        onPress={autoSync} disabled={syncing}
-        activeOpacity={0.8}
-      >
-        {syncing ? (
-          <View style={styles.syncBtnInner}>
-            <ActivityIndicator color="#fff" />
-            <Text style={styles.syncBtnText}>Syncing…</Text>
-          </View>
-        ) : (
-          <Text style={styles.syncBtnText}>⟳  Sync Now</Text>
-        )}
-      </TouchableOpacity>
+      {/* ── Step 1: Grant permissions (shown until granted) ── */}
+      {hcState !== 'granted' && (
+        <View style={[styles.permCard, { backgroundColor: t.card, borderColor: t.border }]}>
+          <Text style={styles.permIcon}>🏥</Text>
+          <Text style={[styles.permTitle, { color: t.text }]}>Health Connect Access</Text>
+          <Text style={[styles.permSub, { color: t.subtext }]}>
+            Grant access to read your sleep, heart rate, steps, and workout data from Health Connect.
+          </Text>
+          {hcState === 'denied' && (
+            <Text style={[styles.permDenied, { color: t.orange }]}>
+              ⚠️ Permission denied. You can grant it in your phone's Health Connect settings.
+            </Text>
+          )}
+          <TouchableOpacity
+            style={[styles.grantBtn, { opacity: hcState === 'granting' ? 0.6 : 1 }]}
+            onPress={handleGrantPermissions}
+            disabled={hcState === 'granting'}
+          >
+            {hcState === 'granting'
+              ? <ActivityIndicator color="#fff" />
+              : <Text style={styles.grantBtnText}>
+                  {hcState === 'denied' ? 'Try Again' : 'Grant Health Connect Access'}
+                </Text>}
+          </TouchableOpacity>
+        </View>
+      )}
 
-      {/* Data cards */}
+      {/* ── Step 2: Sync Now (only shown once granted) ── */}
+      {hcState === 'granted' && (
+        <TouchableOpacity
+          style={[styles.syncBtn, { opacity: syncing ? 0.7 : 1 }]}
+          onPress={handleSync}
+          disabled={syncing}
+          activeOpacity={0.8}
+        >
+          {syncing ? (
+            <View style={styles.syncBtnInner}>
+              <ActivityIndicator color="#fff" />
+              <Text style={styles.syncBtnText}>Syncing…</Text>
+            </View>
+          ) : (
+            <Text style={styles.syncBtnText}>⟳  Sync Now</Text>
+          )}
+        </TouchableOpacity>
+      )}
+
+      {syncError ? (
+        <View style={[styles.warningBox, { borderColor: t.red }]}>
+          <Text style={{ color: t.red, fontSize: 12 }}>⚠️ {syncError}</Text>
+        </View>
+      ) : null}
+
+      {/* ── Data cards ── */}
       {syncData ? (
         <>
           <Text style={[styles.sectionTitle, { color: t.subtext }]}>LAST 7 DAYS</Text>
@@ -247,13 +296,13 @@ export default function SyncScreen() {
           <DataCard t={t} icon="💓" title="Heart Rate Variability"
             count={syncData.hrv.length}
             lastReading={syncData.hrv.length
-              ? `${Math.round(syncData.hrv[syncData.hrv.length - 1].hrv)} ms — ${formatDt(latestReading(syncData.hrv))}`
+              ? `${Math.round(syncData.hrv[syncData.hrv.length - 1].hrv)} ms — ${formatDt(latestTime(syncData.hrv))}`
               : null}
           />
           <DataCard t={t} icon="❤️" title="Heart Rate"
             count={syncData.heartRate.length}
             lastReading={syncData.heartRate.length
-              ? `${syncData.heartRate[syncData.heartRate.length - 1].bpm} bpm — ${formatDt(latestReading(syncData.heartRate))}`
+              ? `${syncData.heartRate[syncData.heartRate.length - 1].bpm} bpm — ${formatDt(latestTime(syncData.heartRate))}`
               : null}
           />
           <DataCard t={t} icon="👟" title="Steps"
@@ -277,14 +326,14 @@ export default function SyncScreen() {
             </View>
           )}
         </>
-      ) : (
+      ) : hcState === 'granted' ? (
         <View style={[styles.emptyState, { borderColor: t.border }]}>
           <Text style={{ fontSize: 32 }}>📊</Text>
           <Text style={[styles.emptyText, { color: t.subtext }]}>
             Tap Sync Now to fetch your Health Connect data
           </Text>
         </View>
-      )}
+      ) : null}
     </ScrollView>
   );
 }
@@ -316,6 +365,21 @@ const styles = StyleSheet.create({
   appTitle: { fontSize: 20, fontWeight: '700' },
   appSub: { fontSize: 12, marginTop: 2 },
 
+  // Permission card
+  permCard: {
+    borderWidth: 1, borderRadius: 18, padding: 24, marginBottom: 20,
+    alignItems: 'center', gap: 8,
+  },
+  permIcon: { fontSize: 36, marginBottom: 4 },
+  permTitle: { fontSize: 17, fontWeight: '700', textAlign: 'center' },
+  permSub: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
+  permDenied: { fontSize: 12, textAlign: 'center' },
+  grantBtn: {
+    backgroundColor: '#16a34a', borderRadius: 14, paddingVertical: 14,
+    paddingHorizontal: 24, alignItems: 'center', marginTop: 8, width: '100%',
+  },
+  grantBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+
   // Sync button
   syncBtn: {
     backgroundColor: '#4f46e5', borderRadius: 18, paddingVertical: 22,
@@ -328,9 +392,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 11, fontWeight: '600', letterSpacing: 1, marginBottom: 10 },
 
   // Cards
-  card: {
-    borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10,
-  },
+  card: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   cardIcon: { fontSize: 18 },
   cardTitle: { fontSize: 14, fontWeight: '600', flex: 1 },
@@ -338,13 +400,8 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 12, fontWeight: '600' },
   cardSub: { fontSize: 12, marginTop: 2 },
 
-  // Stat row
-  statRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1 },
-  statLabel: { fontSize: 13 },
-  statValue: { fontSize: 13, fontWeight: '600' },
-
   // Misc
-  warningBox: { borderWidth: 1, borderRadius: 10, padding: 10, marginTop: 8 },
+  warningBox: { borderWidth: 1, borderRadius: 10, padding: 10, marginTop: 8, marginBottom: 8 },
   emptyState: { borderWidth: 1, borderRadius: 16, borderStyle: 'dashed', padding: 30, alignItems: 'center', gap: 10, marginTop: 10 },
   emptyText: { fontSize: 13, textAlign: 'center' },
 });

@@ -71,41 +71,42 @@ function toTimeRange(startDate, endDate) {
   };
 }
 
-export async function requestPermissions() {
-  // Step 1: initialise the SDK (with detailed logging)
-  const ok = await initializeHealthConnect();
-  if (!ok) {
-    console.error('Health Connect failed to initialise — aborting permission request');
-    return null;
-  }
+const PERMISSIONS = [
+  { accessType: 'read', recordType: 'Steps' },
+  { accessType: 'read', recordType: 'HeartRate' },
+  { accessType: 'read', recordType: 'SleepSession' },
+  { accessType: 'read', recordType: 'HeartRateVariabilityRmssd' },
+  { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+  { accessType: 'read', recordType: 'Distance' },
+  { accessType: 'read', recordType: 'OxygenSaturation' },
+  { accessType: 'read', recordType: 'RespiratoryRate' },
+  { accessType: 'read', recordType: 'ExerciseSession' },
+  { accessType: 'read', recordType: 'Weight' },
+];
 
-  // Step 2: request each permission type individually
-  // so an unsupported type doesn't crash the whole batch
-  const granted = [];
-  for (const group of PERMISSION_GROUPS) {
+export const requestPermissions = async () => {
+  try {
+    await initialize();
+
+    const result = await requestPermission(PERMISSIONS);
+    console.log('requestPermission result:', JSON.stringify(result));
+
+    // Check what was actually granted
+    const granted = await getGrantedPermissions();
+    console.log('granted after request:', JSON.stringify(granted));
+    return granted;
+
+  } catch (e) {
+    console.error('requestPermissions error:', e.message, e.stack);
+    // Fall back to opening Health Connect directly
     try {
-      const result = await requestPermission(group);
-      if (result?.length) granted.push(...result);
-    } catch (e) {
-      console.log('Permission not available:', group[0].recordType, e.message);
+      await Linking.openURL('package:com.google.android.apps.healthdata');
+    } catch (linkErr) {
+      console.log('Could not open Health Connect:', linkErr);
     }
+    return [];
   }
-
-  console.log('Health Connect total granted:', granted.length);
-
-  // If everything threw, fall back to checking what was previously granted
-  if (granted.length === 0) {
-    try {
-      const existing = await getGrantedPermissions();
-      console.log('Health Connect existing permissions:', existing?.length ?? 0);
-      return existing?.length > 0 ? existing : null;
-    } catch {
-      return null;
-    }
-  }
-
-  return granted;
-}
+};
 
 // ── individual fetchers, each isolated so one failure doesn't stop others ──
 

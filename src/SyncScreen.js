@@ -245,7 +245,7 @@ export default function SyncScreen() {
           </Text>
           {hcState === 'denied' && (
             <Text style={[styles.permDenied, { color: t.orange }]}>
-              ⚠️ Permission denied. You can grant it in your phone's Health Connect settings.
+              ⚠️ Permission denied. Tap "Try Again" or open Health Connect Settings to grant access manually.
             </Text>
           )}
           <TouchableOpacity
@@ -259,6 +259,16 @@ export default function SyncScreen() {
                   {hcState === 'denied' ? 'Try Again' : 'Grant Health Connect Access'}
                 </Text>}
           </TouchableOpacity>
+          {hcState === 'denied' && (
+            <TouchableOpacity
+              onPress={() => Linking.openURL('package:com.google.android.apps.healthdata')}
+              style={styles.openSettingsBtn}
+            >
+              <Text style={[styles.openSettingsText, { color: t.accent }]}>
+                Open Health Connect Settings
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -379,6 +389,8 @@ const styles = StyleSheet.create({
   permTitle: { fontSize: 17, fontWeight: '700', textAlign: 'center' },
   permSub: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
   permDenied: { fontSize: 12, textAlign: 'center' },
+  openSettingsBtn: { paddingVertical: 8, alignItems: 'center' },
+  openSettingsText: { fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
   grantBtn: {
     backgroundColor: '#16a34a', borderRadius: 14, paddingVertical: 14,
     paddingHorizontal: 24, alignItems: 'center', marginTop: 8, width: '100%',

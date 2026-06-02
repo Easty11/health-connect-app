@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  ActivityIndicator, StyleSheet, useColorScheme, Alert,
+  ActivityIndicator, StyleSheet, useColorScheme, Alert, Linking,
 } from 'react-native';
 import { login, logout, getStoredToken, syncHealthData } from './api';
 import { requestPermissions, fetchAllData } from './healthConnect';
@@ -70,10 +70,12 @@ function LoginForm({ onLogin, t }) {
     if (!email || !password) return;
     setLoading(true);
     setError('');
+    console.log('Attempting login with:', email);
     try {
       await login(email, password);
       onLogin();
     } catch (err) {
+      console.log('Response error:', err.response?.status, err.response?.data);
       setError(err.response?.data?.detail || 'Login failed');
     } finally {
       setLoading(false);
@@ -110,6 +112,11 @@ function LoginForm({ onLogin, t }) {
         {loading
           ? <ActivityIndicator color="#fff" />
           : <Text style={styles.primaryBtnText}>Sign in</Text>}
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => Linking.openURL('https://health-app-production-e0ff.up.railway.app/forgot-password')}
+      >
+        <Text style={styles.forgotPassword}>Forgot password?</Text>
       </TouchableOpacity>
     </View>
   );
@@ -298,6 +305,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', marginTop: 4,
   },
   primaryBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  forgotPassword: { color: '#4f46e5', fontSize: 13, textAlign: 'center', paddingVertical: 4 },
 
   // Header
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },

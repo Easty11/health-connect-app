@@ -18,9 +18,11 @@ export async function login(email, password) {
   const params = new URLSearchParams();
   params.append('username', email);
   params.append('password', password);
+  console.log('api.login: POST /auth/login body:', params.toString());
   const { data } = await client.post('/auth/login', params, {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   });
+  console.log('api.login: success, token length:', data.access_token?.length);
   await AsyncStorage.setItem(TOKEN_KEY, data.access_token);
   return data.access_token;
 }

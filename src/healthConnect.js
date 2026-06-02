@@ -1,4 +1,4 @@
-import { Linking } from 'react-native';
+import { Linking, NativeModules } from 'react-native';
 import {
   initialize,
   getSdkStatus,
@@ -9,6 +9,20 @@ import {
 } from 'react-native-health-connect';
 
 export { openHealthConnectSettings };
+
+/**
+ * Opens the Health Connect permission management screen for this app
+ * using a native intent — more reliable than the JS SDK approach.
+ * After calling, check getGrantedPermissions() to see what was granted.
+ */
+export const openHealthConnectPermissionsNative = async () => {
+  try {
+    await NativeModules.HealthConnectModule.openHealthConnectPermissions();
+    console.log('Native HC permissions intent fired');
+  } catch (e) {
+    console.error('Native HC permissions error:', e);
+  }
+};
 
 /**
  * Open Health Connect app directly via package URI.

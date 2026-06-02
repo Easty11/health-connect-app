@@ -37,8 +37,14 @@ export async function getStoredToken() {
 
 export async function syncHealthData(data) {
   console.log('Syncing data:', JSON.stringify(data, null, 2));
-  const { data: result } = await client.post('/health-connect/sync', data);
-  return result;
+  try {
+    const response = await client.post('/health-connect/sync', data);
+    return response.data;
+  } catch (error) {
+    console.log('Sync error status:', error.response?.status);
+    console.log('Sync error detail:', JSON.stringify(error.response?.data, null, 2));
+    throw error;
+  }
 }
 
 export async function getSyncStatus() {

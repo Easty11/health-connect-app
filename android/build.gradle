@@ -20,10 +20,10 @@ allprojects {
   }
 }
 
-apply plugin: "expo-root-project"
-apply plugin: "com.facebook.react.rootproject"
-
-// Override minSdkVersion — Health Connect requires API 26+
+// Override minSdkVersion before plugins run — Health Connect requires API 26+
 ext {
     minSdkVersion = 26
 }
+
+apply plugin: "expo-root-project"
+apply plugin: "com.facebook.react.rootproject"

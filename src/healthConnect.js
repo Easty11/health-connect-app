@@ -5,16 +5,16 @@ import {
 } from 'react-native-health-connect';
 
 const PERMISSIONS = [
-  { accessType: 'read', recordType: 'SleepSession' },
-  { accessType: 'read', recordType: 'HeartRateVariabilitySdnn' },
-  { accessType: 'read', recordType: 'HeartRate' },
   { accessType: 'read', recordType: 'Steps' },
-  { accessType: 'read', recordType: 'Distance' },
-  { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+  { accessType: 'read', recordType: 'HeartRate' },
+  { accessType: 'read', recordType: 'SleepSession' },
   { accessType: 'read', recordType: 'Weight' },
+  { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+  { accessType: 'read', recordType: 'Distance' },
   { accessType: 'read', recordType: 'OxygenSaturation' },
   { accessType: 'read', recordType: 'RespiratoryRate' },
   { accessType: 'read', recordType: 'ExerciseSession' },
+  { accessType: 'read', recordType: 'HeartRateVariabilityRmssd' },
 ];
 
 function daysAgo(n) {
@@ -53,7 +53,7 @@ export async function fetchSleepData(startDate, endDate) {
 }
 
 export async function fetchHRVData(startDate, endDate) {
-  const result = await readRecords('HeartRateVariabilitySdnn', {
+  const result = await readRecords('HeartRateVariabilityRmssd', {
     timeRangeFilter: toTimeRange(startDate, endDate),
   });
   return result.records.map((r) => ({

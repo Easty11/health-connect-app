@@ -145,7 +145,11 @@ export default function SyncScreen() {
   const autoSync = useCallback(async () => {
     setSyncing(true);
     try {
-      await requestPermissions();
+      try {
+        await requestPermissions();
+      } catch (permErr) {
+        console.warn('Permission request error (continuing):', permErr);
+      }
       const data = await fetchAllData(7);
       await syncHealthData(data);
       setSyncData(data);

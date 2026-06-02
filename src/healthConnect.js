@@ -131,9 +131,15 @@ async function safeFetch(recordType, startDate, endDate, mapper) {
     const result = await readRecords(recordType, {
       timeRangeFilter: toTimeRange(startDate, endDate),
     });
+    // Log a sample raw record so we can verify the actual library shape
+    if (result.records.length > 0) {
+      console.log(`[HC raw] ${recordType} sample:`, JSON.stringify(result.records[0], null, 2));
+    } else {
+      console.log(`[HC raw] ${recordType}: 0 records`);
+    }
     return { data: result.records.map(mapper), error: null };
   } catch (err) {
-    console.log(`fetchAllData: ${recordType} unavailable —`, err.message);
+    console.log(`[HC] ${recordType} unavailable —`, err.message);
     return { data: [], error: err.message };
   }
 }
@@ -151,7 +157,7 @@ export async function fetchSleepData(startDate, endDate) {
 export async function fetchHRVData(startDate, endDate) {
   const { data } = await safeFetch('HeartRateVariabilityRmssd', startDate, endDate, (r) => ({
     time: r.time,
-    hrv: r.heartRateVariabilityMillis,
+    rmssd: r.heartRateVariabilityMillis,
   }));
   return data;
 }
@@ -159,15 +165,14 @@ export async function fetchHRVData(startDate, endDate) {
 export async function fetchHeartRateData(startDate, endDate) {
   const { data } = await safeFetch('HeartRate', startDate, endDate, (r) => ({
     time: r.time,
-    bpm: r.samples?.[0]?.beatsPerMinute ?? r.beatsPerMinute,
+    bpm: r.beatsPerMinute,
   }));
   return data;
 }
 
 export async function fetchStepsData(startDate, endDate) {
   const { data } = await safeFetch('Steps', startDate, endDate, (r) => ({
-    startTime: r.startTime,
-    endTime: r.endTime,
+    date: r.startTime,
     count: r.count,
   }));
   return data;
@@ -177,7 +182,7 @@ export async function fetchWorkoutData(startDate, endDate) {
   const { data } = await safeFetch('ExerciseSession', startDate, endDate, (r) => ({
     startTime: r.startTime,
     endTime: r.endTime,
-    exerciseType: r.exerciseType,
+    type: r.exerciseType,
     title: r.title ?? null,
     durationMinutes: Math.round((new Date(r.endTime) - new Date(r.startTime)) / 60000),
   }));
@@ -197,21 +202,20 @@ export async function fetchAllData(days = 7) {
     })),
     safeFetch('HeartRateVariabilityRmssd', start, end, (r) => ({
       time: r.time,
-      hrv: r.heartRateVariabilityMillis,
+      rmssd: r.heartRateVariabilityMillis,
     })),
     safeFetch('HeartRate', start, end, (r) => ({
       time: r.time,
-      bpm: r.samples?.[0]?.beatsPerMinute ?? r.beatsPerMinute,
+      bpm: r.beatsPerMinute,
     })),
     safeFetch('Steps', start, end, (r) => ({
-      startTime: r.startTime,
-      endTime: r.endTime,
+      date: r.startTime,
       count: r.count,
     })),
     safeFetch('ExerciseSession', start, end, (r) => ({
       startTime: r.startTime,
       endTime: r.endTime,
-      exerciseType: r.exerciseType,
+      type: r.exerciseType,
       title: r.title ?? null,
       durationMinutes: Math.round((new Date(r.endTime) - new Date(r.startTime)) / 60000),
     })),

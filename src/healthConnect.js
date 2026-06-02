@@ -1,5 +1,7 @@
+import { Linking } from 'react-native';
 import {
   initialize,
+  getSdkStatus,
   requestPermission,
   getGrantedPermissions,
   openHealthConnectSettings,
@@ -7,6 +9,37 @@ import {
 } from 'react-native-health-connect';
 
 export { openHealthConnectSettings };
+
+/**
+ * Open Health Connect app directly via package URI.
+ * Useful as a fallback when the SDK dialog doesn't appear.
+ */
+export const openHealthConnectPermissions = async () => {
+  try {
+    await Linking.openURL('package:com.google.android.apps.healthdata');
+  } catch (e) {
+    console.log('Could not open Health Connect:', e);
+  }
+};
+
+/**
+ * Initialise Health Connect and log SDK status for diagnostics.
+ */
+export const initializeHealthConnect = async () => {
+  try {
+    // Log SDK availability status first
+    const sdkStatus = await getSdkStatus();
+    console.log('HC SDK status:', sdkStatus);
+    // SdkAvailabilityStatus: 1=INSTALLED, 2=NOT_INSTALLED, 3=NOT_SUPPORTED, 4=NEEDS_UPDATE
+
+    const result = await initialize();
+    console.log('HC initialize result:', result);
+    return result;
+  } catch (e) {
+    console.log('HC initialize error:', e.message ?? e);
+    return false;
+  }
+};
 
 // Each permission type requested individually so an unsupported type
 // on a given device/Android version doesn't block the rest.
@@ -39,12 +72,10 @@ function toTimeRange(startDate, endDate) {
 }
 
 export async function requestPermissions() {
-  // Step 1: initialise the SDK
-  try {
-    const ok = await initialize();
-    console.log('Health Connect initialize:', ok);
-  } catch (err) {
-    console.error('Health Connect initialize() error:', err);
+  // Step 1: initialise the SDK (with detailed logging)
+  const ok = await initializeHealthConnect();
+  if (!ok) {
+    console.error('Health Connect failed to initialise — aborting permission request');
     return null;
   }
 

@@ -36,6 +36,7 @@ export async function getStoredToken() {
 }
 
 export async function syncHealthData(data) {
+  console.log('Syncing data:', JSON.stringify(data, null, 2));
   const { data: result } = await client.post('/health-connect/sync', data);
   return result;
 }

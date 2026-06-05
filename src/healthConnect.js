@@ -168,10 +168,12 @@ export async function fetchHeartRateData(startDate, endDate) {
 }
 
 export async function fetchStepsData(startDate, endDate) {
-  const { data } = await safeFetch('Steps', startDate, endDate, (r) => ({
-    date: r.startTime,
-    count: r.count,
-  }));
+  const { data } = await safeFetch('Steps', startDate, endDate, (r) => {
+    const offsetMs = (r.startZoneOffset?.totalSeconds ?? 0) * 1000;
+    const localDate = new Date(new Date(r.startTime).getTime() + offsetMs)
+      .toISOString().slice(0, 10);
+    return { date: localDate, count: r.count };
+  });
   return data;
 }
 
@@ -202,10 +204,12 @@ export async function fetchAllData(days = 7) {
       rmssd: r.heartRateVariabilityMillis,
     })),
     safeFetch('HeartRate', start, end, (r) => r.samples ?? []),
-    safeFetch('Steps', start, end, (r) => ({
-      date: r.startTime,
-      count: r.count,
-    })),
+    safeFetch('Steps', start, end, (r) => {
+      const offsetMs = (r.startZoneOffset?.totalSeconds ?? 0) * 1000;
+      const localDate = new Date(new Date(r.startTime).getTime() + offsetMs)
+        .toISOString().slice(0, 10);
+      return { date: localDate, count: r.count };
+    }),
     safeFetch('ExerciseSession', start, end, (r) => ({
       startTime: r.startTime,
       endTime: r.endTime,

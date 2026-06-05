@@ -355,7 +355,14 @@ export default function SyncScreen() {
       {/* ── TEMP DEBUG: HC Audit ── */}
       <TouchableOpacity
         style={styles.debugBtn}
-        onPress={() => runHealthConnectAudit().then(() => Alert.alert('Audit done', 'Check console logs.'))}
+        onPress={() => runHealthConnectAudit().then((results) => {
+          const lines = Object.entries(results).map(([type, r]) =>
+            r.error
+              ? `${type}: ERROR — ${r.error}`
+              : `${type}: ${r.total} total, ${r.samsungCount} samsung`
+          );
+          Alert.alert('HC Audit', lines.join('\n'));
+        })}
       >
         <Text style={styles.debugBtnText}>[DEBUG] Run HC Audit</Text>
       </TouchableOpacity>

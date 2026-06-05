@@ -163,11 +163,8 @@ export async function fetchHRVData(startDate, endDate) {
 }
 
 export async function fetchHeartRateData(startDate, endDate) {
-  const { data } = await safeFetch('HeartRate', startDate, endDate, (r) => ({
-    time: r.time,
-    bpm: r.beatsPerMinute,
-  }));
-  return data;
+  const { data } = await safeFetch('HeartRate', startDate, endDate, (r) => r.samples ?? []);
+  return data.flat().map((s) => ({ time: s.time, bpm: s.beatsPerMinute }));
 }
 
 export async function fetchStepsData(startDate, endDate) {
@@ -204,10 +201,7 @@ export async function fetchAllData(days = 7) {
       time: r.time,
       rmssd: r.heartRateVariabilityMillis,
     })),
-    safeFetch('HeartRate', start, end, (r) => ({
-      time: r.time,
-      bpm: r.beatsPerMinute,
-    })),
+    safeFetch('HeartRate', start, end, (r) => r.samples ?? []),
     safeFetch('Steps', start, end, (r) => ({
       date: r.startTime,
       count: r.count,
@@ -221,6 +215,8 @@ export async function fetchAllData(days = 7) {
     })),
   ]);
 
+  const heartRate = hrRes.data.flat().map((s) => ({ time: s.time, bpm: s.beatsPerMinute }));
+
   const errors = [sleepRes, hrvRes, hrRes, stepsRes, workoutsRes]
     .filter((r) => r.error)
     .map((r) => r.error);
@@ -230,7 +226,7 @@ export async function fetchAllData(days = 7) {
     periodDays: days,
     sleep: sleepRes.data,
     hrv: hrvRes.data,
-    heartRate: hrRes.data,
+    heartRate,
     steps: stepsRes.data,
     workouts: workoutsRes.data,
     errors,

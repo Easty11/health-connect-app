@@ -5,6 +5,8 @@ import {
 } from 'react-native';
 import { login, logout, getStoredToken, syncHealthData } from './api';
 import { requestPermissions, fetchAllData, openHealthConnectSettings } from './healthConnect';
+// TEMP DEBUG
+import { runHealthConnectAudit } from './HealthConnectAudit';
 
 // ─── Theme ─────────────────────────────────────────────────────────────────
 
@@ -349,6 +351,16 @@ export default function SyncScreen() {
           </Text>
         </View>
       ) : null}
+
+      {/* ── TEMP DEBUG: HC Audit ── */}
+      <TouchableOpacity
+        style={styles.debugBtn}
+        onPress={() => runHealthConnectAudit().then(() => Alert.alert('Audit done', 'Check console logs.'))}
+      >
+        <Text style={styles.debugBtnText}>[DEBUG] Run HC Audit</Text>
+      </TouchableOpacity>
+      {/* ── END TEMP DEBUG ── */}
+
     </ScrollView>
   );
 }
@@ -421,4 +433,8 @@ const styles = StyleSheet.create({
   warningBox: { borderWidth: 1, borderRadius: 10, padding: 10, marginTop: 8, marginBottom: 8 },
   emptyState: { borderWidth: 1, borderRadius: 16, borderStyle: 'dashed', padding: 30, alignItems: 'center', gap: 10, marginTop: 10 },
   emptyText: { fontSize: 13, textAlign: 'center' },
+
+  // TEMP DEBUG
+  debugBtn: { marginTop: 32, borderWidth: 1, borderColor: '#f59e0b', borderRadius: 10, padding: 12, alignItems: 'center' },
+  debugBtnText: { color: '#f59e0b', fontSize: 12, fontWeight: '600' },
 });

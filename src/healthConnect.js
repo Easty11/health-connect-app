@@ -137,7 +137,7 @@ async function safeFetch(recordType, startDate, endDate, mapper) {
     } else {
       console.log(`[HC raw] ${recordType}: 0 records`);
     }
-    return { data: result.records.map(mapper), error: null };
+    return { data: result.records.map(mapper).filter(Boolean), error: null };
   } catch (err) {
     console.log(`[HC] ${recordType} unavailable —`, err.message);
     return { data: [], error: err.message };
@@ -169,6 +169,8 @@ export async function fetchHeartRateData(startDate, endDate) {
 
 export async function fetchStepsData(startDate, endDate) {
   const { data } = await safeFetch('Steps', startDate, endDate, (r) => {
+    const durationMs = new Date(r.endTime).getTime() - new Date(r.startTime).getTime();
+    if (durationMs < 23 * 60 * 60 * 1000) return null;
     const offsetMs = (r.startZoneOffset?.totalSeconds ?? 0) * 1000;
     const localDate = new Date(new Date(r.startTime).getTime() + offsetMs)
       .toISOString().slice(0, 10);
@@ -205,6 +207,9 @@ export async function fetchAllData(days = 7) {
     })),
     safeFetch('HeartRate', start, end, (r) => r.samples ?? []),
     safeFetch('Steps', start, end, (r) => {
+      // Skip minute-level intervals — only keep daily aggregates (≥23h)
+      const durationMs = new Date(r.endTime).getTime() - new Date(r.startTime).getTime();
+      if (durationMs < 23 * 60 * 60 * 1000) return null;
       const offsetMs = (r.startZoneOffset?.totalSeconds ?? 0) * 1000;
       const localDate = new Date(new Date(r.startTime).getTime() + offsetMs)
         .toISOString().slice(0, 10);

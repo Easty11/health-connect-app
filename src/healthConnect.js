@@ -168,15 +168,27 @@ export async function fetchHeartRateData(startDate, endDate) {
 }
 
 export async function fetchStepsData(startDate, endDate) {
-  const { data } = await safeFetch('Steps', startDate, endDate, (r) => {
-    const durationMs = new Date(r.endTime).getTime() - new Date(r.startTime).getTime();
-    if (durationMs < 23 * 60 * 60 * 1000) return null;
-    const offsetMs = (r.startZoneOffset?.totalSeconds ?? 0) * 1000;
-    const localDate = new Date(new Date(r.startTime).getTime() + offsetMs)
-      .toISOString().slice(0, 10);
-    return { date: localDate, count: r.count };
-  });
-  return data;
+  return aggregateSteps(await safeFetch('Steps', startDate, endDate, stepsMapper));
+}
+
+function stepsMapper(r) {
+  const offsetMs = (r.startZoneOffset?.totalSeconds ?? 0) * 1000;
+  const date = new Date(new Date(r.startTime).getTime() + offsetMs).toISOString().slice(0, 10);
+  const durationMs = new Date(r.endTime).getTime() - new Date(r.startTime).getTime();
+  return { date, count: r.count, durationMs };
+}
+
+function aggregateSteps(raw) {
+  const byDate = {};
+  for (const r of raw.data) {
+    if (!byDate[r.date]) byDate[r.date] = { hasAggregate: false, count: 0 };
+    if (r.durationMs >= 23 * 60 * 60 * 1000) {
+      byDate[r.date] = { hasAggregate: true, count: r.count };
+    } else if (!byDate[r.date].hasAggregate) {
+      byDate[r.date].count += r.count;
+    }
+  }
+  return Object.entries(byDate).map(([date, v]) => ({ date, count: v.count }));
 }
 
 export async function fetchWorkoutData(startDate, endDate) {
@@ -206,15 +218,7 @@ export async function fetchAllData(days = 7) {
       rmssd: r.heartRateVariabilityMillis,
     })),
     safeFetch('HeartRate', start, end, (r) => r.samples ?? []),
-    safeFetch('Steps', start, end, (r) => {
-      // Skip minute-level intervals — only keep daily aggregates (≥23h)
-      const durationMs = new Date(r.endTime).getTime() - new Date(r.startTime).getTime();
-      if (durationMs < 23 * 60 * 60 * 1000) return null;
-      const offsetMs = (r.startZoneOffset?.totalSeconds ?? 0) * 1000;
-      const localDate = new Date(new Date(r.startTime).getTime() + offsetMs)
-        .toISOString().slice(0, 10);
-      return { date: localDate, count: r.count };
-    }),
+    safeFetch('Steps', start, end, stepsMapper),
     safeFetch('ExerciseSession', start, end, (r) => ({
       startTime: r.startTime,
       endTime: r.endTime,
@@ -225,6 +229,7 @@ export async function fetchAllData(days = 7) {
   ]);
 
   const heartRate = hrRes.data.flat().map((s) => ({ time: s.time, bpm: s.beatsPerMinute }));
+  const steps = aggregateSteps(stepsRes);
 
   const errors = [sleepRes, hrvRes, hrRes, stepsRes, workoutsRes]
     .filter((r) => r.error)
@@ -236,7 +241,7 @@ export async function fetchAllData(days = 7) {
     sleep: sleepRes.data,
     hrv: hrvRes.data,
     heartRate,
-    steps: stepsRes.data,
+    steps,
     workouts: workoutsRes.data,
     errors,
   };

@@ -4,8 +4,7 @@ import {
   ActivityIndicator, StyleSheet, useColorScheme, Alert, Linking,
 } from 'react-native';
 import { login, logout, getStoredToken, syncHealthData } from './api';
-import { requestPermissions, fetchAllData, openHealthConnectSettings, openHealthConnectPermissionsNative } from './healthConnect';
-import { initialize, getGrantedPermissions } from 'react-native-health-connect';
+import { requestPermissions, fetchAllData, openHealthConnectSettings } from './healthConnect';
 
 // ─── Theme ─────────────────────────────────────────────────────────────────
 
@@ -144,18 +143,7 @@ export default function SyncScreen() {
   async function handleGrantPermissions() {
     try {
       setHcState('granting');
-
-      // Use native intent to open HC permission screen for this app
-      await openHealthConnectPermissionsNative();
-
-      // Re-initialise before checking — avoids ClientNotInitialized error
-      await initialize();
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // After returning from HC, check what was actually granted
-      const granted = await getGrantedPermissions();
-      console.log('Permissions after native intent:', JSON.stringify(granted));
-
+      const granted = await requestPermissions();
       if (granted && granted.length > 0) {
         setHcState('granted');
       } else {

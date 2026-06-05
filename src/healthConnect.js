@@ -60,6 +60,7 @@ export const initializeHealthConnect = async () => {
 const PERMISSION_GROUPS = [
   [{ accessType: 'read', recordType: 'Steps' }],
   [{ accessType: 'read', recordType: 'HeartRate' }],
+  [{ accessType: 'read', recordType: 'RestingHeartRate' }],
   [{ accessType: 'read', recordType: 'SleepSession' }],
   [{ accessType: 'read', recordType: 'HeartRateVariabilityRmssd' }],
   [{ accessType: 'read', recordType: 'ActiveCaloriesBurned' }],
@@ -88,6 +89,7 @@ function toTimeRange(startDate, endDate) {
 const PERMISSIONS = [
   { accessType: 'read', recordType: 'Steps' },
   { accessType: 'read', recordType: 'HeartRate' },
+  { accessType: 'read', recordType: 'RestingHeartRate' },
   { accessType: 'read', recordType: 'SleepSession' },
   { accessType: 'read', recordType: 'HeartRateVariabilityRmssd' },
   { accessType: 'read', recordType: 'ActiveCaloriesBurned' },

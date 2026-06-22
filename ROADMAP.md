@@ -22,10 +22,16 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
   One-day mismatch between Health Connect and the scraper; suspected to misfile
   backfilled rows (DECISIONS_LOG #5). Highest-priority correctness fix. Root
   cause (scraper date assignment vs HC record timestamp/timezone) unconfirmed.
+- **HRV context firewall unbacked — blocks `feat/hrv-capture`/C3.**
+  `src/contract/` has no `CaptureSource`/`CaptureContext` enum; the native
+  module stamps no context on any capture. The #6 firewall (Decision #8 D2)
+  is unbacked. Must wire before C3 lands: (1) add enum to `src/contract/`,
+  (2) stamp context in `HRVCaptureModule.kt` event payload, (3) verify D2.
 - **HRV capture (`feat/hrv-capture`).** Native module + scraper + Polar override
-  landing now. Follow-on: implement the `passive_overnight | calibration |
-  session` context stamp end-to-end and prove the `session` → non-readiness
-  routing (DECISIONS_LOG #6).
+  parked (C3 unstaged). Unblocks after firewall gap above is closed.
+  Follow-on: implement the `passive_overnight | calibration | session` context
+  stamp end-to-end and prove the `session` → non-readiness routing
+  (DECISIONS_LOG #6).
 
 ## Phase 2
 
@@ -62,14 +68,13 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 - `47bcc71` chore: session close-out (first /closeout run)
 
 ### Landed this session
-- `1f8a952` fix: ANCHOR regex accepts forward-slash git path on Windows
-- `6b8ea82` docs: correct #10 false cause, broken+stale ANCHOR (supersede via #11)
+- `4581f91` feat(contract): add SleepStageType generated enum + gen:contract script
+- `672ab95` feat(deep-sleep): add confidence flagger, gate UI; remove HealthConnectAudit
 
-### Uncommitted payload (carry-forward — stage as concern-split commits)
-- `src/deepSleepConfidence.js`, `src/SyncScreen.js`, `src/api.js`, `App.js`, `index.js` — deep-sleep branch changes
-- `Root.js`, `src/contract/`, `scripts/` — shared contract infrastructure (lands on PR #1)
-- `android/.../HRVCaptureModule.kt`, `HRVCapturePackage.kt`, `data/`, `hrv/`, `xml/` — HRV native module (belongs on `feat/hrv-capture`)
-- `android/app/build.gradle`, `AndroidManifest.xml`, `MainApplication.kt`, `strings.xml`, `android/build.gradle`, `package.json` — mixed; split at hunk level per Decision #7
+### Parked — HRV payload (unstaged, stays on feat/deep-sleep-confidence until firewall gap closed)
+- `App.js`, `src/api.js`, `Root.js`, `index.js`, `package.json` — HRV scraper UI + auth wiring
+- `android/app/build.gradle`, `AndroidManifest.xml`, `MainApplication.kt`, `strings.xml`, `android/build.gradle` — native module registration
+- `Root.js` (untracked), `HRVCaptureModule.kt`, `HRVCapturePackage.kt`, `data/`, `hrv/`, `xml/` (all untracked) — HRV native module
 
 ### Next action
-Stage the uncommitted payload as concern-split commits. Start with `feat/deep-sleep-confidence`: pick the deep-sleep hunks from mixed files (`git add -p`), commit `src/contract/` and `scripts/` as shared infrastructure, then push PR #1. After merge, branch `feat/hrv-capture` and land the HRV native module.
+Close the HRV context firewall gap (see work queue above): add `CaptureSource`/`CaptureContext` enum to `src/contract/`, stamp context in `HRVCaptureModule.kt` event payload, verify D2. Then fork `feat/hrv-capture` off this branch and commit C3.

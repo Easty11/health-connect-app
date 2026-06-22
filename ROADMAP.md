@@ -57,24 +57,21 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 ## Sprint block
 
 **Branch:** `feat/deep-sleep-confidence`  
-**Closed:** 2026-06-22
+**Closed:** 2026-06-23
 
 ### Landed (prior sessions)
-- `eeafb62` chore: bootstrap repo-canonical loop (CLAUDE.md, FEEDBACK.md, DECISIONS_LOG.md, ROADMAP.md)
-- `58706e7` docs: log decisions 7-9 (concern-split convention, src/contract shared, stray-artifact policy)
-- `f5cd6e9` chore: ignore *.zip and dump.xml, remove stray artifacts
-- `83717f9` feat: port /closeout ritual to health-connect-app
-- `7a60cb0` docs: log Decision #10 (ANCHOR self-check) and wrong-repo near-miss feedback
-- `47bcc71` chore: session close-out (first /closeout run)
-
-### Landed this session
 - `4581f91` feat(contract): add SleepStageType generated enum + gen:contract script
 - `672ab95` feat(deep-sleep): add confidence flagger, gate UI; remove HealthConnectAudit
+- `82ee3f2` chore: session close-out
+
+### This session
+No commits. Session was operational: rebuilt + reinstalled the release APK to restore the standalone build on device (debug build had overwritten it).
 
 ### Parked — HRV payload (unstaged, stays on feat/deep-sleep-confidence until firewall gap closed)
 - `App.js`, `src/api.js`, `Root.js`, `index.js`, `package.json` — HRV scraper UI + auth wiring
 - `android/app/build.gradle`, `AndroidManifest.xml`, `MainApplication.kt`, `strings.xml`, `android/build.gradle` — native module registration
 - `Root.js` (untracked), `HRVCaptureModule.kt`, `HRVCapturePackage.kt`, `data/`, `hrv/`, `xml/` (all untracked) — HRV native module
+- **Next stash:** use `git stash push --include-untracked` to park the untracked files too (see FEEDBACK 2026-06-23)
 
 ### Next action
 Close the HRV context firewall gap (see work queue above): add `CaptureSource`/`CaptureContext` enum to `src/contract/`, stamp context in `HRVCaptureModule.kt` event payload, verify D2. Then fork `feat/hrv-capture` off this branch and commit C3.

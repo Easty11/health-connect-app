@@ -22,6 +22,11 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-06-23 — git stash without --include-untracked breaks release build  [workflow]
+**Friction:** `git stash` (default) parks tracked modified files but leaves untracked files in place. The HRV payload includes untracked files in Android source dirs (`res/xml/`, `data/`, `hrv/`, `.kt` files). These were picked up by the build system and caused two sequential failures: (1) AAPT resource linking — `accessibility_service_config.xml` referenced `@string/hrv_service_description` from the stashed `strings.xml`; (2) Kotlin compile — `AppDatabase.kt` referenced Room classes whose dependency was in the stashed `build.gradle`. Required manually moving four directories aside and back.
+**Cost:** Two failed build attempts + manual directory shuffling to isolate and clear each blocker.
+**Fix:** Use `git stash push --include-untracked` when the working tree has untracked source files that could be picked up by the build system. The `--include-untracked` flag parks all untracked files alongside the tracked ones and restores them atomically on `stash pop`.
+
 ### 2026-06-22 — correction to the entry below  [ritual]
 The entry below ("wrong-repo close-out near-miss") is inaccurate: it claims the repos share the ritual and that the run was caught before execution. Neither is true — /closeout existed only in health-app, and the run completed there as a no-op, noticed afterward. The mechanism fix (ANCHOR self-check) is unaffected. See DECISIONS_LOG #11.
 

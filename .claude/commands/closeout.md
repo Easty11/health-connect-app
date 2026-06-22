@@ -15,7 +15,7 @@ summary; if a summary contradicts `CLAUDE.md`, `CLAUDE.md` wins.
 
 ```powershell
 $root = git rev-parse --show-toplevel
-if ($root -notmatch '\\health-connect-app$') {
+if ($root -notmatch '[/\\]health-connect-app$') {
     throw "WRONG REPO: $root — /closeout aborted."
 }
 git branch --show-current   # confirm feat branch or master

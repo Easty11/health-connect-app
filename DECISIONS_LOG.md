@@ -97,3 +97,16 @@ false: STOP; wire it before HRV lands.
 never stage into a feature commit.
 **Why:** they belong to other workstreams; tracking them pollutes companion-app
 history and the concern-split.
+
+### #10 — ANCHOR self-check baked into /closeout  ·  active
+**Decision:** `/closeout` opens with a hard repo-root check:
+`git rev-parse --show-toplevel` must end in `\health-connect-app`. If it does not,
+the command aborts unconditionally before writing anything.
+**Why:** On 2026-06-22 the ritual was nearly run in the wrong repo (health-app
+instead of health-connect-app) — the repos share the same workflow and the commands
+look identical in chat. A wrong-repo close-out would have overwritten health-app's
+`closeout.md` and regenerated its ROADMAP sprint block with stale health-connect-app
+state.
+**How you know:** the near-miss happened; this entry is the logged prevention.
+**Consequence:** the ANCHOR is the first executable line of `.claude/commands/closeout.md`
+and cannot be skipped or deferred.

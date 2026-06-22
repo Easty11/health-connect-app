@@ -22,4 +22,14 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-06-22 — wrong-repo close-out near-miss  [ritual]
+**Friction:** `/closeout` was about to be run from health-app instead of
+health-connect-app. Both repos share the same ritual and the commands look identical
+in a chat context where the repo root isn't visible.
+**Cost:** Caught before execution, but only because the user noticed. A missed catch
+would have overwritten health-app's `closeout.md` and ROADMAP sprint block with
+health-connect-app state — silent corruption of the wrong repo.
+**Fix:** ANCHOR self-check now baked into `/closeout` (Decision #10). Command refuses
+and prints the actual root if it isn't `\health-connect-app`.
+
 <!-- New entries above this line -->

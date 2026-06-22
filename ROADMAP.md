@@ -53,15 +53,17 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 **Branch:** `feat/deep-sleep-confidence`  
 **Closed:** 2026-06-22
 
-### Landed (prior sessions — confirmed committed)
+### Landed (prior sessions)
 - `eeafb62` chore: bootstrap repo-canonical loop (CLAUDE.md, FEEDBACK.md, DECISIONS_LOG.md, ROADMAP.md)
 - `58706e7` docs: log decisions 7-9 (concern-split convention, src/contract shared, stray-artifact policy)
 - `f5cd6e9` chore: ignore *.zip and dump.xml, remove stray artifacts
 - `83717f9` feat: port /closeout ritual to health-connect-app
 - `7a60cb0` docs: log Decision #10 (ANCHOR self-check) and wrong-repo near-miss feedback
+- `47bcc71` chore: session close-out (first /closeout run)
 
-### This session
-No commits. Session was ritual-only (first `/closeout` run).
+### Landed this session
+- `1f8a952` fix: ANCHOR regex accepts forward-slash git path on Windows
+- `6b8ea82` docs: correct #10 false cause, broken+stale ANCHOR (supersede via #11)
 
 ### Uncommitted payload (carry-forward — stage as concern-split commits)
 - `src/deepSleepConfidence.js`, `src/SyncScreen.js`, `src/api.js`, `App.js`, `index.js` — deep-sleep branch changes

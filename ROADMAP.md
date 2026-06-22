@@ -50,5 +50,24 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
-_Placeholder. The first `/closeout` overwrites this with the live state read
-from `git log` (last commits, current branch, pending queue, next action)._
+**Branch:** `feat/deep-sleep-confidence`  
+**Closed:** 2026-06-22
+
+### Landed (prior sessions — confirmed committed)
+- `eeafb62` chore: bootstrap repo-canonical loop (CLAUDE.md, FEEDBACK.md, DECISIONS_LOG.md, ROADMAP.md)
+- `58706e7` docs: log decisions 7-9 (concern-split convention, src/contract shared, stray-artifact policy)
+- `f5cd6e9` chore: ignore *.zip and dump.xml, remove stray artifacts
+- `83717f9` feat: port /closeout ritual to health-connect-app
+- `7a60cb0` docs: log Decision #10 (ANCHOR self-check) and wrong-repo near-miss feedback
+
+### This session
+No commits. Session was ritual-only (first `/closeout` run).
+
+### Uncommitted payload (carry-forward — stage as concern-split commits)
+- `src/deepSleepConfidence.js`, `src/SyncScreen.js`, `src/api.js`, `App.js`, `index.js` — deep-sleep branch changes
+- `Root.js`, `src/contract/`, `scripts/` — shared contract infrastructure (lands on PR #1)
+- `android/.../HRVCaptureModule.kt`, `HRVCapturePackage.kt`, `data/`, `hrv/`, `xml/` — HRV native module (belongs on `feat/hrv-capture`)
+- `android/app/build.gradle`, `AndroidManifest.xml`, `MainApplication.kt`, `strings.xml`, `android/build.gradle`, `package.json` — mixed; split at hunk level per Decision #7
+
+### Next action
+Stage the uncommitted payload as concern-split commits. Start with `feat/deep-sleep-confidence`: pick the deep-sleep hunks from mixed files (`git add -p`), commit `src/contract/` and `scripts/` as shared infrastructure, then push PR #1. After merge, branch `feat/hrv-capture` and land the HRV native module.

@@ -24,22 +24,7 @@ import {
   fetchSleepData,
   fetchHeartRateData,
 } from './healthConnect';
-
-// --- Health Connect SleepSessionRecord.StageType constants -------------------
-// Official enum: AWAKE=1, SLEEPING=2, OUT_OF_BED=3, LIGHT=4, DEEP=5, REM=6,
-// AWAKE_IN_BED=7. The backend ingestion path (health_connect.py) currently uses
-// a DIFFERENT map (DEEP=4) — validateNight().perStage is the arbiter for which
-// integer actually carries deep on this device. Do not trust DEEP below until
-// the gate confirms it.
-const STAGE = {
-  AWAKE: 1,
-  SLEEPING: 2,
-  OUT_OF_BED: 3,
-  LIGHT: 4,
-  DEEP: 5,
-  REM: 6,
-  AWAKE_IN_BED: 7,
-};
+import { SleepStageType as STAGE } from './contract/sleepStages.generated';
 
 // --- Tunables (UNCALIBRATED — calibrate against 3-4 trusted nights, then freeze) -
 const HR_NADIR_PCT = 0.1; // 10th percentile = robust nightly HR floor
@@ -124,8 +109,7 @@ export async function validateNight(startISO, endISO) {
     // GATE 1 — confirm enum / which integer is DEEP
     distinctStageValues: [...new Set(stages.map((s) => s.stage))].sort((a, b) => a - b),
     perStage,
-    deepIfConst5: deepFor(STAGE.DEEP), // 5 = official LIGHT? DEEP?  (spec assumption)
-    deepIfConst4: deepFor(4), // 4 = what the backend ingestion path calls DEEP
+    deepIfConst5: deepFor(STAGE.DEEP), // DEEP=5 per backend spec (single source)
     // GATE 2 — did the slivers survive the HC write?
     deepSegmentCount: deepFor(STAGE.DEEP).segments,
     // GATE 3 — HR sampling density during sleep (1/min ~= 60, denser is better)

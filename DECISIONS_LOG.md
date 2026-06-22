@@ -71,3 +71,29 @@ device-agnosticism working as designed, not a violation of it.
 intentions; it lives in the context tag stamped by the app at capture time.
 **Consequence:** `src/contract/` carries `source` + `context`, and is the
 component that makes multi-source / multi-context capture safe.
+
+### #7 — Concern-split commit convention  ·  active
+**Decision:** The uncommitted payload lands as concern-scoped commits, split by
+feature concern across branches (deep-sleep → PR #1 on `feat/deep-sleep-confidence`;
+HRV → `feat/hrv-capture`). Files that mix concerns are split at hunk level
+(`git add -p`), never whole-file. Strays from other workstreams are excluded.
+**Why:** Concern-scoped history keeps PR #1 reviewable and prevents concern-bleed
+(the "each branch builds, no bleed" gate). Whole-file staging of mixed files drags
+unrelated changes across the branch boundary.
+
+### #8 — `src/contract/` is shared capture infrastructure  ·  active  ·  clarifies #6
+**Decision:** `src/contract/` (generated enum + `gen:contract` in `scripts/`) is
+shared, consumed by BOTH the deep-sleep sync path and the HRV firewall. It commits
+on PR #1 only because that branch merges first and `feat/hrv-capture` forks after,
+inheriting it — NOT because it belongs to deep-sleep.
+**How you know:** import-graph check D1/D2. **D2 must be true** — the HRV path must
+actually import the source/context enum, or the #6 firewall is unbacked. If D2 is
+false: STOP; wire it before HRV lands.
+**Consequence:** contract is a shared dependency; future edits ripple to both.
+
+### #9 — Stray-artifact policy  ·  active
+**Decision:** `push_to_hevy.py`, `hevy_routine.json` (Hevy strength workstream) and
+`checkin_build_brief.md` (planning doc) are not tracked here. Gitignore or relocate;
+never stage into a feature commit.
+**Why:** they belong to other workstreams; tracking them pollutes companion-app
+history and the concern-split.

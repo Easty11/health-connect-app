@@ -22,6 +22,9 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-06-22 — correction to the entry below  [ritual]
+The entry below ("wrong-repo close-out near-miss") is inaccurate: it claims the repos share the ritual and that the run was caught before execution. Neither is true — /closeout existed only in health-app, and the run completed there as a no-op, noticed afterward. The mechanism fix (ANCHOR self-check) is unaffected. See DECISIONS_LOG #11.
+
 ### 2026-06-22 — wrong-repo close-out near-miss  [ritual]
 **Friction:** `/closeout` was about to be run from health-app instead of
 health-connect-app. Both repos share the same ritual and the commands look identical

@@ -110,3 +110,12 @@ state.
 **How you know:** the near-miss happened; this entry is the logged prevention.
 **Consequence:** the ANCHOR is the first executable line of `.claude/commands/closeout.md`
 and cannot be skipped or deferred.
+
+### #11 — corrects and supersedes #10's justification and details  ·  active  ·  supersedes #10 (rationale only)
+**Decision:** The ANCHOR self-check in `/closeout` (the intent of #10) stays. #10's recorded cause, "how you know," and path detail are corrected here; #10 remains in place per append-only.
+**Corrections:**
+1. FALSE CAUSE. #10 claims the ritual was "nearly run," that the repos "share the same workflow and the commands look identical in chat," and that "the near-miss happened." All false. `/closeout` existed only in health-app; here it returned "unknown command." The wrong-repo run was not a near-miss — it ran to completion in health-app as a benign no-op, noticed afterward by reading its reported commit.
+2. BROKEN MECHANISM. #10's check as first written matched `\\health-connect-app$`, which false-aborts on every Windows run (git returns forward slashes). Corrected in the command file to `[/\\]health-connect-app$` (commit 1f8a952).
+3. STALE PROSE. #10's body says the root "must end in `\health-connect-app`" (backslash); the working check is the slash-tolerant regex above.
+**Why the check still stands:** a ritual ran in an unintended repo with nothing structural to stop it — that fact alone justifies it, not a near-miss.
+**How you know:** "unknown command: /closeout" here disproves the shared-command claim; 1f8a952's diff is the mechanism fix.

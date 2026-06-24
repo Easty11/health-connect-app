@@ -1,3 +1,4 @@
 <resources>
   <string name="app_name">health-connect-app</string>
+  <string name="hrv_service_description">Reads HRV data from Samsung Health screens</string>
 </resources>

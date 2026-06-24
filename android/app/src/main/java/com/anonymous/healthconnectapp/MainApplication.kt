@@ -14,6 +14,8 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ExpoReactHostFactory
 
+import com.anonymous.healthconnectapp.hrv.SDKSyncObserver
+
 class MainApplication : Application(), ReactApplication {
 
   override val reactHost: ReactHost by lazy {
@@ -22,6 +24,7 @@ class MainApplication : Application(), ReactApplication {
       packageList =
         PackageList(this).packages.apply {
           add(HealthConnectPackage())
+          add(HRVCapturePackage())
         }
     )
   }
@@ -35,6 +38,9 @@ class MainApplication : Application(), ReactApplication {
     }
     loadReactNative(this)
     ApplicationLifecycleDispatcher.onApplicationCreate(this)
+
+    // Start the SDK sync observer: 10-min poll + daily 03:00 flag reset.
+    SDKSyncObserver.schedule(this)
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {

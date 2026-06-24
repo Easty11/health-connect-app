@@ -1,5 +1,6 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.google.devtools.ksp"
 apply plugin: "com.facebook.react"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
@@ -179,4 +180,14 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
+    // Used by SDKSyncObserver to read today's sleep/steps freshness signal.
+    // Pinned to the same version react-native-health-connect resolves.
+    implementation "androidx.health.connect:connect-client:1.1.0-alpha11"
+
+    implementation "androidx.room:room-runtime:2.7.1"
+    implementation "androidx.room:room-ktx:2.7.1"
+    ksp "androidx.room:room-compiler:2.7.1"
 }

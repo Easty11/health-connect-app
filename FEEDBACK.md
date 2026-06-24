@@ -22,6 +22,11 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-06-24 — handoff asserted unpushed work that was already synced  [workflow]
+**Friction:** The chat-generated CODE HANDOFF directed a `git push --force-with-lease` to publish "the firewall commit + stranded work," but `feat/deep-sleep-confidence` was already 0/0 with origin — nothing to push. The same handoff carried audit branch positions (`f6d94a8`/`82f0b88`) it itself flagged as unverified.
+**Cost:** None — the handoff's own "verify what's ahead BEFORE pushing" step caught it before a no-op force-push. But the premise was wrong end to end.
+**Fix:** Treat any git state a handoff *asserts* (unpushed commits, branch topology) as a claim to verify against `git log @{u}..HEAD` / `git rev-list --left-right --count`, never as fact to act on. The protocol's "verify before you build on it" + `;raw` state check is what held; keep gating every destructive git op on a fresh state check, not the handoff's description.
+
 ### 2026-06-23 — git stash without --include-untracked breaks release build  [workflow]
 **Friction:** `git stash` (default) parks tracked modified files but leaves untracked files in place. The HRV payload includes untracked files in Android source dirs (`res/xml/`, `data/`, `hrv/`, `.kt` files). These were picked up by the build system and caused two sequential failures: (1) AAPT resource linking — `accessibility_service_config.xml` referenced `@string/hrv_service_description` from the stashed `strings.xml`; (2) Kotlin compile — `AppDatabase.kt` referenced Room classes whose dependency was in the stashed `build.gradle`. Required manually moving four directories aside and back.
 **Cost:** Two failed build attempts + manual directory shuffling to isolate and clear each blocker.

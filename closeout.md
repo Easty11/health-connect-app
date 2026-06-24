@@ -1,24 +1,26 @@
 ## Commits this session
 
-None. Session was operational — rebuilt and reinstalled the release APK. No code changes committed.
+None. HEAD remains `ab94ffe feat(hrv): native Samsung Health HRV accessibility scraper pipeline` (a prior session). `feat/deep-sleep-confidence` is 0/0 synced with origin.
+
+Session was operational — closed the `add -A` / dead-script hazard:
+- Deleted untracked `push_to_hevy.py` (hardcoded — now rotated — API key + non-canonical `/v1/routines`). Working-tree delete; nothing to commit (Decision #9).
+- Confirmed branch already synced → the handoff's "push stranded work" had nothing to do; no-op `--force-with-lease` correctly skipped.
 
 ## PENDING reconciliation
 
-No `;cc` chat close-out preceded this session. No PENDING queue to reconcile.
+Session opened from a CODE HANDOFF (not a `;cc` PENDING queue). Reconciled against its phases:
+- **Phase A.1 — delete `push_to_hevy.py`:** LANDED as a working-tree deletion (untracked; no commit). Hazard defused — key rotated upstream, script gone.
+- **Phase A.2 — push firewall commit / stranded work:** CORRECTLY SKIPPED. Branch 0/0 with origin; the firewall/HRV work (`ab94ffe`) was already pushed. No commit, no push this session.
+- **Phase B — hevy-client `f6d94a8`/`82f0b88` topology fix:** DEFERRED to its own hevy-client-rooted session (cross-repo; single-repo/single-writer contract). Step-3 topology hard-stop preserved for that session — audit branch positions stay unverified until checked against `;raw` there.
 
 ## Cold-resume handoff
 
-**Branch:** `feat/deep-sleep-confidence` | **Date:** 2026-06-23
+**Branch:** `feat/deep-sleep-confidence`, 0/0 synced with origin. Tree clean except strays `checkin_build_brief.md`, `hevy_routine.json` (Decision #9 — leave untracked).
 
-**Sprint state:** C1 (contract) and C2 (deep-sleep) remain the last feature commits. Release APK rebuilt from committed tree and reinstalled to device (RFCX108PF1J). Standalone is running again. HRV payload parked unstaged — identical to end of last session.
+**Sprint state:** HRV native pipeline LANDED (`ab94ffe`) — the payload that was "parked unstaged" last session is now committed and pushed, onto `feat/deep-sleep-confidence` (NOT `feat/hrv-capture` per Decision #7's concern-split). The concern-bleed is already in pushed history — noted, not reversed.
 
-**Operational note logged:** `git stash` without `--include-untracked` leaves untracked Android source files in place; these break the release build (AAPT resource linking + Kotlin compile). Next time: `git stash push --include-untracked`. See FEEDBACK 2026-06-23.
+**⚠ Highest priority — firewall gap is now LIVE-UNBACKED:** `ab94ffe` added the HRV capture path but no `src/contract/` enum. `src/contract/` still holds only `sleepStages.generated.js`; no tracked source references `CaptureContext`. Decision #8 D2 is FALSE in committed, pushed code — HRV landed ahead of the #6 context firewall that #8 said must precede it.
 
-**Parked unstaged (HRV — do not stage until firewall gap closed):**
-- `App.js`, `src/api.js`, `Root.js`, `index.js`, `package.json`
-- `android/` — build.gradle (×2), AndroidManifest.xml, MainApplication.kt, strings.xml
-- Untracked: `Root.js`, `HRVCaptureModule.kt`, `HRVCapturePackage.kt`, `data/`, `hrv/`, `xml/`
+**Single clearest next action:** Close the firewall gap — add `CaptureSource`/`CaptureContext` enum to `src/contract/`, stamp `passive_overnight | calibration | session` context in `HRVCaptureModule.kt`'s event payload, and verify D2 (HRV path imports the enum). Until done, no `session`-context capture is source-guarded against entering readiness. Then resolve the concern-split (keep HRV on this branch vs. rebase onto `feat/hrv-capture`).
 
-**Strays (never stage — Decision #9):** `checkin_build_brief.md`, `hevy_routine.json`, `push_to_hevy.py`
-
-**Single clearest next action:** Add `CaptureSource`/`CaptureContext` enum to `src/contract/` (new generated file alongside `sleepStages.generated.js`), stamp `context` on the HRVAccessibilityService event payload in `HRVCaptureModule.kt`, re-run D2 gate. On D2 pass: fork `feat/hrv-capture` and commit C3.
+Other open work unchanged in ROADMAP: Q2 (de-dup `validateNight()`), Q4 (Health Connect date-attribution root cause).

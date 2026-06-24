@@ -56,22 +56,27 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
-**Branch:** `feat/deep-sleep-confidence`  
-**Closed:** 2026-06-23
+**Branch:** `feat/deep-sleep-confidence` (0/0 synced with origin)  
+**Closed:** 2026-06-24
 
 ### Landed (prior sessions)
 - `4581f91` feat(contract): add SleepStageType generated enum + gen:contract script
 - `672ab95` feat(deep-sleep): add confidence flagger, gate UI; remove HealthConnectAudit
 - `82ee3f2` chore: session close-out
+- `c415f6a` chore: session close-out
+- `ab94ffe` feat(hrv): native Samsung Health HRV accessibility scraper pipeline
 
 ### This session
-No commits. Session was operational: rebuilt + reinstalled the release APK to restore the standalone build on device (debug build had overwritten it).
+No commits. Operational only — closed the `add -A` / dead-script hazard:
+- Deleted untracked `push_to_hevy.py` (hardcoded — now rotated — API key + non-canonical `/v1/routines`). Working-tree delete; nothing to commit (Decision #9).
+- Verified branch is 0/0 with origin → the firewall/HRV work was already pushed, so the handoff's "push stranded work" had nothing to do. No-op `--force-with-lease` correctly skipped.
+- Phase B (hevy-client `f6d94a8`/`82f0b88` topology fix) deferred to its own hevy-client-rooted session; step-3 topology hard-stop preserved.
 
-### Parked — HRV payload (unstaged, stays on feat/deep-sleep-confidence until firewall gap closed)
-- `App.js`, `src/api.js`, `Root.js`, `index.js`, `package.json` — HRV scraper UI + auth wiring
-- `android/app/build.gradle`, `AndroidManifest.xml`, `MainApplication.kt`, `strings.xml`, `android/build.gradle` — native module registration
-- `Root.js` (untracked), `HRVCaptureModule.kt`, `HRVCapturePackage.kt`, `data/`, `hrv/`, `xml/` (all untracked) — HRV native module
-- **Next stash:** use `git stash push --include-untracked` to park the untracked files too (see FEEDBACK 2026-06-23)
+### HRV payload now LANDED (was "parked unstaged" last session)
+`ab94ffe` committed the full HRV payload (App.js, Root.js, `HRVCaptureModule.kt`, `data/`, `hrv/`, manifest, gradle, etc.) onto `feat/deep-sleep-confidence` — onto the deep-sleep branch, NOT `feat/hrv-capture` as Decision #7's concern-split intended. Concern-bleed is already in pushed history (noted, not reversed). Tree is now clean (only strays `checkin_build_brief.md`, `hevy_routine.json` remain — Decision #9).
+
+### ⚠ Firewall gap is now LIVE-UNBACKED (priority raised)
+`ab94ffe` added the HRV capture path but **no `src/contract/` enum** — `src/contract/` still holds only `sleepStages.generated.js`, and no tracked source references `CaptureContext`. So Decision #8 D2 is FALSE in committed, pushed code: HRV landed without the #6 context firewall. Decision #8 said "if D2 false: STOP; wire it before HRV lands" — HRV has now landed ahead of it.
 
 ### Next action
-Close the HRV context firewall gap (see work queue above): add `CaptureSource`/`CaptureContext` enum to `src/contract/`, stamp context in `HRVCaptureModule.kt` event payload, verify D2. Then fork `feat/hrv-capture` off this branch and commit C3.
+Close the firewall gap, now urgent: add `CaptureSource`/`CaptureContext` enum to `src/contract/`, stamp `passive_overnight | calibration | session` context in `HRVCaptureModule.kt`'s event payload, and verify D2 (HRV path imports the enum). Until then any `session`-context capture is not source-guarded against entering readiness. Then resolve the concern-split (keep HRV on this branch vs. rebase onto `feat/hrv-capture`).

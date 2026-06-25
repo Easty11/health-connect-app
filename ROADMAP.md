@@ -95,9 +95,13 @@ Guarded all three calls with the safe idiom already at `src/api.js:7-17`
 auth-path lines only; scraper feature code (`NativeEventEmitter`,
 `triggerManualExtraction`, extraction listeners) and all Kotlin untouched.
 Validated a known-good 23 Jun-shape payload against the **live `SyncPayload`
-OpenAPI contract → PASS, 2xx-eligible**. Contract-conformance arm only — no live
-production POST (no JWT; synthetic writes would pollute real health data), no
-overnight capture (scraper down → would alias).
+OpenAPI contract → PASS, 2xx-eligible** — but that arm confirms an already-sound
+surface, so it does not test the fix. **Integration precondition met** via an
+**auth-path simulation** (`b7621c4`, `npm run test:auth-path`): exercises
+login/logout/AuthExpired with `HRVCapture` ABSENT (the ab94ffe condition),
+asserting no throw AND capture→POST proceeds; guards extracted verbatim from
+source; a negative control reproduces the pre-fix throw/dead-end. All PASS. No
+JWT, no production POST, no overnight capture (scraper down → would alias).
 
 ### Firewall / D2 — confirmed BACKEND-BLOCKED (was "next action: close it")
 Investigated closing the #8 D2 firewall gap this session. The live
@@ -108,8 +112,8 @@ is now correctly re-sequenced **backend-first** (see work queue). No
 DECISIONS_LOG append — the fix embodies no new decision.
 
 ### Next action
-Decide the regression fix's integration: review draft PR #2, then merge to
-`master` (or rebase the HRV concern onto `feat/hrv-capture` per Decision #7
-before integrating). Separately, the firewall is blocked on the backend
-exposing `CaptureContext` — raise that on `health-app` before any further
-app-side firewall work.
+PR #2 is integration-eligible (auth-path sim passes) but held draft for the
+record. Decide its integration: mark ready + merge to `master`, or rebase the HRV
+concern onto `feat/hrv-capture` per Decision #7 first. Separately, the firewall is
+blocked on the backend exposing `CaptureContext` — raise that on `health-app`
+before any further app-side firewall work.

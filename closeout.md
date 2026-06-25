@@ -23,8 +23,14 @@ No chat `;cc` PENDING queue was carried into this session. The session executed
 - **Scoped-fix gate** — confirmed: diff touches auth-path lines only (`App.js`
   +8/−2, `Root.js` +5/−1); scraper feature + Kotlin untouched.
 - **Isolation validation** — known-good 23 Jun-shape payload validated against the
-  live `SyncPayload` OpenAPI contract → PASS / 2xx-eligible. Contract arm only; no
-  live production POST, no overnight capture (scraper down → aliases).
+  live `SyncPayload` OpenAPI contract → PASS / 2xx-eligible. No live production
+  POST, no overnight capture (scraper down → aliases).
+- **Integration precondition — auth-path simulation** — MET (`b7621c4`,
+  `npm run test:auth-path`). Exercises login/logout/AuthExpired with `HRVCapture`
+  ABSENT (the ab94ffe condition), asserting no throw AND capture→POST proceeds.
+  Guard blocks extracted verbatim from source; negative control reproduces the
+  pre-fix throw/dead-end — so the test discriminates the fix (the contract arm,
+  which confirmed an already-sound surface, did not). All assertions PASS.
 - **Step 5 / D2 CaptureContext enum** — NOT landed. Blocked: live `/openapi.json`
   exposes no `CaptureContext`/context/source schema, so it cannot be single-sourced
   (hand-typed literals forbidden). Re-sequenced backend-first.
@@ -33,10 +39,13 @@ No chat `;cc` PENDING queue was carried into this session. The session executed
 
 ## Cold-resume handoff
 
-**Current state.** On `fix/hrv-capture-regression` @ `fb3310e`, pushed, draft PR #2
-open. Working tree clean except pre-existing strays `checkin_build_brief.md`,
-`hevy_routine.json` (Decision #9 — untracked, leave). The capture→POST regression
-from `ab94ffe` is fixed but **not integrated**.
+**Current state.** On `fix/hrv-capture-regression`, pushed, draft PR #2 open
+(`fb3310e` fix · `b7621c4` auth-path sim · close-out commits). Working tree clean
+except pre-existing strays `checkin_build_brief.md`, `hevy_routine.json` (Decision
+#9 — untracked, leave). The capture→POST regression from `ab94ffe` is fixed; the
+auth-path simulation gate passes, so PR #2 is now **integration-eligible** but
+held **draft per standing instruction** ("hold the PR as draft so I have the
+record") — not merged.
 
 **Open questions / blocks (from ROADMAP).**
 - Integration of PR #2: merge to `master` vs. rebase the HRV concern onto

@@ -158,3 +158,32 @@ should COUNT toward the SDK-migration trigger — flagged, not actioned, here.
 **How you know:** live uiautomator dumps from SM-S921B on 25 June 2026 (branch
 `fix/scraper-sh-relayout`); parse layer validated against the captured strings
 before any code was written into the scraper.
+### #13 — health-connect-app master carries the canonical governance stores  ·  active
+**Decision:** Governance is per-repo by default (convention locked this session;
+the cross-repo statement of it is logged in health-app, not here). This repo's
+master is the canonical trunk for the governance stores — CLAUDE.md,
+DECISIONS_LOG, FEEDBACK, ROADMAP, OPEN_QUESTIONS, and the `/closeout` command —
+which feature branches inherit. The stores were originally bootstrapped on a
+feature branch and never merged, leaving master a stub (`CLAUDE.md` =
+`@AGENTS.md`, no `DECISIONS_LOG`). This entry ratifies master-as-trunk and
+records the one-time, file-scoped transplant. `closeout.md` is deliberately NOT
+carried on the trunk — it is session-local handoff state, written per `/closeout`
+on the working branch.
+**Supersedes:** none.
+**How you know:** pre-transplant `git show master:DECISIONS_LOG.md` failed and
+master's `CLAUDE.md` was the one-line `@AGENTS.md` stub; stores were taken
+file-scoped from `fix/scraper-sh-relayout` onto `chore/governance-bootstrap` and
+fast-forwarded into master — a single commit touching store files only, no
+feature code (verified by `git diff --stat`).
+
+### #14 — SH scraper sleep-capture gaps resolved  ·  active  ·  supersedes #12 (open-gaps portion only)
+**Decision:** The sleep-capture gaps left open by #12 — Light-sleep minutes,
+full stage percentages, SpO2 average, and derived sleep efficiency — are
+resolved by the SH 7.x re-map landed this session.
+**Supersedes:** #12 (open-gaps portion only).
+
+### #15 — OPEN_QUESTIONS.md added to the canonical store hierarchy  ·  active
+**Decision:** OPEN_QUESTIONS.md joins this repo's canonical-store hierarchy as
+the home for machine-checkable code-state defects and unresolved questions; the
+CLAUDE.md stores table is updated to list it.
+**Supersedes:** none.

@@ -44,6 +44,7 @@ Chat proposes content; Code writes it. No exceptions.
 |------|-------|
 | `CLAUDE.md` | This contract. Conventions, architecture invariants. |
 | `DECISIONS_LOG.md` | Append-only decision record. Supersede by reference, never edit in place. |
+| `OPEN_QUESTIONS.md` | Machine-checkable code-state defects + unresolved questions. PENDING until resolved into a decision or a fix. |
 | `ROADMAP.md` | Forward work + the current sprint block. |
 | `FEEDBACK.md` | Friction log on the workflow and on Claude's behaviour. |
 | `closeout.md` | The single committed cold-resume handoff. Overwritten each `/closeout`. |

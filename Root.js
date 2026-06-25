@@ -52,7 +52,11 @@ export default function Root() {
   // drop back to the login screen.
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('AuthExpired', () => {
-      NativeModules.HRVCapture.clearAuthToken();
+      // Guarded: a missing scraper native module must not crash the auth
+      // recovery path (onLogout already clears the scraper token via App).
+      if (NativeModules.HRVCapture?.clearAuthToken) {
+        try { NativeModules.HRVCapture.clearAuthToken(); } catch (_) {}
+      }
       onLogout();
     });
     return () => sub.remove();

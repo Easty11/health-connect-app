@@ -73,9 +73,20 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 
 ### This session — capture→POST regression fix (BRIEF 1)
 - `fb3310e` fix(hrv): decouple capture/POST auth path from scraper native module
+- `a389a2c` chore: session close-out
+- `b7621c4` test(hrv): auth-path simulation — module-absent guard proof
+- `a1a387d` chore: record auth-path simulation gate (integration precondition met)
 
-Branched `fix/hrv-capture-regression` off `8c63856`. Pushed. Draft PR
-[#2](https://github.com/Easty11/health-connect-app/pull/2) opened to hold the record — **not** merged (held for review before integration).
+Branched `fix/hrv-capture-regression` off `8c63856`. All pushed (0/0). Draft PR
+[#2](https://github.com/Easty11/health-connect-app/pull/2) holds the record —
+now **integration-eligible** (auth-path sim passes) but held **draft per standing
+instruction**, not merged.
+
+**Unrelated in-flight work present in tree (NOT mine, NOT committed):** modified
+scraper Kotlin `HRVAccessibilityService.kt` / `HRVDataModel.kt` and untracked
+`_scraper_dumps/` — belongs to the scraper/Brief 2 workstream. Left untouched per
+the "commit only close-out artifacts" rule. `_scraper_dumps/` is a likely stray
+(Decision #9 candidate — gitignore or relocate).
 
 ### Regression diagnosis
 `get_recovery_metrics` shows recovery rows landing daily through **2026-06-23**,

@@ -61,6 +61,16 @@ class HRVAccessibilityService : AccessibilityService() {
         // until all three are captured or we hit this cap.
         private const val MAX_ENERGY_SCROLL_ATTEMPTS = 8
 
+        // Sleep screen also renders lazily: the stages breakdown (Light minutes
+        // + per-stage %) and the Blood-oxygen card sit below the fold, so we
+        // scroll-and-accumulate the same way until they are captured or we cap.
+        private const val MAX_SLEEP_SCROLL_ATTEMPTS = 8
+
+        // Samsung Health resumes on whatever screen it was last left on, not the
+        // home dashboard. If we launch into a detail screen we walk back toward
+        // home, capped so a stuck screen still fails via the state timeout.
+        private const val MAX_HOME_NAV_ATTEMPTS = 5
+
         // External trigger: send this broadcast to start extraction.
         const val ACTION_START_EXTRACTION = "com.yourapp.hrv.START_EXTRACTION"
 
@@ -94,10 +104,13 @@ class HRVAccessibilityService : AccessibilityService() {
         RETURNING_FROM_ENERGY_SCORE,
         WAITING_FOR_HOME_2,
 
-        // Home → Sleep (Compose: one-pass content-desc extraction)
+        // Home → Sleep (Compose). Scroll-and-accumulate: the stages breakdown
+        // (Light + %) and Blood-oxygen render lazily below the fold, so we loop
+        // scroll → extract until they are captured.
         TAPPING_SLEEP,
         WAITING_FOR_SLEEP,
-        EXTRACTING_SLEEP_TOP,
+        SCROLLING_SLEEP,
+        WAITING_FOR_SLEEP_SCROLLED,
 
         // Sleep → Home
         RETURNING_FROM_SLEEP,
@@ -114,6 +127,8 @@ class HRVAccessibilityService : AccessibilityService() {
     private var state = State.IDLE
     private val data = HRVExtractedData()
     private var energyScrollAttempts = 0
+    private var sleepScrollAttempts = 0
+    private var homeNavAttempts = 0
     private var timeoutRunnable: Runnable? = null
 
     // Fires after the screen has been stable for STABILITY_DELAY_MS.
@@ -164,6 +179,8 @@ class HRVAccessibilityService : AccessibilityService() {
         Log.i(TAG, "Starting extraction")
         data.reset()
         energyScrollAttempts = 0
+        sleepScrollAttempts = 0
+        homeNavAttempts = 0
         transition(State.LAUNCHING_APP)
         launchSamsungHealth()
         startTimeout()
@@ -204,10 +221,24 @@ class HRVAccessibilityService : AccessibilityService() {
             State.WAITING_FOR_HOME -> {
                 if (screen == Screen.HOME) {
                     cancelTimeout()
+                    homeNavAttempts = 0
                     // Bonus: grab sleep duration from home tile to cross-check later.
                     extractHomeData(root)
                     transition(State.TAPPING_ENERGY_SCORE)
                     tapEnergyScoreTile(root)
+                    startTimeout()
+                } else if (
+                    (screen == Screen.SLEEP || screen == Screen.ENERGY_SCORE || screen == Screen.SPO2) &&
+                    homeNavAttempts < MAX_HOME_NAV_ATTEMPTS
+                ) {
+                    // SH resumed on a detail screen (it reopens wherever it was
+                    // last left). Walk back toward the dashboard. UNKNOWN frames
+                    // are transient launch/splash states — wait those out rather
+                    // than risk backing out of the app.
+                    homeNavAttempts++
+                    Log.d(TAG, "Not on home (screen=$screen) — backing to dashboard (attempt $homeNavAttempts)")
+                    goBack()
+                    transition(State.WAITING_FOR_HOME)
                     startTimeout()
                 }
             }
@@ -255,10 +286,15 @@ class HRVAccessibilityService : AccessibilityService() {
             }
 
             // ── Sleep screen (Jetpack Compose, SH 7.x) ───────────
-            // No data resource-ids: extract everything from content-desc in
-            // one pass once the Compose tree has populated, then go back.
-            // Respiratory rate is no longer here — it now lives on the
-            // Vitality screen and is captured there.
+            // No data resource-ids: extract from content-desc/text each frame.
+            // The timing header + factor cards are at the top, but the stages
+            // breakdown (Light + %) and Blood-oxygen render lazily below the
+            // fold — so we scroll-and-accumulate until both are captured.
+            // Respiratory rate is no longer here — it lives on the Vitality
+            // screen and is captured there.
+            // First arrival on the Sleep screen: wait for the Compose tree to
+            // populate, read the top (timing header + factor cards), then begin
+            // scrolling for the below-the-fold data.
             State.TAPPING_SLEEP,
             State.WAITING_FOR_SLEEP -> {
                 if (screen == Screen.SLEEP) {
@@ -268,12 +304,20 @@ class HRVAccessibilityService : AccessibilityService() {
                         Log.d(TAG, "Sleep screen not ready yet — waiting for Compose content")
                         return
                     }
-                    cancelTimeout()
-                    transition(State.EXTRACTING_SLEEP_TOP)
                     extractSleepCompose(root)
-                    transition(State.RETURNING_FROM_SLEEP)
-                    goBack()
-                    startTimeout()
+                    advanceSleepScroll(root)
+                }
+            }
+
+            // Mid-scroll: the top "Sleep score" node has scrolled off, so
+            // detectScreen reports UNKNOWN (or SPO2 once the blood-oxygen card
+            // scrolls into view). We're still inside the Sleep detail activity
+            // as long as we haven't landed back on HOME, so keep accumulating.
+            State.SCROLLING_SLEEP,
+            State.WAITING_FOR_SLEEP_SCROLLED -> {
+                if (screen != Screen.HOME) {
+                    extractSleepCompose(root)
+                    advanceSleepScroll(root)
                 }
             }
 
@@ -287,6 +331,31 @@ class HRVAccessibilityService : AccessibilityService() {
             }
 
             else -> { /* terminal or transitional states — no action */ }
+        }
+    }
+
+    /**
+     * Shared tail of the Sleep scroll-accumulate loop. Stops (and navigates
+     * back) once the below-the-fold data is captured or the scroll cap is hit;
+     * otherwise scrolls one page and waits for the next stable frame. Each path
+     * (re)arms the state timeout so a stalled scroll still fails cleanly.
+     */
+    private fun advanceSleepScroll(root: AccessibilityNodeInfo) {
+        if (sleepComplete || sleepScrollAttempts >= MAX_SLEEP_SCROLL_ATTEMPTS) {
+            if (!sleepComplete) Log.w(
+                TAG,
+                "Sleep data incomplete after $sleepScrollAttempts scrolls " +
+                "(light=${data.lightMinutes} spo2=${data.spO2AveragePct})"
+            )
+            transition(State.RETURNING_FROM_SLEEP)
+            goBack()
+            startTimeout()
+        } else {
+            sleepScrollAttempts++
+            Log.d(TAG, "Sleep scroll-accumulate (attempt $sleepScrollAttempts)")
+            findScrollable(root)?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+            transition(State.SCROLLING_SLEEP)
+            startTimeout()
         }
     }
 
@@ -341,15 +410,21 @@ class HRVAccessibilityService : AccessibilityService() {
 
     /**
      * Taps the Energy score card on the redesigned home dashboard (SH 7.x).
-     * The card carries a content-desc beginning "Energy score…"; we find it
-     * and walk up to the clickable container. (The old `vitality_score`
-     * TextView id is gone.)
+     * Anchor on the inner score ids (`vitality_tile_score_layout` /
+     * `vitality_title`), which survive the SH 7.x relayout, then walk up to the
+     * clickable container (`tile_root_layout`). The card's content-desc
+     * ("Energy score, Double tap…") now sits on the *outer* wrapper whose
+     * clickable container is a descendant — so a content-desc anchor + ancestor
+     * walk can never reach it; it is kept only as a last-resort fallback.
      */
     private fun tapEnergyScoreTile(root: AccessibilityNodeInfo) {
-        val anchor = findByContentDescPrefix(root, "Energy score") ?: run {
-            onError("Energy score card not found on home screen")
-            return
-        }
+        val anchor = findById(root, "vitality_tile_score_layout")
+            ?: findById(root, "vitality_title")
+            ?: findByContentDescPrefix(root, "Energy score")
+            ?: run {
+                onError("Energy score card not found on home screen")
+                return
+            }
         val tile = if (anchor.isClickable) anchor else findClickableAncestor(anchor)
         if (tile == null) {
             onError("No clickable ancestor for Energy score card")
@@ -404,6 +479,15 @@ class HRVAccessibilityService : AccessibilityService() {
         get() = data.hrvMs != null && data.sleepHRBpm != null && data.respiratoryRate != null
 
     /**
+     * True once the below-the-fold Sleep data is captured: Light-sleep minutes
+     * (which arrives with the per-stage %) and the Blood-oxygen average. The
+     * top-of-screen timing header and factor cards are read on the first frame,
+     * so these two are what the scroll is for.
+     */
+    private val sleepComplete: Boolean
+        get() = data.lightMinutes != null && data.spO2AveragePct != null
+
+    /**
      * Vitality (Energy score) screen, SH 7.x. HRV/HR keep their text ids;
      * respiratory rate moved here from the old Sleep screen. Cards render and
      * recycle as the screen scrolls, so this is called once per scroll frame
@@ -443,12 +527,41 @@ class HRVAccessibilityService : AccessibilityService() {
      */
     private fun extractSleepCompose(root: AccessibilityNodeInfo) {
         forEachNode(root) { node ->
+            // SpO2 average is a plain TextView ("Average: 96%") under the
+            // Blood-oxygen card — the only "Average:" on the Sleep screen.
+            if (data.spO2AveragePct == null) {
+                node.text?.toString()?.let { txt ->
+                    if (txt.startsWith("Average:") && txt.contains("%")) {
+                        HRVDataParser.parseAverage(txt, "%")?.let {
+                            data.spO2AveragePct = it
+                            Log.d(TAG, "SpO2 average: $txt → $it")
+                        }
+                    }
+                }
+            }
+
             val desc = node.contentDescription?.toString() ?: return@forEachNode
+
             if (desc.startsWith("Sleep time,") && desc.contains("Bedtime")) {
                 HRVDataParser.parseSleepTimingContentDesc(desc, data)
                 Log.d(TAG, "Sleep timing desc: $desc")
                 return@forEachNode
             }
+
+            // Stages breakdown: a single content-desc carries every stage's
+            // minutes AND percentage — the only source of Light-sleep minutes
+            // and the per-stage percentages.
+            //   "Awake, 49 minutes, 11 percent, … Light, 5 hours 12 minutes,
+            //    73 percent, … Deep, 5 minutes, 1 percent"
+            // Must run before the factor parser, which would otherwise match the
+            // leading "Awake, 49 minutes," fragment of this same string.
+            if (desc.contains("percent") &&
+                Regex("(Awake|REM|Light|Deep)\\s*,").containsMatchIn(desc)) {
+                HRVDataParser.parseSleepStagesContentDesc(desc, data)
+                Log.d(TAG, "Sleep stages desc: $desc")
+                return@forEachNode
+            }
+
             HRVDataParser.parseSleepFactorContentDesc(desc)?.let { (label, mins) ->
                 when (label.lowercase()) {
                     "actual sleep time" -> if (data.actualSleepTimeMinutes == null) {
@@ -467,6 +580,7 @@ class HRVAccessibilityService : AccessibilityService() {
 
     private fun completeExtraction() {
         transition(State.COMPLETE)
+        deriveSleepEfficiency()
         Log.i(TAG, "Extraction complete: $data")
 
         // Return to home screen — don't leave Samsung Health in foreground.
@@ -650,5 +764,32 @@ class HRVAccessibilityService : AccessibilityService() {
             depth++
         }
         return null
+    }
+
+    /**
+     * Sleep efficiency is not displayed anywhere on Samsung Health 7.x, so it is
+     * DERIVED (not scraped): actual sleep time ÷ time in bed (bedtime → wake),
+     * per Samsung's own definition. The value is logged as derived; every other
+     * sleep field remains scraped ground truth. Only set when both inputs exist.
+     */
+    private fun deriveSleepEfficiency() {
+        if (data.sleepEfficiencyPct != null) return
+        val actual = data.actualSleepTimeMinutes ?: return
+        val inBed = HRVDataParser.minutesBetweenClockTimes(data.bedtime, data.wakeTime) ?: return
+        if (inBed <= 0) return
+        val pct = Math.round(actual * 100.0 / inBed).toInt()
+        data.sleepEfficiencyPct = pct
+        Log.i(TAG, "Sleep efficiency DERIVED (actual $actual ÷ in-bed $inBed) = $pct%")
+    }
+
+    /**
+     * First scrollable node in the tree. The Sleep screen's scroll containers
+     * carry no resource-id (unlike the Vitality screen's `main_scrollable`), so
+     * we locate the scroller generically by its `isScrollable` flag.
+     */
+    private fun findScrollable(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        var result: AccessibilityNodeInfo? = null
+        forEachNode(root) { if (result == null && it.isScrollable) result = it }
+        return result
     }
 }

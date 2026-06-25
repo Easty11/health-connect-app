@@ -126,6 +126,20 @@ data class HRVExtractedData(
         }
     }
 
+    /**
+     * Routes a sleep-stage percentage to its field. Labels come from the SH 7.x
+     * stages-breakdown content-desc, e.g. "Light". Match by label, never index.
+     */
+    fun setStagePercent(label: String, pct: Int) {
+        when (label.trim().lowercase()) {
+            "awake"               -> awakePct = pct
+            "rem sleep", "rem"    -> remPct   = pct
+            "light sleep", "light" -> lightPct = pct
+            "deep sleep", "deep"  -> deepPct  = pct
+            else -> android.util.Log.w("HRVData", "Unrouted stage pct label: $label")
+        }
+    }
+
     /** Best available sleep HR — detailed screen preferred. */
     val resolvedSleepHR: Int? get() = sleepHRBpmDetailed ?: sleepHRBpm
 
@@ -330,6 +344,48 @@ object HRVDataParser {
         ).find(desc) ?: return null
         val mins = parseNaturalLanguageDuration(m.groupValues[2]) ?: return null
         return m.groupValues[1] to mins
+    }
+
+    /**
+     * Parses the SH 7.x Sleep-screen stages-breakdown content-desc, which lists
+     * every stage's duration AND percentage in one string. This is the only
+     * place Light-sleep minutes and the per-stage percentages are exposed.
+     *
+     * Confirmed live string (25 June 2026):
+     * "Awake, 49 minutes, 11 percent,  Typical range,  REM, 1 hour 6 minutes,
+     *  15 percent,  Typical range,  Light, 5 hours 12 minutes, 73 percent,
+     *  Typical range,  Deep, 5 minutes, 1 percent"
+     *
+     * Distinct from parseStagesContentDesc (the older "Awake5%, REM24%…" chart
+     * form), which is gone from this screen.
+     */
+    fun parseSleepStagesContentDesc(desc: String, data: HRVExtractedData) {
+        Regex("(Awake|REM|Light|Deep)\\s*,\\s*(.+?)\\s*,\\s*(\\d+)\\s*percent")
+            .findAll(desc)
+            .forEach { m ->
+                val label = m.groupValues[1]
+                parseNaturalLanguageDuration(m.groupValues[2])?.let { data.setStageMinutes(label, it) }
+                m.groupValues[3].toIntOrNull()?.let { data.setStagePercent(label, it) }
+            }
+    }
+
+    /**
+     * Minutes between two "HH:mm" clock times, wrapping past midnight — e.g.
+     * bedtime 22:12 → wake 05:57 = 465. Returns null on malformed input.
+     */
+    fun minutesBetweenClockTimes(start: String?, end: String?): Int? {
+        val s = parseClockToMinutes(start) ?: return null
+        val e = parseClockToMinutes(end) ?: return null
+        val diff = e - s
+        return if (diff >= 0) diff else diff + 24 * 60
+    }
+
+    private fun parseClockToMinutes(t: String?): Int? {
+        val m = Regex("^(\\d{1,2}):(\\d{2})$").find(t?.trim() ?: return null) ?: return null
+        val h = m.groupValues[1].toIntOrNull() ?: return null
+        val min = m.groupValues[2].toIntOrNull() ?: return null
+        if (h !in 0..23 || min !in 0..59) return null
+        return h * 60 + min
     }
 
     /**

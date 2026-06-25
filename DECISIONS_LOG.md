@@ -119,3 +119,42 @@ and cannot be skipped or deferred.
 3. STALE PROSE. #10's body says the root "must end in `\health-connect-app`" (backslash); the working check is the slash-tolerant regex above.
 **Why the check still stands:** a ritual ran in an unintended repo with nothing structural to stop it — that fact alone justifies it, not a near-miss.
 **How you know:** "unknown command: /closeout" here disproves the shared-command claim; 1f8a952's diff is the mechanism fix.
+
+### #12 — SH 7.x breakage response: tactical re-map; SDK migration not auto-triggered  ·  active
+**Decision:** When a Samsung Health UI update breaks the accessibility scraper,
+the standing response is a tactical re-map against the accessibility layer. The
+Samsung Health Data SDK migration is the structural exit from UI-coupling but is
+NOT triggered by a single breakage; it stays roadmap-LATER until a defined trigger
+(e.g. Nth breakage in a rolling window, or SDK positive-control passes). The
+25 June 2026 re-map embodies that choice.
+**What broke (SH 7.00.0.107, One UI 7 / Android 16, verified live on SM-S921B,
+25 June 2026):**
+1. **Sleep detail → Jetpack Compose.** All sleep data resource-ids gone
+   (`sleep_main_scroll_view`, `sleep_stages_chart`, `chart_detail_*`,
+   `actual_sleep_time`, `contributor_insight_message_text`). Compose exposes no
+   per-element `viewIdResourceName`; sleep values now read from `content-desc`.
+2. **Home dashboard redesigned.** `me_recycler_view` / `vitality_score` /
+   sleep-timing tile ids gone; energy & sleep are now content-desc cards. Home
+   detection moved to `bottom_tab_navigation`; energy nav to a content-desc tap.
+3. **Signal relocation, not removal.** HRV (`last_shrv` "Average: 62 ms") and
+   sleep HR (`last_shr` "Average: 65 bpm") text ids are INTACT on the Vitality
+   screen but render lazily on scroll (and recycle) — so the scraper now
+   scroll-accumulates. Respiratory rate moved from the Sleep screen to Vitality
+   (`vitality_respiratory_rate_average_title`). Skin-temp is newly available
+   (`vitality_skin_chart_layout`), not yet consumed.
+**Re-map:** prefer resource-id where it survives (HRV/HR/respiratory on Vitality);
+fall back to content-desc string parsing where Compose left no ids (Sleep screen,
+home cards). Navigation/detection/scroll re-pointed accordingly. Verified by
+parsing the live captured strings — extracted values match SH's on-screen numbers
+exactly (HRV 62 ms, HR 65 bpm, RR 13.9 /min; sleep 7h12m / actual 6h23m /
+bed 22:12 / wake 05:57; Deep 5m, REM 1h6m, Awake 49m; score 64).
+**Known gaps (surfaced, not reconstructed):** Light-sleep minutes and sleep
+efficiency are not exposed on the new Compose Sleep screen and are left null —
+not inferred. To resolve later (Sleep-stages expandable / factor detail tap).
+**Rationale:** stops the bleed without pulling a large migration into a fire, and
+prevents single-incident scope creep on the structural path. NOTE: the Compose
+migration materially raises UI-coupling fragility and is the kind of event that
+should COUNT toward the SDK-migration trigger — flagged, not actioned, here.
+**How you know:** live uiautomator dumps from SM-S921B on 25 June 2026 (branch
+`fix/scraper-sh-relayout`); parse layer validated against the captured strings
+before any code was written into the scraper.

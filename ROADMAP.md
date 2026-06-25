@@ -22,11 +22,17 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
   One-day mismatch between Health Connect and the scraper; suspected to misfile
   backfilled rows (DECISIONS_LOG #5). Highest-priority correctness fix. Root
   cause (scraper date assignment vs HC record timestamp/timezone) unconfirmed.
-- **HRV context firewall unbacked — blocks `feat/hrv-capture`/C3.**
+- **HRV context firewall unbacked — blocks `feat/hrv-capture`/C3. Now BACKEND-FIRST.**
   `src/contract/` has no `CaptureSource`/`CaptureContext` enum; the native
   module stamps no context on any capture. The #6 firewall (Decision #8 D2)
-  is unbacked. Must wire before C3 lands: (1) add enum to `src/contract/`,
-  (2) stamp context in `HRVCaptureModule.kt` event payload, (3) verify D2.
+  is unbacked. **2026-06-25 finding:** the live backend `/openapi.json` exposes
+  **no** `CaptureContext`/context/source schema, and `SyncPayload` carries no
+  context field — so the enum cannot be single-sourced app-side (gen:contract
+  pattern needs a backend schema; hand-typed literals are forbidden). Sequence
+  is therefore backend-first: (1) backend exposes `CaptureContext` enum +
+  context field on the ingest contract; (2) `gen:contract` pulls it into
+  `src/contract/`; (3) stamp context in `HRVCaptureModule.kt` event payload;
+  (4) verify D2 (HRV path imports the enum).
 - **HRV capture (`feat/hrv-capture`).** Native module + scraper + Polar override
   parked (C3 unstaged). Unblocks after firewall gap above is closed.
   Follow-on: implement the `passive_overnight | calibration | session` context
@@ -56,27 +62,54 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
-**Branch:** `feat/deep-sleep-confidence` (0/0 synced with origin)  
-**Closed:** 2026-06-24
+**Branch:** `fix/hrv-capture-regression` (0/0 synced with origin)  
+**Closed:** 2026-06-25
 
 ### Landed (prior sessions)
 - `4581f91` feat(contract): add SleepStageType generated enum + gen:contract script
 - `672ab95` feat(deep-sleep): add confidence flagger, gate UI; remove HealthConnectAudit
-- `82ee3f2` chore: session close-out
-- `c415f6a` chore: session close-out
 - `ab94ffe` feat(hrv): native Samsung Health HRV accessibility scraper pipeline
+- `8c63856` chore: session close-out
 
-### This session
-No commits. Operational only — closed the `add -A` / dead-script hazard:
-- Deleted untracked `push_to_hevy.py` (hardcoded — now rotated — API key + non-canonical `/v1/routines`). Working-tree delete; nothing to commit (Decision #9).
-- Verified branch is 0/0 with origin → the firewall/HRV work was already pushed, so the handoff's "push stranded work" had nothing to do. No-op `--force-with-lease` correctly skipped.
-- Phase B (hevy-client `f6d94a8`/`82f0b88` topology fix) deferred to its own hevy-client-rooted session; step-3 topology hard-stop preserved.
+### This session — capture→POST regression fix (BRIEF 1)
+- `fb3310e` fix(hrv): decouple capture/POST auth path from scraper native module
 
-### HRV payload now LANDED (was "parked unstaged" last session)
-`ab94ffe` committed the full HRV payload (App.js, Root.js, `HRVCaptureModule.kt`, `data/`, `hrv/`, manifest, gradle, etc.) onto `feat/deep-sleep-confidence` — onto the deep-sleep branch, NOT `feat/hrv-capture` as Decision #7's concern-split intended. Concern-bleed is already in pushed history (noted, not reversed). Tree is now clean (only strays `checkin_build_brief.md`, `hevy_routine.json` remain — Decision #9).
+Branched `fix/hrv-capture-regression` off `8c63856`. Pushed. Draft PR
+[#2](https://github.com/Easty11/health-connect-app/pull/2) opened to hold the record — **not** merged (held for review before integration).
 
-### ⚠ Firewall gap is now LIVE-UNBACKED (priority raised)
-`ab94ffe` added the HRV capture path but **no `src/contract/` enum** — `src/contract/` still holds only `sleepStages.generated.js`, and no tracked source references `CaptureContext`. So Decision #8 D2 is FALSE in committed, pushed code: HRV landed without the #6 context firewall. Decision #8 said "if D2 false: STOP; wire it before HRV lands" — HRV has now landed ahead of it.
+### Regression diagnosis
+`get_recovery_metrics` shows recovery rows landing daily through **2026-06-23**,
+dead from the 24th — the day `ab94ffe` shipped. Root cause **diverged from the
+brief's hypothesis**: the POST itself is sound (`syncHealthData` →
+`/health-connect/sync`, `SyncPayload` shape, and `AsyncStorage.removeMany` —
+which is the correct API in AsyncStorage v3.1.1, *not* a bug). The real
+regression: `ab94ffe` coupled the auth path to the scraper's `HRVCapture` native
+module, **unguarded**, at `App.js:81` (login), `App.js:94` (logout), and
+`Root.js:55` (AuthExpired). When `HRVCapture` is absent (JS-only reload, no
+native rebuild) login throws → no token → SyncScreen never mounts → capture→POST
+dies.
+
+### Fix + validation
+Guarded all three calls with the safe idiom already at `src/api.js:7-17`
+(optional chaining + try/catch). Diff = `App.js` +8/−2, `Root.js` +5/−1 —
+auth-path lines only; scraper feature code (`NativeEventEmitter`,
+`triggerManualExtraction`, extraction listeners) and all Kotlin untouched.
+Validated a known-good 23 Jun-shape payload against the **live `SyncPayload`
+OpenAPI contract → PASS, 2xx-eligible**. Contract-conformance arm only — no live
+production POST (no JWT; synthetic writes would pollute real health data), no
+overnight capture (scraper down → would alias).
+
+### Firewall / D2 — confirmed BACKEND-BLOCKED (was "next action: close it")
+Investigated closing the #8 D2 firewall gap this session. The live
+`/openapi.json` exposes **no** `CaptureContext`/context/source enum and
+`SyncPayload` has no context field — so it **cannot** be single-sourced app-side
+(hand-typed literals forbidden by the gate). D2 remains false-in-code; the gap
+is now correctly re-sequenced **backend-first** (see work queue). No
+DECISIONS_LOG append — the fix embodies no new decision.
 
 ### Next action
-Close the firewall gap, now urgent: add `CaptureSource`/`CaptureContext` enum to `src/contract/`, stamp `passive_overnight | calibration | session` context in `HRVCaptureModule.kt`'s event payload, and verify D2 (HRV path imports the enum). Until then any `session`-context capture is not source-guarded against entering readiness. Then resolve the concern-split (keep HRV on this branch vs. rebase onto `feat/hrv-capture`).
+Decide the regression fix's integration: review draft PR #2, then merge to
+`master` (or rebase the HRV concern onto `feat/hrv-capture` per Decision #7
+before integrating). Separately, the firewall is blocked on the backend
+exposing `CaptureContext` — raise that on `health-app` before any further
+app-side firewall work.

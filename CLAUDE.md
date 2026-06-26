@@ -98,3 +98,36 @@ Chat proposes content; Code writes it. No exceptions.
 - **`/compact`** is context compression, **not** a closeout. Different thing.
 
 A session is not done until `/closeout` has run and committed.
+
+---
+
+## Session rituals (the contract the close-outs conform to)
+
+_Canonical block, transplanted verbatim from the shared loop rules in
+`health-app/CLAUDE.md`. Edit only there, then copy here — never paraphrase in
+place._
+
+The trigger is not the payload. The payload is defined here; the snippet/command bodies
+must match it.
+
+- **Session open** — at session start, before acting on any brief, Code reports the current
+  `DECISIONS_LOG.md` max decision number (matching the file's actual `###` heading format).
+  Chat re-aims any brief against it, so a stale project copy never masquerades as canon.
+- **Chat close-out (`;cc`)** emits the **pending-commit queue**: canonical-format
+  `DECISIONS_LOG` / `OPEN_QUESTIONS` entries for everything decided that session, each
+  flagged `PENDING`, ready to paste or file as an issue with zero reformatting. Writes
+  nothing to project knowledge.
+- **Code close-out (`/closeout`)**:
+  1. Reads the canonical stores.
+  2. Reports the **actual commits** made this session (`git log` since open) — not
+     suggested commit messages.
+  3. **Reconciles the pending-commit queue**: confirms each `PENDING` item landed in a
+     commit, or states why not.
+  4. Regenerates the cold-resume handoff view from the stores.
+  5. Overwrites a single `closeout.md`. Never appends narrative; never describes the act
+     of writing the close-out.
+  6. Emits the full current text of every governance store touched this session
+     (`DECISIONS_LOG` / `OPEN_QUESTIONS` / `ROADMAP` / `FEEDBACK` / `Ideas`) for wholesale
+     project-copy replacement — not a prose summary. Chat replaces the project copies
+     wholesale and never regenerates these stores from memory.
+- `/compact` is mid-session context compression, **not** a close-out. Do not conflate.

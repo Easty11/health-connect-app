@@ -48,6 +48,55 @@ function medianGapSec(timesMs) {
   return Math.round(gaps[gaps.length >> 1] / 1000);
 }
 
+function sessionDurMin(s) {
+  return s.durationMinutes != null
+    ? s.durationMinutes
+    : (toMs(s.endTime) - toMs(s.startTime)) / 60000;
+}
+
+// =============================================================================
+// De-dup overlapping / duplicate SleepSession records (Q2).
+// =============================================================================
+//
+// Samsung sometimes writes several SleepSession records covering the same night
+// (a full-night record plus partial/duplicate copies). Flattening stages across
+// ALL of them double-counts deep/REM minutes downstream in validateNight() and
+// runDeepConfidence().
+//
+// Mirrors the backend canonical rule
+// (health-app/backend/routers/health_connect.py:_aggregate_day —
+// `best = max(day_sleep, key=lambda s: s.duration())`): collapse each cluster of
+// overlapping sessions to the single LONGEST session, before any stage flatten.
+//
+// Pure and source-agnostic — operates on {startTime,endTime,durationMinutes}
+// only, no device coupling. Returns one session per night, zero overlaps.
+export function collapseSleepSessions(sleep) {
+  if (!Array.isArray(sleep) || sleep.length <= 1) return sleep ?? [];
+
+  // Sort by start, then greedily cluster any sessions that overlap in time.
+  const sorted = [...sleep].sort((a, b) => toMs(a.startTime) - toMs(b.startTime));
+  const clusters = [];
+  let cur = [sorted[0]];
+  let curEnd = toMs(sorted[0].endTime);
+  for (let i = 1; i < sorted.length; i++) {
+    const s = sorted[i];
+    if (toMs(s.startTime) < curEnd) {
+      cur.push(s);
+      curEnd = Math.max(curEnd, toMs(s.endTime));
+    } else {
+      clusters.push(cur);
+      cur = [s];
+      curEnd = toMs(s.endTime);
+    }
+  }
+  clusters.push(cur);
+
+  // One session per cluster: the longest (backend's max-by-duration rule).
+  return clusters.map((c) =>
+    c.reduce((best, s) => (sessionDurMin(s) > sessionDurMin(best) ? s : best)),
+  );
+}
+
 // =============================================================================
 // Step 0: VALIDATION HARNESS — run this FIRST, one night, before anything else.
 // =============================================================================
@@ -67,7 +116,8 @@ export async function validateNight(startISO, endISO) {
   const start = new Date(startISO);
   const end = new Date(endISO);
 
-  const sleep = await fetchSleepData(start, end); // [{startTime,endTime,stages,durationMinutes}]
+  const rawSleep = await fetchSleepData(start, end); // [{startTime,endTime,stages,durationMinutes}]
+  const sleep = collapseSleepSessions(rawSleep); // Q2: one session per night, zero overlaps
   const hr = await fetchHeartRateData(start, end); // [{time, bpm}]
 
   const stages = sleep.flatMap((r) => r.stages ?? []);
@@ -104,7 +154,8 @@ export async function validateNight(startISO, endISO) {
 
   const diag = {
     window: { startISO, endISO },
-    sleepRecords: sleep.length,
+    rawSleepRecords: rawSleep.length, // Q2: records before de-dup
+    sleepRecords: sleep.length, // after de-dup — should be one per night
     totalStageSegments: stages.length,
     // GATE 1 — confirm enum / which integer is DEEP
     distinctStageValues: [...new Set(stages.map((s) => s.stage))].sort((a, b) => a - b),
@@ -194,7 +245,7 @@ export async function runDeepConfidence(startISO, endISO) {
   const start = new Date(startISO);
   const end = new Date(endISO);
 
-  const sleep = await fetchSleepData(start, end);
+  const sleep = collapseSleepSessions(await fetchSleepData(start, end)); // Q2: de-dup first
   const hr = await fetchHeartRateData(start, end);
 
   const deepSegments = sleep

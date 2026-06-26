@@ -1,12 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView,
-  ActivityIndicator, StyleSheet, useColorScheme, Alert, Linking,
+  View, Text, TouchableOpacity, ScrollView,
+  ActivityIndicator, StyleSheet, useColorScheme, Alert, Button,
 } from 'react-native';
-import { login, logout, getStoredToken, syncHealthData } from './api';
-import { requestPermissions, fetchAllData, openHealthConnectSettings } from './healthConnect';
-// TEMP DEBUG
-import { runHealthConnectAudit } from './HealthConnectAudit';
+import { syncHealthData } from './api';
+import { requestPermissions, fetchAllData } from './healthConnect';
+import { validateNight } from './deepSleepConfidence';
+
+// Last-night window: yesterday 18:00 → today 11:00 local. Wide enough to capture
+// a single overnight sleep session without spilling into the night before.
+function lastNightWindow() {
+  const end = new Date();
+  end.setHours(11, 0, 0, 0);
+  const start = new Date(end);
+  start.setDate(start.getDate() - 1);
+  start.setHours(18, 0, 0, 0);
+  return { startISO: start.toISOString(), endISO: end.toISOString() };
+}
 
 // ─── Theme ─────────────────────────────────────────────────────────────────
 
@@ -21,151 +31,81 @@ function useTheme() {
     text: dark ? '#f3f4f6' : '#111827',
     subtext: dark ? '#9ca3af' : '#6b7280',
     accent: '#4f46e5',
-    accentLight: dark ? '#312e81' : '#eef2ff',
-    green: '#16a34a',
-    orange: '#ea580c',
     red: '#dc2626',
   };
 }
 
-// ─── Sub-components ─────────────────────────────────────────────────────────
+// ─── Result row (matches App.js "Last Extraction" card) ──────────────────────
 
-function DataCard({ title, icon, count, lastReading, t }) {
+function ResultRow({ label, value, t }) {
   return (
-    <View style={[styles.card, { backgroundColor: t.card, borderColor: t.border }]}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardIcon}>{icon}</Text>
-        <Text style={[styles.cardTitle, { color: t.text }]}>{title}</Text>
-        {count > 0 && (
-          <View style={[styles.badge, { backgroundColor: t.accentLight }]}>
-            <Text style={[styles.badgeText, { color: t.accent }]}>{count}</Text>
-          </View>
-        )}
-      </View>
-      <Text style={[styles.cardSub, { color: t.subtext }]}>
-        {lastReading || 'No data'}
-      </Text>
-    </View>
-  );
-}
-
-// ─── Login screen ────────────────────────────────────────────────────────────
-
-function LoginForm({ onLogin, t }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  async function handleLogin() {
-    if (!email || !password) return;
-    setLoading(true);
-    setError('');
-    const normEmail = email.toLowerCase().trim();
-    console.log('Attempting login with:', normEmail);
-    try {
-      await login(normEmail, password);
-      onLogin();
-    } catch (err) {
-      console.log('Response error:', err.response?.status, err.response?.data);
-      setError(err.response?.data?.detail || 'Login failed');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <View style={styles.loginContainer}>
-      <Text style={[styles.loginTitle, { color: t.text }]}>Health & Performance</Text>
-      <Text style={[styles.loginSub, { color: t.subtext }]}>Sign in to sync your health data</Text>
-
-      {error ? (
-        <View style={[styles.errorBox, { backgroundColor: '#fef2f2' }]}>
-          <Text style={{ color: t.red, fontSize: 13 }}>{error}</Text>
-        </View>
-      ) : null}
-
-      <TextInput
-        style={[styles.input, { backgroundColor: t.card, borderColor: t.border, color: t.text }]}
-        placeholder="Email" placeholderTextColor={t.subtext}
-        value={email} onChangeText={setEmail}
-        keyboardType="email-address" autoCapitalize="none" autoCorrect={false}
-      />
-      <TextInput
-        style={[styles.input, { backgroundColor: t.card, borderColor: t.border, color: t.text }]}
-        placeholder="Password" placeholderTextColor={t.subtext}
-        value={password} onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TouchableOpacity
-        style={[styles.primaryBtn, { opacity: loading ? 0.6 : 1 }]}
-        onPress={handleLogin} disabled={loading}
-      >
-        {loading
-          ? <ActivityIndicator color="#fff" />
-          : <Text style={styles.primaryBtnText}>Sign in</Text>}
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => Linking.openURL('https://health-app-production-e0ff.up.railway.app/forgot-password')}
-      >
-        <Text style={styles.forgotPassword}>Forgot password?</Text>
-      </TouchableOpacity>
+    <View style={[styles.row, { borderBottomColor: t.border }]}>
+      <Text style={[styles.rowLabel, { color: t.subtext }]}>{label}</Text>
+      <Text style={[styles.rowValue, { color: t.text }]}>{value}</Text>
     </View>
   );
 }
 
 // ─── Main sync screen ─────────────────────────────────────────────────────────
+// Auth is guaranteed by Root before this renders, so there is no login gate.
 
-// Possible states for Health Connect access
-// 'unknown'   — haven't asked yet (initial state after login)
-// 'granting'  — permission dialog in progress
-// 'granted'   — permissions obtained, ready to sync
-// 'denied'    — user declined
-
-export default function SyncScreen() {
+export default function SyncScreen({ token, username, onLogout }) {
   const t = useTheme();
-  const [authed, setAuthed] = useState(false);
-  const [initLoading, setInitLoading] = useState(true);
 
   // Health Connect flow
-  const [hcState, setHcState] = useState('unknown'); // unknown | granting | granted | denied
+  const [permissionsGranted, setPermissionsGranted] = useState(false);
+  const [granting, setGranting] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [lastSync, setLastSync] = useState(null);
-  const [syncData, setSyncData] = useState(null);
+  const [syncResult, setSyncResult] = useState(null); // { lastSynced: Date, count: number }
   const [syncError, setSyncError] = useState('');
 
-  // On mount: only check stored auth token — no Health Connect calls
-  useEffect(() => {
-    getStoredToken()
-      .then((tok) => { if (tok) setAuthed(true); })
-      .finally(() => setInitLoading(false));
-  }, []);
+  // DEV: deep-sleep gate diagnostic (validateNight) — not wired to anything.
+  const [validating, setValidating] = useState(false);
+  const [gate, setGate] = useState(null); // validateNight() diag object
+  const [gateError, setGateError] = useState('');
 
-  // ── Step 1: user taps "Grant Health Connect Access" ──
+  // ── Health Connect requires permissions before reading ──
   async function handleGrantPermissions() {
+    setGranting(true);
+    setSyncError('');
     try {
-      setHcState('granting');
       const granted = await requestPermissions();
       if (granted && granted.length > 0) {
-        setHcState('granted');
+        setPermissionsGranted(true);
       } else {
-        setHcState('denied');
+        setSyncError('Permissions not granted. Tap Grant Permissions to try again.');
       }
-    } catch (error) {
-      console.error('Health Connect permission error:', error);
-      setHcState('denied');
+    } catch (err) {
+      console.warn('Permission request error:', err);
+      setSyncError(err.message || 'Permission request failed');
+    } finally {
+      setGranting(false);
     }
   }
 
-  // ── Step 2: user taps "Sync Now" (only shown once granted) ──
+  // ── Manual sync: read from Health Connect, then push to backend ──
   async function handleSync() {
     setSyncing(true);
     setSyncError('');
     try {
-      const data = await fetchAllData(7);
-      await syncHealthData(data);
-      setSyncData(data);
-      setLastSync(new Date());
+      const data = await fetchAllData();
+      await syncHealthData(data, token);
+      const steps = data.steps || [];
+      const sleep = data.sleep?.length || 0;
+      const hrv = data.hrv?.length || 0;
+      const heartRate = data.heartRate?.length || 0;
+      const workouts = data.workouts?.length || 0;
+      const count = sleep + hrv + heartRate + steps.length + workouts;
+      setSyncResult({
+        lastSynced: new Date(),
+        count,
+        sleep,
+        hrv,
+        heartRate,
+        workouts,
+        stepDays: steps.length,
+        stepsTotal: steps.reduce((sum, r) => sum + (r.count || 0), 0),
+      });
     } catch (err) {
       console.warn('Sync error:', err);
       setSyncError(err.message || 'Sync failed');
@@ -174,274 +114,197 @@ export default function SyncScreen() {
     }
   }
 
+  // ── DEV: run the deep-sleep gate for last night and show the diagnostic ──
+  async function handleValidateNight() {
+    setValidating(true);
+    setGateError('');
+    setGate(null);
+    try {
+      const { startISO, endISO } = lastNightWindow();
+      const diag = await validateNight(startISO, endISO);
+      setGate(diag);
+    } catch (err) {
+      console.warn('validateNight error:', err);
+      setGateError(err.message || 'validateNight failed');
+    } finally {
+      setValidating(false);
+    }
+  }
+
   function handleLogout() {
     Alert.alert('Sign out', 'Sign out of Health & Performance?', [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign out', style: 'destructive',
-        onPress: async () => {
-          await logout();
-          setAuthed(false);
-          setSyncData(null);
-          setHcState('unknown');
-        },
-      },
+      { text: 'Sign out', style: 'destructive', onPress: () => onLogout() },
     ]);
   }
 
-  function formatTime(date) {
-    if (!date) return 'Never';
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
-  function formatDt(iso) {
-    if (!iso) return '—';
-    return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  }
-
-  function latestTime(arr, key = 'time') {
-    return arr?.length ? arr[arr.length - 1][key] : null;
-  }
-
-  // ── Loading splash ──
-  if (initLoading) {
-    return (
-      <View style={[styles.centred, { backgroundColor: t.bg }]}>
-        <ActivityIndicator color={t.accent} size="large" />
-      </View>
-    );
-  }
-
-  // ── Login ──
-  if (!authed) {
-    return (
-      <View style={[styles.centred, { backgroundColor: t.bg }]}>
-        <LoginForm t={t} onLogin={() => setAuthed(true)} />
-      </View>
-    );
-  }
-
-  // ── Authenticated sync screen ──
   return (
-    <ScrollView style={{ backgroundColor: t.bg }} contentContainerStyle={styles.container}>
-      {/* Header */}
+    <View style={[styles.screen, { backgroundColor: t.bg }]}>
+      {/* Header (fixed) */}
       <View style={styles.header}>
         <View>
           <Text style={[styles.appTitle, { color: t.text }]}>Health Sync</Text>
-          <Text style={[styles.appSub, { color: t.subtext }]}>
-            Last sync: {formatTime(lastSync)}
-          </Text>
+          {username ? (
+            <Text style={[styles.appSub, { color: t.subtext }]}>Signed in as {username}</Text>
+          ) : null}
         </View>
         <TouchableOpacity onPress={handleLogout}>
           <Text style={{ color: t.red, fontSize: 13 }}>Sign out</Text>
         </TouchableOpacity>
       </View>
 
-      {/* ── Step 1: Grant permissions (shown until granted) ── */}
-      {hcState !== 'granted' && (
-        <View style={[styles.permCard, { backgroundColor: t.card, borderColor: t.border }]}>
-          <Text style={styles.permIcon}>🏥</Text>
-          <Text style={[styles.permTitle, { color: t.text }]}>Health Connect Access</Text>
-          <Text style={[styles.permSub, { color: t.subtext }]}>
-            Grant access to read your sleep, heart rate, steps, and workout data from Health Connect.
-          </Text>
-          {hcState === 'denied' && (
-            <Text style={[styles.permDenied, { color: t.orange }]}>
-              ⚠️ Permission denied. Tap "Try Again" or open Health Connect Settings to grant access manually.
-            </Text>
-          )}
-          <TouchableOpacity
-            style={[styles.grantBtn, { opacity: hcState === 'granting' ? 0.6 : 1 }]}
+      {/* Permissions gate: Grant first, then Sync (fixed above the card) */}
+      {!permissionsGranted ? (
+        <View style={styles.btn}>
+          <Button
+            title="Grant Permissions"
             onPress={handleGrantPermissions}
-            disabled={hcState === 'granting'}
-          >
-            {hcState === 'granting'
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.grantBtnText}>
-                  {hcState === 'denied' ? 'Try Again' : 'Grant Health Connect Access'}
-                </Text>}
-          </TouchableOpacity>
-          {hcState === 'denied' && (
-            <TouchableOpacity
-              onPress={() => openHealthConnectSettings()}
-              style={styles.openSettingsBtn}
-            >
-              <Text style={[styles.openSettingsText, { color: t.accent }]}>
-                Open Health Connect Settings
-              </Text>
-            </TouchableOpacity>
-          )}
+            disabled={granting}
+          />
+        </View>
+      ) : (
+        <View style={styles.btn}>
+          <Button
+            title="SYNC HEALTH CONNECT"
+            onPress={handleSync}
+            disabled={syncing}
+          />
         </View>
       )}
 
-      {/* ── Step 2: Sync Now (only shown once granted) ── */}
-      {hcState === 'granted' && (
-        <TouchableOpacity
-          style={[styles.syncBtn, { opacity: syncing ? 0.7 : 1 }]}
-          onPress={handleSync}
-          disabled={syncing}
-          activeOpacity={0.8}
-        >
-          {syncing ? (
-            <View style={styles.syncBtnInner}>
-              <ActivityIndicator color="#fff" />
-              <Text style={styles.syncBtnText}>Syncing…</Text>
-            </View>
-          ) : (
-            <Text style={styles.syncBtnText}>⟳  Sync Now</Text>
-          )}
-        </TouchableOpacity>
-      )}
+      {/* DEV: deep-sleep gate — runs validateNight() for last night */}
+      <View style={styles.btn}>
+        <Button
+          title="DEV: VALIDATE DEEP-SLEEP GATE"
+          color="#6b7280"
+          onPress={handleValidateNight}
+          disabled={validating}
+        />
+      </View>
 
-      {syncError ? (
-        <View style={[styles.warningBox, { borderColor: t.red }]}>
-          <Text style={{ color: t.red, fontSize: 12 }}>⚠️ {syncError}</Text>
+      {/* Requesting permissions */}
+      {granting ? (
+        <View style={styles.progressBox}>
+          <ActivityIndicator />
+          <Text style={styles.progressText}>Requesting permissions...</Text>
         </View>
       ) : null}
 
-      {/* ── Data cards ── */}
-      {syncData ? (
-        <>
-          <Text style={[styles.sectionTitle, { color: t.subtext }]}>LAST 7 DAYS</Text>
-
-          <DataCard t={t} icon="😴" title="Sleep"
-            count={syncData.sleep.length}
-            lastReading={syncData.sleep.length
-              ? `${syncData.sleep[syncData.sleep.length - 1].durationMinutes} min — ${formatDt(syncData.sleep[syncData.sleep.length - 1].endTime)}`
-              : null}
-          />
-          <DataCard t={t} icon="💓" title="Heart Rate Variability"
-            count={syncData.hrv.length}
-            lastReading={syncData.hrv.length
-              ? `${Math.round(syncData.hrv[syncData.hrv.length - 1].hrv)} ms — ${formatDt(latestTime(syncData.hrv))}`
-              : null}
-          />
-          <DataCard t={t} icon="❤️" title="Heart Rate"
-            count={syncData.heartRate.length}
-            lastReading={syncData.heartRate.length
-              ? `${syncData.heartRate[syncData.heartRate.length - 1].bpm} bpm — ${formatDt(latestTime(syncData.heartRate))}`
-              : null}
-          />
-          <DataCard t={t} icon="👟" title="Steps"
-            count={syncData.steps.length}
-            lastReading={syncData.steps.length
-              ? `${syncData.steps.reduce((s, r) => s + r.count, 0).toLocaleString()} total steps`
-              : null}
-          />
-          <DataCard t={t} icon="🏋️" title="Workouts"
-            count={syncData.workouts.length}
-            lastReading={syncData.workouts.length
-              ? `${syncData.workouts[syncData.workouts.length - 1].durationMinutes} min — ${formatDt(syncData.workouts[syncData.workouts.length - 1].startTime)}`
-              : null}
-          />
-
-          {syncData.errors?.length > 0 && (
-            <View style={[styles.warningBox, { borderColor: t.orange }]}>
-              <Text style={{ color: t.orange, fontSize: 12 }}>
-                ⚠️ Some data types unavailable: {syncData.errors.join(', ')}
-              </Text>
-            </View>
-          )}
-        </>
-      ) : hcState === 'granted' ? (
-        <View style={[styles.emptyState, { borderColor: t.border }]}>
-          <Text style={{ fontSize: 32 }}>📊</Text>
-          <Text style={[styles.emptyText, { color: t.subtext }]}>
-            Tap Sync Now to fetch your Health Connect data
-          </Text>
+      {/* Sync in progress */}
+      {syncing ? (
+        <View style={styles.progressBox}>
+          <ActivityIndicator />
+          <Text style={styles.progressText}>Syncing...</Text>
         </View>
       ) : null}
 
-      {/* ── TEMP DEBUG: HC Audit ── */}
-      <TouchableOpacity
-        style={styles.debugBtn}
-        onPress={() => runHealthConnectAudit().then((results) => {
-          const lines = Object.entries(results).map(([type, r]) =>
-            r.error
-              ? `${type}: ERROR — ${r.error}`
-              : `${type}: ${r.total} total, ${r.samsungCount} samsung`
-          );
-          Alert.alert('HC Audit', lines.join('\n'));
-        })}
-      >
-        <Text style={styles.debugBtnText}>[DEBUG] Run HC Audit</Text>
-      </TouchableOpacity>
-      {/* ── END TEMP DEBUG ── */}
+      {/* Gate in progress */}
+      {validating ? (
+        <View style={styles.progressBox}>
+          <ActivityIndicator />
+          <Text style={styles.progressText}>Reading last night...</Text>
+        </View>
+      ) : null}
 
-    </ScrollView>
+      {/* Failure (fixed) */}
+      {syncError ? <Text style={styles.error}>{syncError}</Text> : null}
+      {gateError ? <Text style={styles.error}>{gateError}</Text> : null}
+
+      {/* Only the result card scrolls; the button above stays fixed. */}
+      <ScrollView style={styles.cardScroll} contentContainerStyle={styles.cardScrollContent}>
+        {syncResult ? (
+          <View style={[styles.resultBox, { borderColor: t.border }]}>
+            <Text style={[styles.resultTitle, { color: t.text }]}>Last Sync</Text>
+            <ResultRow t={t} label="Last Synced" value={syncResult.lastSynced.toLocaleString()} />
+            <ResultRow t={t} label="Total records" value={String(syncResult.count)} />
+
+            <Text style={[styles.sectionHeader, { color: t.subtext }]}>SYNCED DATA</Text>
+            <ResultRow t={t} label="Sleep sessions" value={String(syncResult.sleep)} />
+            <ResultRow t={t} label="HRV readings" value={String(syncResult.hrv)} />
+            <ResultRow t={t} label="Heart rate samples" value={String(syncResult.heartRate)} />
+            <ResultRow t={t} label="Steps" value={`${syncResult.stepsTotal.toLocaleString()} (${syncResult.stepDays}d)`} />
+            <ResultRow t={t} label="Workouts" value={String(syncResult.workouts)} />
+          </View>
+        ) : null}
+
+        {gate ? (
+          <View style={[styles.resultBox, { borderColor: t.border }]}>
+            <Text style={[styles.resultTitle, { color: t.text }]}>Deep-Sleep Gate</Text>
+            <ResultRow t={t} label="Sleep records" value={String(gate.sleepRecords)} />
+            <ResultRow t={t} label="Stage segments" value={String(gate.totalStageSegments)} />
+
+            <Text style={[styles.sectionHeader, { color: t.subtext }]}>
+              GATE 1 — STAGE INTEGERS
+            </Text>
+            <ResultRow t={t} label="distinctStageValues" value={`[${gate.distinctStageValues.join(', ')}]`} />
+            {Object.keys(gate.perStage).sort().map((k) => (
+              <ResultRow
+                key={k}
+                t={t}
+                label={`stage ${k}`}
+                value={`${gate.perStage[k].segments} seg · ${gate.perStage[k].totalMin}m · ${gate.perStage[k].slivers} sliver`}
+              />
+            ))}
+            <ResultRow t={t} label="if DEEP=5" value={`${gate.deepIfConst5.segments} seg · ${gate.deepIfConst5.totalMin}m`} />
+            <ResultRow t={t} label="if DEEP=4" value={`${gate.deepIfConst4.segments} seg · ${gate.deepIfConst4.totalMin}m`} />
+
+            <Text style={[styles.sectionHeader, { color: t.subtext }]}>
+              GATE 2 — SLIVER SURVIVAL
+            </Text>
+            <ResultRow t={t} label="deepSegmentCount (DEEP=5)" value={String(gate.deepSegmentCount)} />
+
+            <Text style={[styles.sectionHeader, { color: t.subtext }]}>
+              GATE 3 — HR DENSITY
+            </Text>
+            <ResultRow t={t} label="HR samples" value={String(gate.hrSampleCount)} />
+            <ResultRow t={t} label="hrMedianGapSec" value={gate.hrMedianGapSec == null ? '—' : `${gate.hrMedianGapSec}s`} />
+          </View>
+        ) : null}
+      </ScrollView>
+    </View>
   );
 }
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  centred: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  container: { padding: 20, paddingBottom: 40 },
-
-  // Login
-  loginContainer: { width: '100%', paddingHorizontal: 24, gap: 12 },
-  loginTitle: { fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 4 },
-  loginSub: { fontSize: 13, textAlign: 'center', marginBottom: 8 },
-  errorBox: { borderRadius: 10, padding: 10 },
-  input: {
-    borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14,
-    fontSize: 15,
-  },
-  primaryBtn: {
-    backgroundColor: '#4f46e5', borderRadius: 14, paddingVertical: 16,
-    alignItems: 'center', marginTop: 4,
-  },
-  primaryBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  forgotPassword: { color: '#4f46e5', fontSize: 13, textAlign: 'center', paddingVertical: 4 },
+  // Fixed outer screen; header + button live here, only the card scrolls.
+  screen: { flex: 1, padding: 20 },
+  cardScroll: { flex: 1 },
+  cardScrollContent: { paddingBottom: 20 },
 
   // Header
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   appTitle: { fontSize: 20, fontWeight: '700' },
   appSub: { fontSize: 12, marginTop: 2 },
 
-  // Permission card
-  permCard: {
-    borderWidth: 1, borderRadius: 18, padding: 24, marginBottom: 20,
-    alignItems: 'center', gap: 8,
+  // Button wrapper — matches App.js "Test HRV Extraction" (s.btn)
+  btn: { marginBottom: 12 },
+
+  // Progress — matches App.js extracting box
+  progressBox: { marginTop: 16, alignItems: 'center' },
+  progressText: { marginTop: 8, fontSize: 14, color: '#555', textAlign: 'center' },
+
+  // Result card — matches App.js "Last Extraction" card
+  resultBox: {
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 10,
+    padding: 14,
   },
-  permIcon: { fontSize: 36, marginBottom: 4 },
-  permTitle: { fontSize: 17, fontWeight: '700', textAlign: 'center' },
-  permSub: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
-  permDenied: { fontSize: 12, textAlign: 'center' },
-  openSettingsBtn: { paddingVertical: 8, alignItems: 'center' },
-  openSettingsText: { fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
-  grantBtn: {
-    backgroundColor: '#16a34a', borderRadius: 14, paddingVertical: 14,
-    paddingHorizontal: 24, alignItems: 'center', marginTop: 8, width: '100%',
+  resultTitle: { fontSize: 15, fontWeight: '700', marginBottom: 10, textAlign: 'center' },
+  sectionHeader: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginTop: 14, marginBottom: 2 },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#eee',
   },
-  grantBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  rowLabel: { fontSize: 14, color: '#555' },
+  rowValue: { fontSize: 14, fontWeight: '600', color: '#111' },
 
-  // Sync button
-  syncBtn: {
-    backgroundColor: '#4f46e5', borderRadius: 18, paddingVertical: 22,
-    alignItems: 'center', marginBottom: 24,
-  },
-  syncBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  syncBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
-
-  // Section
-  sectionTitle: { fontSize: 11, fontWeight: '600', letterSpacing: 1, marginBottom: 10 },
-
-  // Cards
-  card: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  cardIcon: { fontSize: 18 },
-  cardTitle: { fontSize: 14, fontWeight: '600', flex: 1 },
-  badge: { borderRadius: 99, paddingHorizontal: 8, paddingVertical: 2 },
-  badgeText: { fontSize: 12, fontWeight: '600' },
-  cardSub: { fontSize: 12, marginTop: 2 },
-
-  // Misc
-  warningBox: { borderWidth: 1, borderRadius: 10, padding: 10, marginTop: 8, marginBottom: 8 },
-  emptyState: { borderWidth: 1, borderRadius: 16, borderStyle: 'dashed', padding: 30, alignItems: 'center', gap: 10, marginTop: 10 },
-  emptyText: { fontSize: 13, textAlign: 'center' },
-
-  // TEMP DEBUG
-  debugBtn: { marginTop: 32, borderWidth: 1, borderColor: '#f59e0b', borderRadius: 10, padding: 12, alignItems: 'center' },
-  debugBtnText: { color: '#f59e0b', fontSize: 12, fontWeight: '600' },
+  // Error — matches App.js error text
+  error: { marginTop: 12, fontSize: 14, color: '#c0392b', textAlign: 'center' },
 });

@@ -493,21 +493,26 @@ class HRVAccessibilityService : AccessibilityService() {
      * recycle as the screen scrolls, so this is called once per scroll frame
      * and only fills a field that isn't already set.
      *
-     *   last_shrv → "Average: 62 ms"  → HRV in ms
-     *   last_shr  → "Average: 65 bpm"  → Sleep HR
-     *   vitality_respiratory_rate_average_title → "Average: 13.9 times/min"
+     *   last_shrv → "Average: 42 ms"  → HRV in ms
+     *   last_shr  → "Average: 72 bpm"  → Sleep HR
+     *   vitality_respiratory_rate_average_title → "Average: 14.7 times/min"
+     *
+     * Each id matches TWO nodes: a degenerate-bounds phantom duplicate left by
+     * Compose recycling, bearing the prior render's stale value, and the real
+     * node. Read via findByIdValidBounds (not findById) so the phantom is
+     * skipped — see findByIdValidBounds / DECISIONS_LOG.
      */
     private fun extractEnergyScoreData(root: AccessibilityNodeInfo) {
-        if (data.hrvMs == null) findById(root, "last_shrv")?.text?.toString()?.let { raw ->
+        if (data.hrvMs == null) findByIdValidBounds(root, "last_shrv")?.text?.toString()?.let { raw ->
             data.hrvMs = HRVDataParser.parseAverage(raw, "ms")
             Log.d(TAG, "HRV: $raw → ${data.hrvMs}")
         }
-        if (data.sleepHRBpm == null) findById(root, "last_shr")?.text?.toString()?.let { raw ->
+        if (data.sleepHRBpm == null) findByIdValidBounds(root, "last_shr")?.text?.toString()?.let { raw ->
             data.sleepHRBpm = HRVDataParser.parseAverage(raw, "bpm")?.toInt()
             Log.d(TAG, "Sleep HR: $raw → ${data.sleepHRBpm}")
         }
         if (data.respiratoryRate == null)
-            findById(root, "vitality_respiratory_rate_average_title")?.text?.toString()?.let { raw ->
+            findByIdValidBounds(root, "vitality_respiratory_rate_average_title")?.text?.toString()?.let { raw ->
                 data.respiratoryRate = HRVDataParser.parseFirstNumber(raw)
                 Log.d(TAG, "Respiratory rate: $raw → ${data.respiratoryRate}")
             }
@@ -716,6 +721,40 @@ class HRVAccessibilityService : AccessibilityService() {
     /** Find first node matching a Samsung Health resource ID. */
     private fun findById(root: AccessibilityNodeInfo, id: String): AccessibilityNodeInfo? =
         root.findAccessibilityNodeInfosByViewId("$SHEALTH:id/$id").firstOrNull()
+
+    /**
+     * Like [findById] but skips degenerate-bounds phantom duplicates.
+     *
+     * The Energy-score value cards (HRV/HR/respiratory) each resolve to TWO
+     * nodes under the same id: a stale phantom left by Compose view recycling —
+     * bearing the prior render's value with an invalid rectangle (its `right`
+     * lands left of `left`, i.e. negative width) — and the real node. Plain
+     * `firstOrNull()` returns the phantom (it sorts first), so the scraper read
+     * stale HRV/HR/RR. We select the first match with **positive width**
+     * (`right > left`).
+     *
+     * Width, not height: the real node is below the fold at read time (the walk
+     * reads the first Energy-score frame without scrolling), so its `bottom` is
+     * clamped to the screen while `top` is past it — a non-positive height that
+     * is NOT degeneracy. Importance is also not usable: the respiratory phantom
+     * is `importantForAccessibility=true`. Bounds-width is the sole reliable
+     * discriminator (verified: round-4 uiautomator/logcat capture).
+     */
+    private fun findByIdValidBounds(root: AccessibilityNodeInfo, id: String): AccessibilityNodeInfo? {
+        val matches = root.findAccessibilityNodeInfosByViewId("$SHEALTH:id/$id")
+        val chosen = matches.firstOrNull { node ->
+            val r = android.graphics.Rect()
+            node.getBoundsInScreen(r)
+            r.right > r.left
+        }
+        if (matches.size > 1) {
+            val r = android.graphics.Rect()
+            chosen?.getBoundsInScreen(r)
+            Log.d(TAG, "findByIdValidBounds($id): ${matches.size} matches, " +
+                    "chose bounds=$r text=\"${chosen?.text}\"")
+        }
+        return chosen
+    }
 
     /**
      * Depth-first walk of the node tree. Needed for Compose screens, where

@@ -251,3 +251,45 @@ OPEN_QUESTIONS in a separate session.
 `sourcePackage` is forwarded on all five record types. Postgres verification (non-null
 `source_package` rows in `health_connect_record_sources` post-deploy) still owed —
 not verifiable from this session (no live sync run).
+
+### #19 — Energy-score reads select first VALID-BOUNDS node, not `.firstOrNull()` (phantom-duplicate fix)  ·  active  ·  supersedes #12 (value-read portion only)
+**Lineage — logged ≠ landed.** This decision was first written 26 Jun 2026 as
+`#16` on branch `fix/scraper-sh-relayout` (commit `aab35c4`) and **never landed** —
+`git cherry origin/master fix/scraper-sh-relayout` shows its patch-id absent upstream.
+Master independently spent #16–#18 in the interim, so the fix is renumbered **#19**
+at merge (number-at-merge rule). The code sat correct-but-unmerged for a fortnight
+while master kept shipping the phantom read; that gap is the record, not a footnote.
+**Decision:** The three Energy-score value reads select the first matching node
+with **positive width** (`right > left`), via a new `findByIdValidBounds` helper,
+instead of `findById(...).firstOrNull()`. Applies to all three: `last_shrv` (HRV),
+`last_shr` (sleep HR), and `vitality_respiratory_rate_average_title` (RR) — a
+half-landing that fixed only HRV would leave HR/RR reading phantoms.
+**What was wrong:** Samsung Health's Vitality screen renders the factor subtree
+**twice** per read — a real on-screen copy and a phantom duplicate left by Compose
+view recycling, bearing the *prior* render's value with a degenerate rectangle whose
+`right` lands left of `left` (negative width). The phantom sorts first, so
+`.firstOrNull()` returned it: the scraper emitted/POSTed the stale copy.
+**Discriminator — width, NOT height or importance:** height is unusable (the walk
+reads the first Energy-score frame unscrolled, so the real card is below-fold —
+`bottom` clamps to screen, `top` past it, giving non-positive height that is NOT
+degeneracy); importance is unusable (the RR phantom is `imp=true`). Positive width
+(`right > left`) is the sole reliable test.
+**Scope:** read-selection only. Parser, navigation, screen detection, scroll, the
+Compose Sleep reads, and the POST path are untouched. Three call sites converted.
+**Boundary — does NOT fix read-freshness / day-lag.** #19 fixes phantom *selection*.
+It does not address the morning day-lag question (whether an earlier `117` was
+"yesterday's" value): today's capture proves the valid-bounds node reads on-screen
+truth *at capture time*, but the morning-freshness path is verified only by watching
+one real morning sync land today's value in Railway post-land. **Day-lag stays OPEN**
+— closeout must not mark it resolved on the strength of this entry.
+**How you know:** original branch evidence — in-service tree dump (round-3/4 logcat,
+`hrv_quarantine/FINDINGS_FINAL.md`) enumerated 2 matches per id with bounds; post-fix
+live walk on SM-S921B (26 Jun 2026) read HRV 42 / HR 72 / RR 14.7, each log line
+confirming the chosen node had `right>left`. **Re-confirmed 11 Jul 2026** on
+`feat/hrv-node-dump`: a read-only node-tree capture (`nodedump.txt`) shows, in one
+`WAITING_FOR_ENERGY_SCORE` frame, `last_shrv` phantom `'Average: 106 ms'` at
+`Rect(0,4659 - -84,2340)` (width −84) sorting before the real `'Average: 97 ms'` at
+`Rect(84,4659 - 996,2340)` (width 912); on-screen value was 97. uiautomator alone
+cannot see the phantom (it filters `importantForAccessibility=false`); the service
+reads it via `FLAG_INCLUDE_NOT_IMPORTANT_VIEWS`. Backend rows from prior stale POSTs
+are not reconciled here (separate concern).

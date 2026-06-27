@@ -111,6 +111,35 @@ data class HRVExtractedData(
         }
     }
 
+    /**
+     * Routes a SH 7.x sleep-stage factor (label + already-parsed minutes) to
+     * its field. Labels come from Compose content-descs, e.g. "Deep sleep".
+     * Always match by label — never assume card order is stable.
+     */
+    fun setStageMinutes(label: String, minutes: Int) {
+        when (label.trim().lowercase()) {
+            "awake"               -> awakeMinutes = minutes
+            "rem sleep", "rem"    -> remMinutes   = minutes
+            "light sleep", "light" -> lightMinutes = minutes
+            "deep sleep", "deep"  -> deepMinutes  = minutes
+            else -> android.util.Log.w("HRVData", "Unrouted stage label: $label")
+        }
+    }
+
+    /**
+     * Routes a sleep-stage percentage to its field. Labels come from the SH 7.x
+     * stages-breakdown content-desc, e.g. "Light". Match by label, never index.
+     */
+    fun setStagePercent(label: String, pct: Int) {
+        when (label.trim().lowercase()) {
+            "awake"               -> awakePct = pct
+            "rem sleep", "rem"    -> remPct   = pct
+            "light sleep", "light" -> lightPct = pct
+            "deep sleep", "deep"  -> deepPct  = pct
+            else -> android.util.Log.w("HRVData", "Unrouted stage pct label: $label")
+        }
+    }
+
     /** Best available sleep HR — detailed screen preferred. */
     val resolvedSleepHR: Int? get() = sleepHRBpmDetailed ?: sleepHRBpm
 
@@ -251,6 +280,112 @@ object HRVDataParser {
             .find(desc)?.groupValues?.get(1)?.toIntOrNull()
         data.deepPct  = Regex("Deep(\\d+)%",  RegexOption.IGNORE_CASE)
             .find(desc)?.groupValues?.get(1)?.toIntOrNull()
+    }
+
+    /**
+     * Parses Samsung Health 7.x natural-language durations into minutes.
+     *   "1 hour 6 minutes"   → 66
+     *   "6 hours 23 minutes" → 383
+     *   "49 minutes"         → 49
+     *   "5 minutes"          → 5
+     *
+     * Confirmed against live SH 7.00.0.107 (Jetpack Compose Sleep screen),
+     * 25 June 2026. Distinct from parseDurationToMinutes, which handles the
+     * legacy "1 h 6 m" compact form (now gone from the Sleep screen).
+     */
+    fun parseNaturalLanguageDuration(text: String): Int? {
+        val h = Regex("(\\d+)\\s*hours?").find(text)?.groupValues?.get(1)?.toIntOrNull()
+        val m = Regex("(\\d+)\\s*minutes?").find(text)?.groupValues?.get(1)?.toIntOrNull()
+        if (h == null && m == null) return null
+        return (h ?: 0) * 60 + (m ?: 0)
+    }
+
+    /**
+     * Parses the combined Sleep-screen header content-desc (SH 7.x Compose).
+     *
+     * Confirmed live string (25 June 2026):
+     * "Sleep time,7 hours 12 minutes,Bedtime 22:12, wake-up time 05:57,
+     *  Actual sleep time, 6 hours 23 minutes"
+     *
+     * Populates totalSleepTimeMinutes, bedtime, wakeTime, actualSleepTime*.
+     */
+    fun parseSleepTimingContentDesc(desc: String, data: HRVExtractedData) {
+        Regex(
+            "Sleep time,\\s*(.+?),\\s*Bedtime\\s*(\\d+:\\d+).*?" +
+            "wake-up time\\s*(\\d+:\\d+).*?Actual sleep time,\\s*(.+)$"
+        ).find(desc)?.let { m ->
+            parseNaturalLanguageDuration(m.groupValues[1])?.let { data.totalSleepTimeMinutes = it }
+            data.bedtime = m.groupValues[2]
+            data.wakeTime = m.groupValues[3]
+            parseNaturalLanguageDuration(m.groupValues[4])?.let {
+                data.actualSleepTimeMinutes = it
+                data.actualSleepTimeRaw = m.groupValues[4].trim()
+            }
+        }
+    }
+
+    /**
+     * Parses a single Sleep-score-factor card content-desc (SH 7.x Compose).
+     *
+     * Confirmed live strings (25 June 2026), each on its own View node:
+     * "Deep sleep, 5 minutes, Attention, Button"
+     * "REM sleep, 1 hour 6 minutes, Fair, Button"
+     * "Awake, 49 minutes, Good, Button"
+     * "Actual sleep time, 6 hours 23 minutes, Fair, Button"
+     * "Sleep latency, 6 minutes, Excellent, Button"
+     *
+     * Returns (label, minutes) or null if the desc isn't a known factor.
+     * Note: Light sleep is NOT exposed as a factor on this screen.
+     */
+    fun parseSleepFactorContentDesc(desc: String): Pair<String, Int>? {
+        val m = Regex(
+            "^\\s*(Deep sleep|REM sleep|Light sleep|Awake|Actual sleep time|Sleep latency)" +
+            "\\s*,\\s*(.+?)\\s*,"
+        ).find(desc) ?: return null
+        val mins = parseNaturalLanguageDuration(m.groupValues[2]) ?: return null
+        return m.groupValues[1] to mins
+    }
+
+    /**
+     * Parses the SH 7.x Sleep-screen stages-breakdown content-desc, which lists
+     * every stage's duration AND percentage in one string. This is the only
+     * place Light-sleep minutes and the per-stage percentages are exposed.
+     *
+     * Confirmed live string (25 June 2026):
+     * "Awake, 49 minutes, 11 percent,  Typical range,  REM, 1 hour 6 minutes,
+     *  15 percent,  Typical range,  Light, 5 hours 12 minutes, 73 percent,
+     *  Typical range,  Deep, 5 minutes, 1 percent"
+     *
+     * Distinct from parseStagesContentDesc (the older "Awake5%, REM24%…" chart
+     * form), which is gone from this screen.
+     */
+    fun parseSleepStagesContentDesc(desc: String, data: HRVExtractedData) {
+        Regex("(Awake|REM|Light|Deep)\\s*,\\s*(.+?)\\s*,\\s*(\\d+)\\s*percent")
+            .findAll(desc)
+            .forEach { m ->
+                val label = m.groupValues[1]
+                parseNaturalLanguageDuration(m.groupValues[2])?.let { data.setStageMinutes(label, it) }
+                m.groupValues[3].toIntOrNull()?.let { data.setStagePercent(label, it) }
+            }
+    }
+
+    /**
+     * Minutes between two "HH:mm" clock times, wrapping past midnight — e.g.
+     * bedtime 22:12 → wake 05:57 = 465. Returns null on malformed input.
+     */
+    fun minutesBetweenClockTimes(start: String?, end: String?): Int? {
+        val s = parseClockToMinutes(start) ?: return null
+        val e = parseClockToMinutes(end) ?: return null
+        val diff = e - s
+        return if (diff >= 0) diff else diff + 24 * 60
+    }
+
+    private fun parseClockToMinutes(t: String?): Int? {
+        val m = Regex("^(\\d{1,2}):(\\d{2})$").find(t?.trim() ?: return null) ?: return null
+        val h = m.groupValues[1].toIntOrNull() ?: return null
+        val min = m.groupValues[2].toIntOrNull() ?: return null
+        if (h !in 0..23 || min !in 0..59) return null
+        return h * 60 + min
     }
 
     /**

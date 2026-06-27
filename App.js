@@ -78,7 +78,11 @@ export default function App({ token, username, onLogin, onLogout }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
       // Mirror token to native (used by the scraper's HRVSyncWorker).
-      await HRVCapture.storeAuthToken(data.access_token);
+      // Guarded: the auth/POST path must not depend on the scraper native
+      // module being present (matches the safe idiom in src/api.js).
+      if (HRVCapture?.storeAuthToken) {
+        try { await HRVCapture.storeAuthToken(data.access_token); } catch (_) {}
+      }
       setPassword('');
       setStatus('');
       // Hand the token + username up to Root, which owns shared auth state.
@@ -91,7 +95,9 @@ export default function App({ token, username, onLogin, onLogout }) {
   };
 
   const logout = async () => {
-    await HRVCapture.clearAuthToken();
+    if (HRVCapture?.clearAuthToken) {
+      try { await HRVCapture.clearAuthToken(); } catch (_) {}
+    }
     setEmail('');
     setPassword('');
     setStatus('');

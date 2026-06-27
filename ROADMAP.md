@@ -43,6 +43,8 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
   field = cross-repo contract change, not done from this single-repo session.
   (3) Append a DECISIONS_LOG entry superseding #12's "known gaps" clause now that
   light-sleep + efficiency are captured — needs Luke (don't mint a number solo).
+  (4) SH-breakage tally toward #12 SDK-migration trigger: 3rd event 25-Jun-2026
+  (home relayout, closed via 06d5a43). Not yet tripping.
 
 ## Open / unverified (carry until proven)
 

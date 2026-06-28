@@ -64,49 +64,47 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
-**Branch:** `fix/scraper-sh-relayout`  
-**Closed:** 2026-06-25
+**Branch:** `master` (trunk)  
+**Closed:** 2026-06-27
 
-### This session — landed
-- `6b81eb1` fix(hrv): decouple capture/POST auth path from scraper native module
-  (cherry-pick of `fb3310e` from the sibling branch — guards three unguarded
-  `HRVCapture` calls so a missing native module can't kill the auth/POST path).
-- `06d5a43` feat(scraper): full SH 7.x sleep capture + tap/home-resume re-map.
+### This session — landed on master
+- `8a724e6` chore(governance): adopt session-lifecycle ritual (chip B) — `## Session
+  rituals` section transplanted verbatim from `health-app/CLAUDE.md`.
+- `36df9a2` fix(sleep): de-dup `validateNight` SleepSession records (Q2) —
+  `collapseSleepSessions()` mirrors backend `_aggregate_day` (longest-per-night),
+  applied before stage-flatten in `validateNight`/`runDeepConfidence`. Verified on a
+  known multi-session night (3 overlapping → 1 longest; deep segments 3→1; zero overlaps).
+- `6f454a2` merge `feat/deep-sleep-confidence` → master (PR #1). Governance conflict
+  resolved take-master (master ⊇ branch; DECISIONS_LOG stayed #15).
+- `c257b00` merge `fix/scraper-sh-relayout` → master (PR #3). SH 7.x scraper-capture
+  code (`f59c316`/`6b81eb1`/`06d5a43`) reached trunk; only DECISIONS_LOG conflicted,
+  resolved take-master (subsumption verified — branch carried no unique governance).
+- `e1ceab4` docs(roadmap): record 3rd SH-breakage tick (#12 SDK-migration trigger).
 
-### Dead native HRV feed — diagnosed; root cause was NOT the manifest
-Brief hypothesised a dropped accessibility-`<service>` registration (672ab95).
-REFUTED: 672ab95 touched no manifest; the service was first added by `ab94ffe`,
-and HEAD's source manifest is intact (all refs resolve). Real cause: the
-**installed APK was stale** — `app-release.apk` built 06-23 06:41 (device
-`lastUpdateTime` 06-23 06:44) predated `ab94ffe` (06-24 11:13), so the installed
-build had no service (merged-manifest `HRVAccessibilityService` count = 0). Fixed
-by rebuild + `adb install -r` (release is debug-signed → in-place, no data loss).
-Verified on device RFCX108PF1J.
+Three open PRs drained to trunk: #1 (deep-sleep), #5 (chip B + Q2, rebase-merged →
+`8a724e6`+`36df9a2`), #3 (SH 7.x scraper). All merged/closed.
 
-### Scraper re-map + sleep capture (`06d5a43`)
-- **Energy-tile tap re-map.** Today's home relayout left `f59c316`'s content-desc
-  anchor matching the outer non-clickable card wrapper (clickable `tile_root_layout`
-  is a *descendant*). Re-anchored on inner ids `vitality_tile_score_layout` /
-  `vitality_title`.
-- **Home-resume recovery.** SH reopens on its last screen, not home; added bounded
-  back-to-dashboard nav (transient UNKNOWN splash frames waited out).
-- **Sleep scroll-accumulate.** Stages breakdown + blood-oxygen render below the
-  fold; scroll states keep accumulating until back on HOME (detectScreen can't see
-  SLEEP once the top node scrolls off).
-- **Closed #12's logged "known gaps":** Light-sleep minutes (312), all stage %
-  (Awake 11 / REM 15 / Light 73 / Deep 1), SpO2 average (96). Sleep efficiency
-  DERIVED (actual ÷ time-in-bed = 82%), logged as derived. Verified end-to-end on
-  device, 25 Jun 2026.
+### Decisions
+DECISIONS_LOG max unchanged at **#15**. #16 NOT minted — ruling: the 25-Jun
+SH-breakage is operational watch-state, homed in the work queue above (tally tick),
+not a decision (#14 already superseded #12's open-gaps portion).
 
-### ⚠ Carried forward — UNTOUCHED this session (still top structural debt)
-Firewall gap still LIVE-UNBACKED (Decision #8 D2): `src/contract/` has no
+### ⚠ Cross-repo defect found — PROVISIONAL (next health-app session)
+health-app DECISIONS_LOG #31 cites a phantom companion fix — "`health-connect-app`
+DECISIONS_LOG #16, `findByIdValidBounds`". Verified this session: no HCA #16 (max is
+#15), `findByIdValidBounds` exists on no ref, and neither `06d5a43` nor `f59c316`
+touches the scalar-tile reads or carries staleness logic. Approved supersede **#34**
+drafted for health-app (corrects citation, names the absence, affirms #31's data
+core). PENDING — belongs to a health-app session; uncommitted = provisional.
+
+### ⚠ Carried forward — top structural debt (UNTOUCHED)
+HRV context firewall still LIVE-UNBACKED (Decision #8 D2): `src/contract/` has no
 `CaptureSource`/`CaptureContext` enum; `ab94ffe`'s HRV path landed without the #6
-context firewall. Unchanged this session. Also open: Q4 HC date-attribution, Q2
-`validateNight()` de-dup.
+firewall. Also open: Q4 HC date-attribution root cause.
 
 ### Next action
-Decide branch disposition for `fix/scraper-sh-relayout` (`6b81eb1` + `06d5a43` on
-`f59c316`): PR/merge target. Then (a) append the #12-superseding DECISIONS_LOG
-entry recording the gap-closure + that today is a *further* SH breakage (another
-tick toward the #12 SDK-migration trigger) — needs Luke; (b) the carried-forward
-firewall gap (#8 D2) remains the highest structural priority.
+Close the HRV context firewall gap (#8 D2): (1) add `CaptureSource`/`CaptureContext`
+enum to `src/contract/`, (2) stamp context in `HRVCaptureModule.kt` event payload,
+(3) verify D2 — unblocks `feat/hrv-capture`/C3. In parallel: commit health-app #34;
+Q4 HC date-attribution. NOTE: the work-queue "Q2 — de-dup validateNight" item landed
+this session (`36df9a2`) — update the queue on next open.

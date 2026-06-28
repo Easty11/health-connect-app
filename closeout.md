@@ -1,60 +1,68 @@
+# closeout.md — health-connect-app
+
 ## Commits this session
 
+Session-open HEAD was `a7cc309` (master). `git log --oneline a7cc309..HEAD`
+(session-authored, oldest→newest):
+
 ```
-06d5a43 feat(scraper): full SH 7.x sleep capture + tap/home-resume re-map
-6b81eb1 fix(hrv): decouple capture/POST auth path from scraper native module
+6f454a2 Merge remote-tracking branch 'origin/feat/deep-sleep-confidence' (PR #1 → master)
+8a724e6 chore(governance): adopt session-lifecycle ritual (chip B)
+36df9a2 fix(sleep): de-dup validateNight SleepSession records (Q2)
+c257b00 Merge remote-tracking branch 'origin/fix/scraper-sh-relayout' (PR #3 → master)
+e1ceab4 docs(roadmap): record 3rd SH-breakage tick (#12 trigger count)
 ```
 
-Session-open HEAD was `f59c316`. Both commits sit on `fix/scraper-sh-relayout`.
-`6b81eb1` is a cherry-pick of `fb3310e` from a sibling branch (applied cleanly —
-HEAD's `App.js`/`Root.js` matched `fb3310e`'s parent). `06d5a43` is the SH 7.x
-scraper re-map + sleep-capture expansion. (The `chore: session close-out` commit
-for this file lands on top.)
+All five landed on `master`. PR #5 carried chip B + Q2 and was rebase-merged →
+`8a724e6` + `36df9a2`. The two merge commits brought prior-session code to trunk:
+deep-sleep flagger + native HRV pipeline (`ab94ffe`, `672ab95`, `4581f91`) via
+PR #1; SH 7.x scraper capture (`f59c316`, `6b81eb1`, `06d5a43`) via PR #3. The
+`chore: session close-out` commit (this file + the regenerated ROADMAP sprint
+block) lands on top.
 
 ## PENDING reconciliation
 
-Session opened from a task brief (manifest-repair hypothesis), not a `;cc` PENDING
-queue — nothing carried in to reconcile. The brief's own premise was tested and
-**refuted**, then the work evolved on-device:
-
-- **Brief's hypothesis — dropped accessibility-`<service>` registration in the
-  manifest (672ab95):** REFUTED. 672ab95 touched no manifest; the service was
-  first added by `ab94ffe`; HEAD's source manifest is intact, all refs resolve.
-  Real cause: **stale installed APK** (06-23 build predated `ab94ffe`'s 06-24
-  service add). Fixed by rebuild + `adb install -r`, not a code change.
-- **Briefed OPEN_QUESTIONS.md defect entry ("fixed by manifest repair"):** NOT
-  written — that cause was false, and the file doesn't exist in this repo. The
-  accurate account lives here + in the ROADMAP sprint block instead.
+- **chip B** (session-lifecycle ritual) — LANDED `8a724e6` (`## Session rituals`
+  in CLAUDE.md, verbatim from health-app).
+- **Q2** (`validateNight` de-dup) — LANDED `36df9a2`. Verified on a known
+  multi-session night: 3 overlapping records → 1 longest, deep segments 3→1,
+  zero overlaps; `node --check` clean.
+- **PR #1 / PR #5 / PR #3 → master** — LANDED `6f454a2` / (rebase →
+  `8a724e6`+`36df9a2`) / `c257b00`. All three PRs merged or closed.
+- **3rd SH-breakage tick** (ruling B) — LANDED `e1ceab4` (ROADMAP work queue).
+- **#16 mint** — DEFERRED by ruling: not a decision; homed in ROADMAP as
+  operational watch-state. Intentional — master stays at #15.
+- **health-app #34** (supersede #31's phantom companion citation) — APPROVED,
+  PENDING, **UNCOMMITTED**. Cross-repo (health-app); belongs to the next
+  health-app session. Provisional until that commit lands.
 
 ## Cold-resume handoff
 
-**Branch:** `fix/scraper-sh-relayout` — `6b81eb1` + `06d5a43` on `f59c316`. Not
-yet pushed/PR'd. Tree clean except strays `checkin_build_brief.md`,
-`hevy_routine.json` (Decision #9 — leave untracked).
+**Repo state:** `master` clean, synced with origin, tip `e1ceab4` (+ this
+close-out commit). DECISIONS_LOG max **#15**. All three feature PRs drained to
+trunk; scraper-capture + deep-sleep + HRV-pipeline code now on master.
 
-**What landed:** the native HRV scraper is alive end-to-end on device RFCX108PF1J
-(SH 7.x, 25 Jun 2026). Dead feed was a stale APK, not the manifest. Re-mapped the
-Energy-tile tap (today's home relayout broke `f59c316`'s anchor), added recovery
-for when SH reopens off-home, and added Sleep scroll-accumulate that now captures
-**Light minutes (312), all stage % (11/15/73/1), SpO2 average (96)** and a
-**derived** sleep efficiency (82% = actual ÷ time-in-bed). This closes the
-"known gaps" DECISIONS_LOG #12 left open.
+**Open questions (OPEN_QUESTIONS.md):**
+- **Q1** SH-relayout cadence vs SDK-migration trigger (#12) — PENDING (tally now
+  3 events; see ROADMAP work queue).
+- **Q2** native HRV scrape end-to-end to DB, post-:355 — PENDING.
+- **Q3** stale-APK-masked Compose-break defect record — PENDING.
 
-**Needs Luke's call (surfaced, not actioned):**
-1. **DECISIONS_LOG #12 superseder.** #12's "light + efficiency left null, resolve
-   later" is now resolved, and today is a *further* SH breakage on top of #12's —
-   another tick toward the SDK-migration trigger #12 flagged. Append a new
-   superseding entry (don't edit #12; don't mint a number solo).
-2. **Branch disposition** for `fix/scraper-sh-relayout` — push / PR / merge target.
-3. SpO2 *lowest* deferred (chose average-only). Derived-efficiency wire-provenance
-   flag deferred (new `SyncPayload` field = cross-repo contract change).
+**Work queue needs a human pass:** the ROADMAP "Q2 — de-dup `validateNight`" item
+landed this session (`36df9a2`) but still reads as the next engineering action —
+update on next open.
 
-**⚠ Highest structural priority — UNCHANGED this session:** the firewall gap is
-still LIVE-UNBACKED. `src/contract/` has no `CaptureSource`/`CaptureContext` enum;
-`ab94ffe`'s HRV path landed without the #6 context firewall (Decision #8 D2 FALSE
-in committed code). No `session`-context capture is source-guarded against entering
-readiness until this is wired. Also open in ROADMAP: Q4 (HC date-attribution), Q2
-(`validateNight()` de-dup).
+**Single clearest next action:** Close the **HRV context firewall gap** (Decision
+#8 D2 — LIVE-UNBACKED, top structural debt): add `CaptureSource`/`CaptureContext`
+enum to `src/contract/`, stamp context in `HRVCaptureModule.kt` event payload,
+verify D2 — unblocks `feat/hrv-capture`/C3.
 
-**Single clearest next action:** push/PR `fix/scraper-sh-relayout`, then return to
-the firewall gap (#8 D2) as the top structural fix.
+**Cross-repo owed:** health-app **#34** (PENDING) — corrects #31's phantom
+citation (no HCA #16; `findByIdValidBounds` exists on no ref; neither `06d5a43`
+nor `f59c316` touches the scalar tiles). Commit in a health-app session;
+provisional until then.
+
+_Note: this session ran entirely in `health-connect-app`. The `/closeout` command
+was the health-app variant, but all commits landed in HCA — closed out against HCA
+accordingly. health-app had no commits this session (only the approved-but-pending
+#34 draft)._

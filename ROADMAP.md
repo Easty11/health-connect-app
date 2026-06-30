@@ -14,10 +14,10 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 
 ## Work queue
 
-- **Q2 — de-dup `validateNight()` before `runDeepConfidence`.**
-  The single next real-engineering action. Blocks Q3.
+- **Q2 — de-dup `validateNight()` before `runDeepConfidence`.** ✅ LANDED `36df9a2`
+  (`collapseSleepSessions()`, longest-per-night). Cleared — no longer the next action.
 - **Q3 — wire `runDeepConfidence` into readiness / Banister.**
-  Blocked by Q2 *and* by the threshold review gate (DECISIONS_LOG #4).
+  Unblocked on the Q2 side; still gated by the threshold review (DECISIONS_LOG #4).
 - **Q4 — Health Connect date-attribution root cause.**
   One-day mismatch between Health Connect and the scraper; suspected to misfile
   backfilled rows (DECISIONS_LOG #5). Highest-priority correctness fix. Root
@@ -64,47 +64,39 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
-**Branch:** `master` (trunk)  
-**Closed:** 2026-06-27
+**Branch:** `claude/session-lifecycle-sleep-dedup-yg1xx6` (on `master` tip `2e889d6`)  
+**Closed:** 2026-06-30
 
-### This session — landed on master
-- `8a724e6` chore(governance): adopt session-lifecycle ritual (chip B) — `## Session
-  rituals` section transplanted verbatim from `health-app/CLAUDE.md`.
-- `36df9a2` fix(sleep): de-dup `validateNight` SleepSession records (Q2) —
-  `collapseSleepSessions()` mirrors backend `_aggregate_day` (longest-per-night),
-  applied before stage-flatten in `validateNight`/`runDeepConfidence`. Verified on a
-  known multi-session night (3 overlapping → 1 longest; deep segments 3→1; zero overlaps).
-- `6f454a2` merge `feat/deep-sleep-confidence` → master (PR #1). Governance conflict
-  resolved take-master (master ⊇ branch; DECISIONS_LOG stayed #15).
-- `c257b00` merge `fix/scraper-sh-relayout` → master (PR #3). SH 7.x scraper-capture
-  code (`f59c316`/`6b81eb1`/`06d5a43`) reached trunk; only DECISIONS_LOG conflicted,
-  resolved take-master (subsumption verified — branch carried no unique governance).
-- `e1ceab4` docs(roadmap): record 3rd SH-breakage tick (#12 SDK-migration trigger).
-
-Three open PRs drained to trunk: #1 (deep-sleep), #5 (chip B + Q2, rebase-merged →
-`8a724e6`+`36df9a2`), #3 (SH 7.x scraper). All merged/closed.
+### This session — no commits (verification only)
+No code or governance commits were authored. Work performed:
+- Confirmed `claude/session-lifecycle-sleep-dedup-b9k5qf` is fully **superseded** —
+  its two commits (`84a06c6` sleep-dedup, `6e90315` chip B) are already on `master`
+  as `36df9a2` / `8a724e6` (identical `git patch-id`). Nothing to merge from it; the
+  alarming `master..b9k5qf` diffstat was just the branch sitting behind master, not
+  destructive change. Safe to delete.
+- Confirmed the designated branch `…-yg1xx6` sits exactly on latest `master` (`2e889d6`).
+- Build verification: `npm install` clean (492 pkgs); `expo export --platform android`
+  bundled 589 modules, 0 errors → 1.8 MB `.hbc`. Full native APK not buildable in this
+  environment (no Android SDK). Reverted incidental `package-lock.json` churn; removed
+  throwaway `dist/`.
 
 ### Decisions
-DECISIONS_LOG max unchanged at **#15**. #16 NOT minted — ruling: the 25-Jun
-SH-breakage is operational watch-state, homed in the work queue above (tally tick),
-not a decision (#14 already superseded #12's open-gaps portion).
+DECISIONS_LOG max unchanged at **#15**. None minted.
 
-### ⚠ Cross-repo defect found — PROVISIONAL (next health-app session)
-health-app DECISIONS_LOG #31 cites a phantom companion fix — "`health-connect-app`
-DECISIONS_LOG #16, `findByIdValidBounds`". Verified this session: no HCA #16 (max is
-#15), `findByIdValidBounds` exists on no ref, and neither `06d5a43` nor `f59c316`
-touches the scalar-tile reads or carries staleness logic. Approved supersede **#34**
-drafted for health-app (corrects citation, names the absence, affirms #31's data
-core). PENDING — belongs to a health-app session; uncommitted = provisional.
+### Work queue
+Q2 (de-dup `validateNight`) — cleared; LANDED last session (`36df9a2`). Next
+real-engineering action is now the HRV context-firewall gap (Decision #8 D2).
 
-### ⚠ Carried forward — top structural debt (UNTOUCHED)
-HRV context firewall still LIVE-UNBACKED (Decision #8 D2): `src/contract/` has no
-`CaptureSource`/`CaptureContext` enum; `ab94ffe`'s HRV path landed without the #6
-firewall. Also open: Q4 HC date-attribution root cause.
+### ⚠ Carried forward — UNTOUCHED this session
+- HRV context firewall still LIVE-UNBACKED (Decision #8 D2): `src/contract/` has no
+  `CaptureSource`/`CaptureContext` enum; `ab94ffe`'s HRV path landed without the #6
+  firewall. Top structural debt.
+- Q4 — Health Connect date-attribution root cause.
+- Cross-repo owed: health-app **#34** (corrects #31's phantom HCA-`#16` /
+  `findByIdValidBounds` citation) — PENDING, belongs to a health-app session.
 
 ### Next action
 Close the HRV context firewall gap (#8 D2): (1) add `CaptureSource`/`CaptureContext`
 enum to `src/contract/`, (2) stamp context in `HRVCaptureModule.kt` event payload,
 (3) verify D2 — unblocks `feat/hrv-capture`/C3. In parallel: commit health-app #34;
-Q4 HC date-attribution. NOTE: the work-queue "Q2 — de-dup validateNight" item landed
-this session (`36df9a2`) — update the queue on next open.
+Q4 HC date-attribution.

@@ -14,10 +14,14 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 
 ## Work queue
 
-- **Q2 — de-dup `validateNight()` before `runDeepConfidence`.**
-  The single next real-engineering action. Blocks Q3.
+- **Q2 — de-dup `validateNight()` — RESOLVED (`36df9a2`, on master).**
+  Landed via PR #5 rebase-merge; patch-identical to branch commit `84a06c6`
+  (same patch-id). Re-verified 2026-07-02: `collapseSleepSessions()` collapses
+  overlapping/duplicate `SleepSession` records to the longest per cluster
+  (incl. transitive chains) with the non-duplicate path untouched.
 - **Q3 — wire `runDeepConfidence` into readiness / Banister.**
-  Blocked by Q2 *and* by the threshold review gate (DECISIONS_LOG #4).
+  Unblocked by Q2's resolution; still gated by the threshold review
+  (DECISIONS_LOG #4 — tunables uncalibrated).
 - **Q4 — Health Connect date-attribution root cause.**
   One-day mismatch between Health Connect and the scraper; suspected to misfile
   backfilled rows (DECISIONS_LOG #5). Highest-priority correctness fix. Root

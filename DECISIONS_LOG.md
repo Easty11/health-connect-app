@@ -212,3 +212,22 @@ closeout-routing's provisional "#17".
 l.20–136 (`diff` against source = empty); `/closeout` renumbered, emission step
 absent; `git ls-remote` post-session = master + `fix/hrv-capture-regression`
 only.
+
+### #17 — Shared block re-mirrored to health-app 504e5e5; #41 local+remote gate landed  ·  active
+**Decision:** HCA's shared loop-rules block re-synced verbatim to health-app
+master `504e5e5`, carrying #41's terminal-state-gate extension (the gate
+enumerates local branches (`git branch`) as well as `refs/remotes/origin` — a
+local branch with `+` commits vs `origin/master` must be pushed, parked in
+`BRANCHES.md`, or discarded before close). HCA's `/closeout` command step 4
+extended lockstep. First application of the edit-in-health-app-copy-to-HCA
+mechanism established by #16 — a verbatim copy, not a hand-merge. Local limbo
+cleared under the new gate: `feat/deep-sleep-confidence` local deleted (empty
+cherry), `fix/scraper-sh-relayout` parked (3 unpushed commits pending review).
+**Supersedes:** the #16 shared-block snapshot (remotes-only gate) → now #41's
+local+remote gate.
+**Note:** "#17" was the provisional number `chore/closeout-routing` tried to
+mint on-branch and had discarded (#16 disposition); it is now legitimately
+claimed at merge — Rule 4 as intended.
+**How you know:** shared block diff vs health-app `504e5e5` l.20–139 = empty;
+command step 4 == shared-block bullet verbatim; #NEXT claimed #17 with HCA max
+verified `### #16` at the merge instant.

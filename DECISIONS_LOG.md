@@ -231,3 +231,23 @@ claimed at merge — Rule 4 as intended.
 **How you know:** shared block diff vs health-app `504e5e5` l.20–139 = empty;
 command step 4 == shared-block bullet verbatim; #NEXT claimed #17 with HCA max
 verified `### #16` at the merge instant.
+
+### #18 — F1 writer-identity forwarding: HCA emits flat sourcePackage  ·  active
+**Decision:** HCA mappers forward `metadata.dataOrigin` (`react-native-health-connect`
+surfaces it as a flat package-name string, not a `{packageName}` object — verified
+against a live device `[HC raw]` log, 2 Jul 2026) as the flat `sourcePackage` alias on
+every record passed through `safeFetch` in `src/healthConnect.js` (sleep, HRV, heart
+rate, steps, workouts). Backend's `get_source_package()` reads the alias first — no
+backend change needed. Populates `health_connect_record_sources` with real writers
+instead of the `'unknown'` sentinel; dedup behaviour unchanged. Implements the HCA
+half of health-app #36/#37.
+**Note for the F1 dedup consumer (health-app, pending):** Polar arrives via two
+paths — direct AccessLink v4 (health-app #17, authoritative) and `fi.polar.polarflow`
+via HC. The dedup pass must prefer direct-API. To be logged to health-app
+OPEN_QUESTIONS in a separate session.
+**Supersedes:** none.
+**How you know:** device log confirms `record.metadata.dataOrigin` is a flat string
+(not `.packageName`); code review of every mapper in `src/healthConnect.js` confirms
+`sourcePackage` is forwarded on all five record types. Postgres verification (non-null
+`source_package` rows in `health_connect_record_sources` post-deploy) still owed —
+not verifiable from this session (no live sync run).

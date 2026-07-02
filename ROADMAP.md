@@ -72,14 +72,15 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 **Closed:** 2026-07-02 (governance-parity session)
 
 ### This session — landed on master
-- Governance parity (Commit A): health-app shared loop-rules block (`83e0cb2`
+- `58bda34` (Commit A): health-app shared loop-rules block (`83e0cb2`
   l.20–136) copied verbatim into `CLAUDE.md`, replacing the parallel
   Single-writer / Canonical-stores / Decisions-log-discipline sections and the
   stale Session-rituals transplant; `/closeout` brought current (#38/#39
   body→`closeout.md` sole sink, pointer-only stdout; #40 branch terminal-state
   gate inserted as step 4); `BRANCHES.md` ledger created.
-- DECISIONS_LOG **#16** (Commit B): parity entry — #38/#39 discharged, #40
-  landed, twins attribution grounded, branch dispositions recorded.
+- `48601ae` (Commit B): DECISIONS_LOG **#16** — parity entry; #16 claimed at
+  the `--ff` instant (origin/master re-fetched, max confirmed #15).
+- Landed `--ff-only` via `git land`; `chore/governance-parity` self-deleted.
 
 ### Branch dispositions (terminal states, per #16)
 - `chore/governance-held-writes` — **deleted** (husk: single commit, bare

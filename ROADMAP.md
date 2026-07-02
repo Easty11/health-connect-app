@@ -69,44 +69,31 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 ## Sprint block
 
 **Branch:** `master` (trunk)  
-**Closed:** 2026-07-02
+**Closed:** 2026-07-02 (governance-parity session)
 
 ### This session — landed on master
-- `9e1777a` docs(roadmap): Q2 resolved via `36df9a2` (≡`84a06c6`); Q3 unblocked,
-  still #4-gated.
+- Governance parity (Commit A): health-app shared loop-rules block (`83e0cb2`
+  l.20–136) copied verbatim into `CLAUDE.md`, replacing the parallel
+  Single-writer / Canonical-stores / Decisions-log-discipline sections and the
+  stale Session-rituals transplant; `/closeout` brought current (#38/#39
+  body→`closeout.md` sole sink, pointer-only stdout; #40 branch terminal-state
+  gate inserted as step 4); `BRANCHES.md` ledger created.
+- DECISIONS_LOG **#16** (Commit B): parity entry — #38/#39 discharged, #40
+  landed, twins attribution grounded, branch dispositions recorded.
 
-### Session facts (de-chaos brief — outcome differed from premise)
-- The brief's "stranded Q2 fix" was already in master: `84a06c6` ≡ `36df9a2`
-  (identical patch-id), landed previously via PR #5 rebase-merge. Steps 1–2
-  (rescue + ff-merge) were no-ops; no cherry-pick was committed.
-- VERIFY ran anyway (gates the ROADMAP "resolved" claim): no test script in
-  `package.json`, so `collapseSleepSessions()` was exercised standalone —
-  9/9 behavioral checks pass (overlap/duplicate collapse to longest incl.
-  transitive chains; single/disjoint/back-to-back non-duplicate paths identity;
-  `durationMinutes` precedence; empty/null safe).
-- GATE 2 settled: chip B `6e90315` ≡ master's `8a724e6` (identical patch-id) —
-  nothing lost by pruning.
-- Pruned 4 remote branches (ancestry/equivalence re-verified at machine first):
-  `feat/deep-sleep-confidence`, `fix/scraper-sh-relayout` (both strict ancestors),
-  `claude/session-lifecycle-sleep-dedup-b9k5qf` (both unique commits patch-identical
-  in master), `claude/session-lifecycle-sleep-dedup-yg1xx6` (only unique commit a
-  close-out).
-- Remote surface now: `master` + 3 consciously deferred branches (see below).
+### Branch dispositions (terminal states, per #16)
+- `chore/governance-held-writes` — **deleted** (husk: single commit, bare
+  close-out; `git cherry` inspected, no substance).
+- `chore/closeout-routing` — **deleted**, superset-superseded: its body→file +
+  pointer-stdout substance is on master via the mirrored `/closeout`; its
+  emission carve-out is retired by #39; its on-branch provisional "#17" is
+  discarded per number-at-merge — never canon.
+- `fix/hrv-capture-regression` — **parked** in `BRANCHES.md` (holds the #8 D2
+  guard-proof test; unblocks on the firewall-gap session, Brief 1).
 
 ### Decisions
-DECISIONS_LOG max unchanged at **#15** on master. NOTE: branch
-`chore/closeout-routing` carries a provisional **#17** (closeout body → closeout.md
-sole sink) not yet on trunk — it is NOT canon until that branch's governance
-session reconciles it against health-app #38/#39.
-
-### Deferred branches (each its own concern — do not batch)
-- `chore/closeout-routing` — HCA half of the owed #38/#39 `/closeout` mirror;
-  reconcile to match health-app #39 (pointer-only, no emission exception) →
-  governance session.
-- `chore/governance-held-writes` — 1 commit, tip is a close-out; inspect, likely
-  delete → quick follow-up.
-- `fix/hrv-capture-regression` — 5 commits, touches HRV capture; ties to the live
-  #8 D2 firewall gap → HRV session.
+DECISIONS_LOG max now **#16** on master. The provisional "#17" that lived on
+`chore/closeout-routing` was discarded with the branch — it was never canon.
 
 ### ⚠ Cross-repo — PROVISIONAL (next health-app session, carried forward)
 health-app DECISIONS_LOG #31 cites a phantom companion fix ("HCA #16,

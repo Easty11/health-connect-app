@@ -30,17 +30,15 @@ anything. Report the actual root and ask the user to switch to the correct repo.
 
 ### 1. Read the canonical stores
 
-Read all four in full before writing anything:
+Read all five in full before writing anything:
 
 | File | Holds |
 |------|-------|
 | `DECISIONS_LOG.md` | Append-only decision record |
+| `OPEN_QUESTIONS.md` | Machine-checkable code-state defects + unresolved questions |
 | `ROADMAP.md` | Forward work + current sprint block (Code-owned) |
 | `FEEDBACK.md` | Friction log on workflow and Claude behaviour |
 | `CLAUDE.md` | Contract — conventions, architecture invariants |
-
-Open questions live in `ROADMAP.md`'s work queue (Q2–Q5 sections). There is no
-`OPEN_QUESTIONS.md` in this repo.
 
 ### 2. Report actual commits this session
 
@@ -62,7 +60,18 @@ For each `PENDING` item carried in from the chat close-out (`;cc`), either:
 
 Anything decided but uncommitted is provisional. The commit is the only sync point.
 
-### 4. Regenerate the ROADMAP.md sprint block
+### 4. Branch terminal-state gate
+
+Every branch touched this session must end in a terminal state:
+- **merged+deleted**, or
+- **listed in `BRANCHES.md`** (repo root) with purpose / why-parked / unblocks-on.
+
+Confirm merge status with `git cherry origin/master <branch>` (patch-id, never
+SHA — rebase/squash merges rewrite SHAs and make ancestry lie). If any touched
+branch is in undefined limbo — neither merged+deleted nor parked in
+`BRANCHES.md` — **HALT** before writing `closeout.md` and resolve it first.
+
+### 5. Regenerate the ROADMAP.md sprint block
 
 Update the `## Current Sprint` section of `ROADMAP.md` to reflect what landed this
 session. Rules:
@@ -74,7 +83,7 @@ session. Rules:
 > **DB queries:** write a Python script via `Out-File -Encoding utf8` and run it.
 > Do not fight inline PowerShell quoting against the DB connection string.
 
-### 5. Write closeout.md and commit
+### 6. Write closeout.md and commit
 
 **Overwrite** `closeout.md` (single file, root of repo, lowercase) with exactly three
 sections:
@@ -87,8 +96,15 @@ sections:
 <item-by-item: landed (hash) or still provisional>
 
 ## Cold-resume handoff
-<current sprint state · open questions from ROADMAP · single clearest next action>
+<current sprint state · open questions · single clearest next action>
 ```
+
+`closeout.md` is the **sole sink** for the close-out body — write it verbatim to the
+file. To stdout print **only a terse pointer**: path, branch, single next action, and
+the filenames of governance stores changed this session (`DECISIONS_LOG` /
+`OPEN_QUESTIONS` / `ROADMAP` / `FEEDBACK` / `Ideas`; names only, never contents).
+Do **not** emit governance-store text — pre-merge copy-back is `cat`/open of the
+changed store file on disk.
 
 **Never append.** Never narrate the act of writing the close-out. Never include a
 "suggested commits" list.

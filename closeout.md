@@ -2,60 +2,72 @@
 
 ## Commits this session
 
-Session-open HEAD was `789f5f0` (`origin/master`, verified against the brief's
-anchor before any action). `git log --oneline 789f5f0..HEAD`:
+Session-open HEAD was `8aff573` (`origin/master`). `git log --oneline 8aff573..HEAD`:
 
 ```
-48601ae docs(decisions): #16 — HCA governance parity; #38/#39 discharged, #40 landed
-58bda34 chore(governance): parity with health-app — shared block verbatim, /closeout current, BRANCHES.md
+09552ed docs(decisions): #18 — F1 writer-identity forwarding (HCA emits flat sourcePackage)
+bd8ba89 feat(sync): forward writer identity as flat sourcePackage on every record
+46597cb docs(decisions): #17 — shared block re-mirror + #41 gate parity, local limbo cleared
+e2a88ed chore(governance): re-mirror shared block to health-app 504e5e5; local-branch limbo cleared
 ```
 
-Both landed on master via `--ff-only` (`789f5f0..48601ae`, pushed). Branch
-`chore/governance-parity` merged+deleted.
+All four landed on master via `--ff-only` across two branches:
+`chore/gate-remirror` (`8aff573..46597cb`) and `feat/f1-writer-forwarding`
+(`46597cb..09552ed`). Both branches merged+deleted.
 
 ## PENDING reconciliation
 
-- **Brief LOG payload (`### #NEXT` governance-parity entry)** — landed as
-  **#16** in `48601ae`. Number claimed at the `--ff` instant: origin/master
-  re-fetched at `789f5f0`, max confirmed `### #15`, then amended `#NEXT → #16`.
-- **Owed #38/#39 `/closeout` mirror** — discharged in `58bda34`
-  (body→`closeout.md` sole sink; stdout pointer-only; store-emission retired).
-- **#40 Rules 2–5** — landed in `58bda34` (patch-id disposition + terminal-state
-  gate as `/closeout` step 4 + number-at-merge + concern-named branches, all via
-  the verbatim shared block; `BRANCHES.md` created).
-- **Branch dispositions** — all terminal:
-  `chore/governance-held-writes` deleted (husk: single bare close-out commit,
-  `git cherry` = one `+`, content only a stale ROADMAP/closeout regen);
-  `chore/closeout-routing` deleted as superset-superseded (`git cherry` = two
-  `+`, documented exception — its body→file + pointer-stdout substance is on
-  master via `58bda34`; its emission carve-out retired by #39; its on-branch
-  "#17" discarded per Rule 4);
-  `fix/hrv-capture-regression` parked in `BRANCHES.md`.
-- OPEN_QUESTIONS Q1–Q3 — untouched this session, still PENDING.
+No `;cc` pending-commit queue was carried into this session — the work was
+driven directly by two code briefs, not a chat close-out payload. Nothing to
+reconcile.
 
 ## Cold-resume handoff
 
-**State:** master `48601ae` + this close-out. Governance parity with health-app
-established: shared loop-rules block is verbatim in `CLAUDE.md` (diff against
-health-app `83e0cb2` source = empty), `/closeout` is current (6 steps, gate
-before write, no emission step), `BRANCHES.md` ledger live. Remote surface:
-`master` + `fix/hrv-capture-regression` only (verified via `git ls-remote`).
+**State:** master `09552ed`.
 
-**Surfaced this session (not actioned — out of brief scope):**
-- Local-only branch `fix/scraper-sh-relayout` carries 3 `+` commits vs
-  origin/master (`git cherry`) — real unmerged local work in undefined limbo;
-  needs disposition (merge, park in `BRANCHES.md`, or delete) next session.
-- Local-only branch `feat/deep-sleep-confidence` — `git cherry` empty (fully on
-  master); safe local delete, pending confirmation.
-- `/closeout` step-1 claimed `OPEN_QUESTIONS.md` doesn't exist while the store
-  does (landed `dcbc605`) — corrected in `58bda34`.
+- **#17** — HCA's shared loop-rules block re-mirrored verbatim from health-app
+  `504e5e5` (l.20–139), diff against source = empty. Carries #41's
+  terminal-state-gate extension: the gate now enumerates local branches
+  (`git branch`) as well as `refs/remotes/origin`; a local branch with `+`
+  commits vs `origin/master` must be pushed, parked in `BRANCHES.md`, or
+  discarded before close. `.claude/commands/closeout.md` step 4 extended
+  lockstep (verbatim match confirmed). Local-branch limbo cleared under the
+  new gate: `feat/deep-sleep-confidence` deleted (empty cherry, fully
+  upstream); `fix/scraper-sh-relayout` parked in `BRANCHES.md` (3 unpushed
+  commits, pending review — not disposed, not deleted).
+- **#18** — F1 writer-identity forwarding: every mapper in
+  `src/healthConnect.js` (sleep, HRV, heart rate, steps, workouts) now
+  forwards `sourcePackage: record.metadata?.dataOrigin ?? null`. `dataOrigin`
+  confirmed via a live device `[HC raw]` log to be a flat package-name
+  string, not a `{packageName}` object — this corrected the field path from
+  how the work was originally briefed. Implements the HCA half of health-app
+  #36/#37; backend's `get_source_package()` reads the alias, no backend
+  change needed.
 
-**Open questions:** Q1 (SH-relayout cadence vs #12 SDK-migration trigger),
-Q2 (native HRV scrape end-to-end to DB post-:355), Q3 (stale-APK-masked
-Compose-break defect record) — all PENDING in `OPEN_QUESTIONS.md`.
+**Branch state:** `chore/gate-remirror` and `feat/f1-writer-forwarding`
+merged+deleted. `fix/hrv-capture-regression` (pre-existing) and
+`fix/scraper-sh-relayout` (parked this session) both listed in `BRANCHES.md`.
+No branch in undefined limbo. Remote surface: `master` +
+`fix/hrv-capture-regression` only (`fix/scraper-sh-relayout` is local-only,
+never pushed — that's why it needed parking rather than a remote-based check
+catching it).
 
-**Next action:** Close the HRV context firewall gap (#8 D2): (1) add
+**Verification owed (not verifiable from this session):** #18's Postgres
+check — after the next deploy + a real device sync, confirm
+`health_connect_record_sources` shows non-null `source_package` rows (e.g.
+`com.sec.android.app.shealth`, `fi.polar.polarflow`) replacing the
+`'unknown'` sentinel. Report a sample row.
+
+**Open questions (OPEN_QUESTIONS.md, unchanged this session):** Q1
+(SH-relayout cadence vs #12 SDK-migration trigger), Q2 (native HRV scrape
+end-to-end to DB post-:355), Q3 (stale-APK-masked Compose-break defect
+record) — all PENDING.
+
+**Next action:** Deploy + run a real sync to verify #18's Postgres gate
+(sample row of non-null `source_package`). In parallel, the HRV context
+firewall gap (#8 D2) remains the top carried-forward structural debt: (1) add
 `CaptureSource`/`CaptureContext` enum to `src/contract/`, (2) stamp context in
 `HRVCaptureModule.kt` event payload, (3) verify D2 — unblocks
-`feat/hrv-capture`/C3 and the parked `fix/hrv-capture-regression` guard-proof
-test (Brief 1).
+`feat/hrv-capture`/C3 and pairs with the parked `fix/hrv-capture-regression`
+guard-proof test. Separately: review/land or discard
+`fix/scraper-sh-relayout`'s 3 unpushed commits.

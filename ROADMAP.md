@@ -68,27 +68,36 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
-**Branch:** `master` (trunk, via `chore/gate-remirror`)  
-**Closed:** 2026-07-02 (gate-remirror session)
+**Branch:** `master` (trunk, via `chore/gate-remirror` + `feat/f1-writer-forwarding`)  
+**Closed:** 2026-07-02 (gate-remirror + F1-forwarding session)
 
 ### This session — landed on master
-- Commit A: HCA's shared loop-rules block re-mirrored verbatim from health-app
-  `504e5e5` (l.20–139), carrying #41's terminal-state-gate extension — the gate
-  now enumerates local branches (`git branch`) as well as `refs/remotes/origin`;
-  a local branch with `+` commits vs `origin/master` must be pushed, parked in
-  `BRANCHES.md`, or discarded before close. `.claude/commands/closeout.md` step 4
-  extended lockstep with the same sentence. First application of the
-  edit-in-health-app-copy-to-HCA mechanism established by #16 — a verbatim copy,
-  not a hand-merge.
-- Local-branch limbo cleared under the new gate: `feat/deep-sleep-confidence`
-  deleted (empty cherry, fully upstream); `fix/scraper-sh-relayout` parked in
-  `BRANCHES.md` (3 unpushed commits, pending review).
-- Commit B: DECISIONS_LOG **#17** — governance entry for the re-mirror + gate
-  parity + local cleanup; #17 claimed at the `--ff` instant (origin/master
-  re-fetched, max confirmed #16).
-- Landed `--ff-only` via `git land`; `chore/gate-remirror` self-deleted.
+- `e2a88ed` / `46597cb` (**#17**): HCA's shared loop-rules block re-mirrored
+  verbatim from health-app `504e5e5` (l.20–139), carrying #41's
+  terminal-state-gate extension — the gate now enumerates local branches
+  (`git branch`) as well as `refs/remotes/origin`; a local branch with `+`
+  commits vs `origin/master` must be pushed, parked in `BRANCHES.md`, or
+  discarded before close. `.claude/commands/closeout.md` step 4 extended
+  lockstep. First application of the edit-in-health-app-copy-to-HCA mechanism
+  established by #16 — a verbatim copy, not a hand-merge. Local-branch limbo
+  cleared under the new gate: `feat/deep-sleep-confidence` deleted (empty
+  cherry, fully upstream); `fix/scraper-sh-relayout` parked in `BRANCHES.md`
+  (3 unpushed commits, pending review). #17 claimed at the `--ff` instant
+  (max confirmed #16). Landed `--ff-only` via `git land`;
+  `chore/gate-remirror` self-deleted.
+- `bd8ba89` / `09552ed` (**#18**): F1 writer-identity forwarding — every
+  mapper in `src/healthConnect.js` (sleep, HRV, heart rate, steps, workouts)
+  now forwards `sourcePackage: record.metadata?.dataOrigin ?? null`.
+  `dataOrigin` verified against a live device `[HC raw]` log to be a flat
+  package-name string, not a `{packageName}` object — corrects the
+  originally-briefed field path. Implements the HCA half of health-app
+  #36/#37; backend's `get_source_package()` reads the alias with no backend
+  change needed. #18 claimed at the `--ff` instant (max confirmed #17).
+  Landed `--ff-only` via `git land`; `feat/f1-writer-forwarding` self-deleted.
 
-### Branch dispositions (terminal states, per #17)
+### Branch dispositions (terminal states, per #17/#18)
+- `chore/gate-remirror` — **merged+deleted**.
+- `feat/f1-writer-forwarding` — **merged+deleted**.
 - `fix/hrv-capture-regression` — **parked** in `BRANCHES.md` (holds the #8 D2
   guard-proof test; unblocks on the firewall-gap session, Brief 1).
 - `fix/scraper-sh-relayout` — **parked** in `BRANCHES.md` (SH scraper UI
@@ -96,8 +105,15 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
   review).
 
 ### Decisions
-DECISIONS_LOG max now **#17** on master, superseding the #16 shared-block
-snapshot (remotes-only gate) with #41's local+remote gate.
+DECISIONS_LOG max now **#18** on master. #17 supersedes the #16 shared-block
+snapshot (remotes-only gate) with #41's local+remote gate. #18 implements the
+HCA half of health-app #36/#37 (writer-identity forwarding).
+
+### ⚠ Verification owed (not verifiable from this session)
+#18's Postgres check is still open: after the next deploy + a real device
+sync, confirm `health_connect_record_sources` shows non-null `source_package`
+rows (e.g. `com.sec.android.app.shealth`, `fi.polar.polarflow`) replacing the
+`'unknown'` sentinel. Report a sample row.
 
 ### ⚠ Carried forward — top structural debt (UNTOUCHED)
 HRV context firewall still LIVE-UNBACKED (Decision #8 D2): `src/contract/` has no
@@ -105,8 +121,10 @@ HRV context firewall still LIVE-UNBACKED (Decision #8 D2): `src/contract/` has n
 Also open: Q4 HC date-attribution root cause.
 
 ### Next action
-Close the HRV context firewall gap (#8 D2): (1) add `CaptureSource`/`CaptureContext`
-enum to `src/contract/`, (2) stamp context in `HRVCaptureModule.kt` event payload,
-(3) verify D2 — unblocks `feat/hrv-capture`/C3 and pairs with the
-`fix/hrv-capture-regression` triage. Separately: review/land or discard
-`fix/scraper-sh-relayout`'s 3 unpushed commits.
+Deploy + run a real sync to verify #18's Postgres gate (sample row of non-null
+`source_package`). In parallel: close the HRV context firewall gap (#8 D2) —
+(1) add `CaptureSource`/`CaptureContext` enum to `src/contract/`, (2) stamp
+context in `HRVCaptureModule.kt` event payload, (3) verify D2 — unblocks
+`feat/hrv-capture`/C3 and pairs with the `fix/hrv-capture-regression` triage.
+Separately: review/land or discard `fix/scraper-sh-relayout`'s 3 unpushed
+commits.

@@ -187,3 +187,28 @@ resolved by the SH 7.x re-map landed this session.
 the home for machine-checkable code-state defects and unresolved questions; the
 CLAUDE.md stores table is updated to list it.
 **Supersedes:** none.
+
+### #16 — HCA governance parity: shared loop-rules block established; #38/#39 discharged, #40 landed  ·  active
+**Decision:** HCA adopts the health-app shared loop-rules block verbatim
+(BEGIN/END markers), replacing its parallel Single-writer / Canonical-stores /
+Decisions-log-discipline / Session-rituals sections and retiring the stale
+Session-rituals transplant. This discharges the owed #38/#39 `/closeout` mirror
+(body→file sole sink, pointer-only stdout, store-emission retired) and lands
+#40's Rules 2–5 (patch-id disposition, terminal-state gate as a new `/closeout`
+step, number-at-merge, concern-named branches) plus a `BRANCHES.md` ledger.
+Propagation of shared rules is now a verbatim copy from health-app, not a
+hand-merge. Twins attribution (grounds health-app #40): the
+`claude/session-lifecycle-sleep-dedup-b9k5qf` / `-yg1xx6` twins cited in
+health-app #40 were this repo's autonomous session branches, pruned 2 Jul 2026
+in the sleep-dedup cleanup — verifiable from HCA history, not health-app's.
+Branch disposition: `chore/governance-held-writes` deleted (husk);
+`chore/closeout-routing` deleted as superset-superseded (its body→file
+substance is now on master; its on-branch "#17" discarded per Rule 4, never a
+canon number); `fix/hrv-capture-regression` parked in `BRANCHES.md` (holds the
+#8 D2 guard-proof test).
+**Supersedes:** the stale in-place Session-rituals transplant;
+closeout-routing's provisional "#17".
+**How you know:** shared block copied byte-for-byte from health-app `83e0cb2`
+l.20–136 (`diff` against source = empty); `/closeout` renumbered, emission step
+absent; `git ls-remote` post-session = master + `fix/hrv-capture-regression`
+only.

@@ -152,6 +152,7 @@ export async function fetchSleepData(startDate, endDate) {
     endTime: r.endTime,
     stages: r.stages ?? [],
     durationMinutes: Math.round((new Date(r.endTime) - new Date(r.startTime)) / 60000),
+    sourcePackage: r.metadata?.dataOrigin ?? null,
   }));
   return data;
 }
@@ -160,13 +161,19 @@ export async function fetchHRVData(startDate, endDate) {
   const { data } = await safeFetch('HeartRateVariabilityRmssd', startDate, endDate, (r) => ({
     time: r.time,
     rmssd: r.heartRateVariabilityMillis,
+    sourcePackage: r.metadata?.dataOrigin ?? null,
   }));
   return data;
 }
 
 export async function fetchHeartRateData(startDate, endDate) {
-  const { data } = await safeFetch('HeartRate', startDate, endDate, (r) => r.samples ?? []);
-  return data.flat().map((s) => ({ time: s.time, bpm: s.beatsPerMinute }));
+  const { data } = await safeFetch('HeartRate', startDate, endDate, heartRateMapper);
+  return data.flat();
+}
+
+function heartRateMapper(r) {
+  const sourcePackage = r.metadata?.dataOrigin ?? null;
+  return (r.samples ?? []).map((s) => ({ time: s.time, bpm: s.beatsPerMinute, sourcePackage }));
 }
 
 export async function fetchStepsData(startDate, endDate) {
@@ -177,7 +184,7 @@ function stepsMapper(r) {
   const offsetMs = (r.startZoneOffset?.totalSeconds ?? 0) * 1000;
   const date = new Date(new Date(r.startTime).getTime() + offsetMs).toISOString().slice(0, 10);
   const durationMs = new Date(r.endTime).getTime() - new Date(r.startTime).getTime();
-  return { date, count: r.count, durationMs };
+  return { date, count: r.count, durationMs, sourcePackage: r.metadata?.dataOrigin ?? null };
 }
 
 function aggregateSteps(raw) {
@@ -193,14 +200,19 @@ function aggregateSteps(raw) {
   return Object.entries(byDate).map(([date, v]) => ({ date, count: v.count }));
 }
 
-export async function fetchWorkoutData(startDate, endDate) {
-  const { data } = await safeFetch('ExerciseSession', startDate, endDate, (r) => ({
+function workoutMapper(r) {
+  return {
     startTime: r.startTime,
     endTime: r.endTime,
     type: r.exerciseType,
     title: r.title ?? null,
     durationMinutes: Math.round((new Date(r.endTime) - new Date(r.startTime)) / 60000),
-  }));
+    sourcePackage: r.metadata?.dataOrigin ?? null,
+  };
+}
+
+export async function fetchWorkoutData(startDate, endDate) {
+  const { data } = await safeFetch('ExerciseSession', startDate, endDate, workoutMapper);
   return data;
 }
 
@@ -214,23 +226,19 @@ export async function fetchAllData(days = 7) {
       endTime: r.endTime,
       stages: r.stages ?? [],
       durationMinutes: Math.round((new Date(r.endTime) - new Date(r.startTime)) / 60000),
+      sourcePackage: r.metadata?.dataOrigin ?? null,
     })),
     safeFetch('HeartRateVariabilityRmssd', start, end, (r) => ({
       time: r.time,
       rmssd: r.heartRateVariabilityMillis,
+      sourcePackage: r.metadata?.dataOrigin ?? null,
     })),
-    safeFetch('HeartRate', start, end, (r) => r.samples ?? []),
+    safeFetch('HeartRate', start, end, heartRateMapper),
     safeFetch('Steps', start, end, stepsMapper),
-    safeFetch('ExerciseSession', start, end, (r) => ({
-      startTime: r.startTime,
-      endTime: r.endTime,
-      type: r.exerciseType,
-      title: r.title ?? null,
-      durationMinutes: Math.round((new Date(r.endTime) - new Date(r.startTime)) / 60000),
-    })),
+    safeFetch('ExerciseSession', start, end, workoutMapper),
   ]);
 
-  const heartRate = hrRes.data.flat().map((s) => ({ time: s.time, bpm: s.beatsPerMinute }));
+  const heartRate = hrRes.data.flat();
   const steps = aggregateSteps(stepsRes);
 
   const errors = [sleepRes, hrvRes, hrRes, stepsRes, workoutsRes]

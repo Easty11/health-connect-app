@@ -67,9 +67,12 @@ Every branch touched this session must end in a terminal state:
 - **listed in `BRANCHES.md`** (repo root) with purpose / why-parked / unblocks-on.
 
 Confirm merge status with `git cherry origin/master <branch>` (patch-id, never
-SHA — rebase/squash merges rewrite SHAs and make ancestry lie). If any touched
-branch is in undefined limbo — neither merged+deleted nor parked in
-`BRANCHES.md` — **HALT** before writing `closeout.md` and resolve it first.
+SHA — rebase/squash merges rewrite SHAs and make ancestry lie). The gate
+enumerates local branches (`git branch`) as well as `refs/remotes/origin`; a local
+branch with `+` commits vs `origin/master` must be pushed, parked in `BRANCHES.md`,
+or discarded before close. If any touched branch is in undefined limbo — neither
+merged+deleted nor parked in `BRANCHES.md` — **HALT** before writing `closeout.md`
+and resolve it first.
 
 ### 5. Regenerate the ROADMAP.md sprint block
 

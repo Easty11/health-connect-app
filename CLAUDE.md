@@ -82,8 +82,11 @@ must match it.
   3. **Reconciles the pending-commit queue**: confirms each `PENDING` item landed in a
      commit, or states why not.
   4. **Branch terminal-state gate** — every branch touched this session ends
-     merged+deleted or listed in `BRANCHES.md`; none in undefined limbo. If any touched
-     branch is neither, the close-out HALTS until resolved.
+     merged+deleted or listed in `BRANCHES.md`; none in undefined limbo. The gate
+     enumerates local branches (`git branch`) as well as `refs/remotes/origin`; a local
+     branch with `+` commits vs `origin/master` must be pushed, parked in `BRANCHES.md`,
+     or discarded before close. If any touched branch is neither, the close-out HALTS
+     until resolved.
   5. Regenerates the cold-resume handoff view from the stores.
   6. Overwrites a single `closeout.md`. Never appends narrative; never describes the act
      of writing the close-out.

@@ -68,39 +68,36 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
-**Branch:** `master` (trunk)  
-**Closed:** 2026-07-02 (governance-parity session)
+**Branch:** `master` (trunk, via `chore/gate-remirror`)  
+**Closed:** 2026-07-02 (gate-remirror session)
 
 ### This session — landed on master
-- `58bda34` (Commit A): health-app shared loop-rules block (`83e0cb2`
-  l.20–136) copied verbatim into `CLAUDE.md`, replacing the parallel
-  Single-writer / Canonical-stores / Decisions-log-discipline sections and the
-  stale Session-rituals transplant; `/closeout` brought current (#38/#39
-  body→`closeout.md` sole sink, pointer-only stdout; #40 branch terminal-state
-  gate inserted as step 4); `BRANCHES.md` ledger created.
-- `48601ae` (Commit B): DECISIONS_LOG **#16** — parity entry; #16 claimed at
-  the `--ff` instant (origin/master re-fetched, max confirmed #15).
-- Landed `--ff-only` via `git land`; `chore/governance-parity` self-deleted.
+- Commit A: HCA's shared loop-rules block re-mirrored verbatim from health-app
+  `504e5e5` (l.20–139), carrying #41's terminal-state-gate extension — the gate
+  now enumerates local branches (`git branch`) as well as `refs/remotes/origin`;
+  a local branch with `+` commits vs `origin/master` must be pushed, parked in
+  `BRANCHES.md`, or discarded before close. `.claude/commands/closeout.md` step 4
+  extended lockstep with the same sentence. First application of the
+  edit-in-health-app-copy-to-HCA mechanism established by #16 — a verbatim copy,
+  not a hand-merge.
+- Local-branch limbo cleared under the new gate: `feat/deep-sleep-confidence`
+  deleted (empty cherry, fully upstream); `fix/scraper-sh-relayout` parked in
+  `BRANCHES.md` (3 unpushed commits, pending review).
+- Commit B: DECISIONS_LOG **#17** — governance entry for the re-mirror + gate
+  parity + local cleanup; #17 claimed at the `--ff` instant (origin/master
+  re-fetched, max confirmed #16).
+- Landed `--ff-only` via `git land`; `chore/gate-remirror` self-deleted.
 
-### Branch dispositions (terminal states, per #16)
-- `chore/governance-held-writes` — **deleted** (husk: single commit, bare
-  close-out; `git cherry` inspected, no substance).
-- `chore/closeout-routing` — **deleted**, superset-superseded: its body→file +
-  pointer-stdout substance is on master via the mirrored `/closeout`; its
-  emission carve-out is retired by #39; its on-branch provisional "#17" is
-  discarded per number-at-merge — never canon.
+### Branch dispositions (terminal states, per #17)
 - `fix/hrv-capture-regression` — **parked** in `BRANCHES.md` (holds the #8 D2
   guard-proof test; unblocks on the firewall-gap session, Brief 1).
+- `fix/scraper-sh-relayout` — **parked** in `BRANCHES.md` (SH scraper UI
+  relayout; 3 unpushed local commits pending Luke's review; unblocks on that
+  review).
 
 ### Decisions
-DECISIONS_LOG max now **#16** on master. The provisional "#17" that lived on
-`chore/closeout-routing` was discarded with the branch — it was never canon.
-
-### ⚠ Cross-repo — PROVISIONAL (next health-app session, carried forward)
-health-app DECISIONS_LOG #31 cites a phantom companion fix ("HCA #16,
-`findByIdValidBounds`" — neither exists). Approved supersede **#34** drafted for
-health-app. Also owed there: flip health-app OPEN_QUESTIONS Q2 (backend-side
-mirror of the sleep de-dup bug) open→resolved. Both PENDING — health-app session.
+DECISIONS_LOG max now **#17** on master, superseding the #16 shared-block
+snapshot (remotes-only gate) with #41's local+remote gate.
 
 ### ⚠ Carried forward — top structural debt (UNTOUCHED)
 HRV context firewall still LIVE-UNBACKED (Decision #8 D2): `src/contract/` has no
@@ -111,5 +108,5 @@ Also open: Q4 HC date-attribution root cause.
 Close the HRV context firewall gap (#8 D2): (1) add `CaptureSource`/`CaptureContext`
 enum to `src/contract/`, (2) stamp context in `HRVCaptureModule.kt` event payload,
 (3) verify D2 — unblocks `feat/hrv-capture`/C3 and pairs with the
-`fix/hrv-capture-regression` triage. In parallel: health-app session for #34 + its
-OPEN_QUESTIONS Q2 flip; Q4 HC date-attribution.
+`fix/hrv-capture-regression` triage. Separately: review/land or discard
+`fix/scraper-sh-relayout`'s 3 unpushed commits.

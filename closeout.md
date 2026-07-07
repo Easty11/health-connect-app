@@ -2,41 +2,44 @@
 
 ## Commits this session
 
-Session-open HEAD was `69aecf2` (`origin/master`). `git log --oneline 69aecf2..HEAD`:
+Session-open HEAD was `c8be2fa` (branch checked out at that commit, identical
+to `origin/master`). `git log --oneline c8be2fa..HEAD`: empty.
 
-```
-f841a29 govern: propagate empirical-specificity to HCA shared block
-```
-
-Landed on master via `--ff-only` from `chore/propagate-empirical-specificity`.
-Branch merged+deleted. `CLAUDE.md` only, 6 insertions, no other file touched.
+No commits were made this session. It was investigation plus one blocking
+triage decision, not code.
 
 ## PENDING reconciliation
 
-No `;cc` pending-commit queue was carried into this session — the work was
-driven directly by a code brief (ANCHOR), not a chat close-out payload.
-Nothing to reconcile.
+No `;cc` pending-commit queue was carried into this session. Nothing to
+reconcile.
 
 ## Cold-resume handoff
 
-**State:** master `f841a29`.
+**State:** `claude/hevy-api-workout-query-teulc2` == `origin/master` (`c8be2fa`),
+0 ahead / 0 behind, `git cherry origin/master` empty (patch-identical).
 
-- Verbatim propagation of the Empirical Specificity standing-rule bullet into
-  HCA `CLAUDE.md`'s shared loop-rules block, inserted immediately after
-  "Verify before design." Restores byte-for-byte parity with health-app's
-  shared block, closing the two-master drift opened when the bullet landed in
-  health-app only (health-app `38061d1`).
-- Parity baseline taken before editing: shared block identical-but-for-the-
-  missing-bullet against health-app master `96281a6` (verified local ==
-  origin). Post-insertion diff (HCA l.8–133 vs health-app l.20–145) = empty.
-- No new DECISIONS_LOG entry — per the brief's explicit `LOG: None` (verbatim
-  propagation of an existing rule embodies no new decision). DECISIONS_LOG max
-  remains **#18**.
+- **Hevy exercise-lookup query** (raw `/v1/workouts/{id}` for
+  `exercise_template_id`, workout `93e9daf2-872a-4a64-abdd-e9f711f3ebc5`) —
+  could not be run. No Hevy API key is available in this environment; the
+  `get_hevy_workouts` MCP tool has no per-ID lookup and its digest omits
+  `exercise_template_id`. Still blocked on a real key or the user running the
+  query themselves.
+- **ANCHOR: `hevy_exercise_templates` Postgres table + sync job +
+  `resolve_exercise(title, user_id)` resolver, feeding `create_workout`
+  provisioning** — redirected, not implemented. This repo has no
+  backend/DB surface (`package.json` = expo/react-native/axios only; no
+  Postgres, no server, no `create_workout` path). The brief's deliverable is
+  backend work and belongs in `health-app`, not here — flagged to the user
+  instead of building it in the wrong repo (same failure shape as
+  DECISIONS_LOG #10/#11's wrong-repo near-miss). User confirmed: close out
+  here; the ANCHOR needs to be re-sent to a `health-app`-scoped session.
+- No new DECISIONS_LOG entry. Max remains **#18**.
 
-**Branch state:** `chore/propagate-empirical-specificity` merged+deleted,
-origin/master == local master (`f841a29`), 0 ahead/0 behind. Pre-existing
-parked branches untouched this session: `fix/hrv-capture-regression` and
-`fix/scraper-sh-relayout`, both still listed in `BRANCHES.md`. No branch in
+**Branch state:** `claude/hevy-api-workout-query-teulc2` parked in
+`BRANCHES.md` — zero unique commits, harness auto-named (banned for in-flight
+work per convention), deletion candidate held pending explicit user
+confirmation. Pre-existing parked branches untouched this session:
+`fix/hrv-capture-regression`, `fix/scraper-sh-relayout`. No branch in
 undefined limbo.
 
 **Open questions (OPEN_QUESTIONS.md, unchanged this session):** Q1
@@ -44,11 +47,11 @@ undefined limbo.
 end-to-end to DB post-:355), Q3 (stale-APK-masked Compose-break defect
 record) — all PENDING.
 
-**Next action:** Close the HRV context firewall gap (#8 D2), the top
-carried-forward structural debt: (1) add `CaptureSource`/`CaptureContext`
-enum to `src/contract/`, (2) stamp context in `HRVCaptureModule.kt` event
-payload, (3) verify D2 — unblocks `feat/hrv-capture`/C3 and pairs with the
-parked `fix/hrv-capture-regression` guard-proof test. Separately: verify
-#18's Postgres gate after the next real device sync (non-null
-`source_package` rows), and review/land or discard
-`fix/scraper-sh-relayout`'s 3 unpushed commits.
+**Next action:** Re-open the Hevy exercise-template-resolver ANCHOR in a
+`health-app`-scoped session — it cannot be built here. Separately: decide
+whether to delete the empty `claude/hevy-api-workout-query-teulc2` branch,
+and supply a Hevy API key if the exercise_template_id lookup is still wanted.
+Once this repo resumes normal feature work, the HRV context firewall gap
+(#8 D2) is still the top carried-forward structural debt: (1) add
+`CaptureSource`/`CaptureContext` enum to `src/contract/`, (2) stamp context in
+`HRVCaptureModule.kt` event payload, (3) verify D2.

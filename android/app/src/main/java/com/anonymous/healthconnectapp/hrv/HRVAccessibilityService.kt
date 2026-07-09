@@ -20,6 +20,7 @@ package com.anonymous.healthconnectapp.hrv
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Intent
+import android.graphics.Rect
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -40,6 +41,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.io.File
 import java.time.Instant
 
 class HRVAccessibilityService : AccessibilityService() {
@@ -210,6 +212,14 @@ class HRVAccessibilityService : AccessibilityService() {
     private fun onScreenStable() {
         val root = rootInActiveWindow ?: return
         if (root.packageName?.toString() != SHEALTH) return
+
+        // ── DIAGNOSTIC (feat/hrv-node-dump) ─────────────────────────
+        // Read-only node-tree capture. Fires once per stable Samsung Health
+        // frame, so every page the state machine walks (home → Vitality/HRV →
+        // each scroll frame → Sleep detail) is recorded to nodedump.txt. Uses
+        // the already-package-checked `root` above — the header will always
+        // resolve to Samsung Health. Additive only; selector logic untouched.
+        dumpActiveTree(root)
 
         val screen = detectScreen(root)
         Log.d(TAG, "Stable | screen=$screen | state=$state")
@@ -830,5 +840,53 @@ class HRVAccessibilityService : AccessibilityService() {
         var result: AccessibilityNodeInfo? = null
         forEachNode(root) { if (result == null && it.isScrollable) result = it }
         return result
+    }
+
+    // ─── DIAGNOSTIC: node-tree dump (feat/hrv-node-dump) ──────────
+    //
+    // Read-only. Exists to diagnose the HRV selector against the *real*
+    // Samsung Health node tree instead of inference. Records every node
+    // carrying text or content-desc, with the full attribute set needed to
+    // choose an identity-based selector: viewId, text, desc, isSelected,
+    // isChecked, className, and screen bounds. Remove once the selector is
+    // fixed — this writes to app-private external storage on every frame.
+
+    /**
+     * Depth-first dump of one node subtree. Emits a line per node that has
+     * text or a content-desc (structural containers are skipped to keep the
+     * file readable); indentation encodes depth.
+     */
+    private fun dumpTree(node: AccessibilityNodeInfo?, depth: Int, out: StringBuilder) {
+        node ?: return
+        val t = node.text?.toString()
+        val cd = node.contentDescription?.toString()
+        if (!t.isNullOrBlank() || !cd.isNullOrBlank()) {
+            val b = Rect().also { node.getBoundsInScreen(it) }
+            out.appendLine(
+                "${"  ".repeat(depth)}i=${node.viewIdResourceName} " +
+                "text='$t' desc='$cd' sel=${node.isSelected} chk=${node.isChecked} " +
+                "cls=${node.className} $b"
+            )
+        }
+        for (i in 0 until node.childCount) dumpTree(node.getChild(i), depth + 1, out)
+    }
+
+    /**
+     * Writes one framed dump of [root] (already confirmed to be Samsung Health
+     * by the caller) to nodedump.txt in app-private external storage. The
+     * header carries the package so the capture can be verified as Samsung
+     * Health's tree, not our own. Appends — multiple pages accumulate in one
+     * file. Failures are swallowed and logged; instrumentation must never
+     * disturb the extraction flow.
+     */
+    private fun dumpActiveTree(root: AccessibilityNodeInfo) {
+        try {
+            val sb = StringBuilder()
+            sb.appendLine("=== ${System.currentTimeMillis()} pkg=${root.packageName} state=$state ===")
+            dumpTree(root, 0, sb)
+            File(getExternalFilesDir(null), "nodedump.txt").appendText(sb.toString() + "\n\n")
+        } catch (e: Exception) {
+            Log.w(TAG, "nodedump failed: ${e.message}")
+        }
     }
 }

@@ -1,5 +1,19 @@
 {
   "enabledPlugins": {
     "expo@claude-plugins-official": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/block-metro-build.cjs",
+            "statusMessage": "Checking for Metro-dependent debug build"
+          }
+        ]
+      }
+    ]
   }
 }

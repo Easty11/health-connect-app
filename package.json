@@ -13,7 +13,8 @@
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo run:android",
+    "android": "expo run:android --variant release",
+    "android:dev": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "gen:contract": "node scripts/gen-contract.mjs"

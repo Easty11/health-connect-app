@@ -22,6 +22,24 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-07-11 — debug rebuilds keep re-installing a Metro-dependent APK  [workflow]
+**Friction:** Every time we rebuild to debug on-device, `npx expo run:android` (and the
+`npm run android` script) installed the **debug** variant, which loads its JS bundle from
+the Metro dev server. The overnight/on-unlock HRV scraper then silently fails whenever
+Metro or the dev machine is down. This recurred repeatedly; verbal "won't happen again"
+assurances did nothing because nothing enforced them — and each recurrence re-masqueraded
+as a scraper bug (e.g. the morning `106` deploy gap).
+**Cost:** Repeated wasted debugging chasing "scraper" failures that were really a
+Metro-dependent build; one full misdiagnosis cycle before dex-gating the installed APK.
+**Fix (codified, not remembered):** (1) PreToolUse hook `.claude/hooks/block-metro-build.cjs`
+(wired in `.claude/settings.json`, matches Bash|PowerShell) BLOCKS any `expo run:android`
+/`run-android`/`installDebug`/`assembleDebug`/`adb install …-debug.apk` that lacks
+`--variant release`. (2) `npm run android` now = `expo run:android --variant release`
+(standalone Hermes-embedded); `npm run android:dev` is the explicit debug/Metro opt-in.
+(3) Standing rule: **only standalone release builds go on the scraper device** — after any
+scraper rebuild, dex-gate the *installed* APK (source-clean ≠ deployed). See
+[[hrv-last-shrv-phantom-node-misresolution]].
+
 ### 2026-06-24 — handoff asserted unpushed work that was already synced  [workflow]
 **Friction:** The chat-generated CODE HANDOFF directed a `git push --force-with-lease` to publish "the firewall commit + stranded work," but `feat/deep-sleep-confidence` was already 0/0 with origin — nothing to push. The same handoff carried audit branch positions (`f6d94a8`/`82f0b88`) it itself flagged as unverified.
 **Cost:** None — the handoff's own "verify what's ahead BEFORE pushing" step caught it before a no-op force-push. But the premise was wrong end to end.

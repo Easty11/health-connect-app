@@ -68,45 +68,54 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
-**Branch:** `master` (trunk, via `chore/propagate-empirical-specificity`)  
-**Closed:** 2026-07-03 (empirical-specificity propagation session)
+**Branch:** `master` (trunk)  
+**Closed:** 2026-07-11 (HRV phantom-selector fix landed + on-device verified; Metro-guard codified)
 
 ### This session — landed on master
-- `f841a29` (verbatim propagation, no new decision — `LOG: None` per brief):
-  the Empirical Specificity standing-rule bullet propagated into HCA
-  `CLAUDE.md`'s shared loop-rules block, immediately after "Verify before
-  design.", closing the two-master drift opened when the bullet landed in
-  health-app only (health-app `38061d1`). Parity baseline confirmed
-  identical-but-for-the-bullet before insertion; post-insertion diff of the
-  shared block (HCA l.8–133 vs health-app l.20–145) against health-app master
-  `96281a6` = empty. No other file touched.
+- `1db8833` — **fix(scraper): select valid-bounds Energy-score node, not `firstOrNull` phantom.**
+  Landed the fortnight-old fix from unmerged `fix/scraper-sh-relayout`: the three
+  Energy-score reads (HRV/HR/RR) now use `findByIdValidBounds` (first match with
+  `right > left`), skipping the duplicate negative-width phantom node. DECISIONS_LOG
+  entry renumbered stale `#16` → **#19** at merge (master had spent #16–#18).
+- `db6f50e` — **chore(build): codify standalone-release-only; block Metro debug installs.**
+  PreToolUse hook `.claude/hooks/block-metro-build.cjs` (+ `npm run android` → release,
+  `npm run android:dev` = debug opt-in, FEEDBACK entry). Closes the recurring
+  Metro-dependent-debug-build trap that masked the fix as a "scraper bug."
+- `c878f52`, `e3b6d12` — branch-retirement records for the two landed branches.
+- On the parked `feat/hrv-node-dump`: `b66d34b` read-only node-dump instrumentation
+  (used this session to prove the phantom from real nodes; rebased onto master).
+
+### On-device verification (this session)
+Rebuilt from `feat/hrv-node-dump`, dex-gated the **installed** APK
+(`findByIdValidBounds` PRESENT), ran a live extraction: logcat
+`findByIdValidBounds(last_shrv): 2 matches, chose … text="Average: 97 ms"` →
+POST `hrv_ms:97` → `Synced 1 reading(s)` → Room row `2026-07-11 = 97.0, synced=1`.
+Standalone release build proven Metro-independent (loads with Metro killed).
 
 ### Branch dispositions (terminal state)
-- `chore/propagate-empirical-specificity` — **merged+deleted** (`--ff-only`,
-  pushed, local branch deleted).
-- `fix/hrv-capture-regression` — **parked** in `BRANCHES.md`, untouched this
-  session (holds the #8 D2 guard-proof test; unblocks on the firewall-gap
-  session, Brief 1).
-- `fix/scraper-sh-relayout` — **parked** in `BRANCHES.md`, untouched this
-  session (SH scraper UI relayout; 3 unpushed local commits pending Luke's
-  review; unblocks on that review).
+- `fix/scraper-sh-relayout` — **merged+deleted** (code landed as `1db8833`/#19;
+  byte-identical upstream). Recorded in `BRANCHES.md`.
+- `chore/block-metro-debug-build` — **merged+deleted** (clean `--ff-only` → `db6f50e`).
+  Recorded in `BRANCHES.md`.
+- `feat/hrv-node-dump` — **parked** in `BRANCHES.md` (+1 vs origin/master, `b66d34b`
+  instrumentation); disposition pending day-lag verification.
+- `fix/hrv-capture-regression` — **parked** in `BRANCHES.md`, untouched this session.
 
 ### Decisions
-No new DECISIONS_LOG entry — this session is a verbatim propagation of an
-existing health-app rule, not a new decision (per the brief's explicit
-`LOG: None`). DECISIONS_LOG max remains **#18**.
+- **#19** appended — Energy-score reads select first valid-bounds node (phantom-duplicate
+  fix); supersedes #12 (value-read portion). Renumbered from the stale branch `#16`.
+  DECISIONS_LOG max is now **#19**.
 
-### ⚠ Carried forward — top structural debt (UNTOUCHED)
-HRV context firewall still LIVE-UNBACKED (Decision #8 D2): `src/contract/` has no
-`CaptureSource`/`CaptureContext` enum; the HRV path landed without the #6 firewall.
-Also open: Q4 HC date-attribution root cause. #18's Postgres verification
-(non-null `source_package` rows post-deploy) is still owed — not touched this
-session.
+### Open (carried forward)
+- **Q4 — day-lag / read-freshness** (OPEN_QUESTIONS): #19 fixed *selection*, not
+  freshness; verify by watching one real ~5am sync land today's value in Railway.
+- **Q5 — historical stale-row reconciliation** (τ-window bleed; e.g. `2026-07-09=117`).
+- Pre-existing structural debt **UNTOUCHED**: HRV context firewall #8 D2 unbacked
+  (`src/contract/` has no `CaptureSource`/`CaptureContext`); #18 Postgres
+  `source_package` gate still owed; Q4 HC date-attribution root cause.
 
 ### Next action
-Close the HRV context firewall gap (#8 D2) — (1) add
-`CaptureSource`/`CaptureContext` enum to `src/contract/`, (2) stamp context in
-`HRVCaptureModule.kt` event payload, (3) verify D2 — unblocks
-`feat/hrv-capture`/C3 and pairs with the `fix/hrv-capture-regression` triage.
-Separately: verify #18's Postgres gate after the next real device sync, and
-review/land or discard `fix/scraper-sh-relayout`'s 3 unpushed commits.
+Watch ONE real overnight/~5am sync land today's HRV value in Railway (Postgres
+query, not on-device UI) on the fixed standalone build — resolves Q4 day-lag and
+unblocks `feat/hrv-node-dump` disposition. The standalone release build made this
+session is what makes that unattended capture possible.

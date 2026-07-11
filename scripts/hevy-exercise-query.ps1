@@ -54,10 +54,15 @@ if ($found.Count -eq 0) {
   return
 }
 
+# Out-String -Width forces a wide virtual render so a narrow console can't
+# squeeze/truncate the last column (else primary_muscle_group wraps to one
+# char per line under Format-Table -AutoSize).
 $found |
   Select-Object title, id, type, primary_muscle_group |
   Sort-Object title |
-  Format-Table -AutoSize
+  Format-Table -AutoSize |
+  Out-String -Width 4096 |
+  Write-Host
 
 Write-Host ""
 Write-Host ("{0} template(s) matched '*{1}*'." -f $found.Count, $Search)

@@ -68,54 +68,52 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
-**Branch:** `master` (trunk)  
-**Closed:** 2026-07-11 (HRV phantom-selector fix landed + on-device verified; Metro-guard codified)
+**Branch:** `master` (trunk, via `claude/hevy-api-exercise-query-hc8zgh`)  
+**Closed:** 2026-07-11 (Hevy exercise-template query tool — a small utility session, concurrent with the HRV phantom-selector session)
 
 ### This session — landed on master
-- `1db8833` — **fix(scraper): select valid-bounds Energy-score node, not `firstOrNull` phantom.**
-  Landed the fortnight-old fix from unmerged `fix/scraper-sh-relayout`: the three
-  Energy-score reads (HRV/HR/RR) now use `findByIdValidBounds` (first match with
-  `right > left`), skipping the duplicate negative-width phantom node. DECISIONS_LOG
-  entry renumbered stale `#16` → **#19** at merge (master had spent #16–#18).
-- `db6f50e` — **chore(build): codify standalone-release-only; block Metro debug installs.**
-  PreToolUse hook `.claude/hooks/block-metro-build.cjs` (+ `npm run android` → release,
-  `npm run android:dev` = debug opt-in, FEEDBACK entry). Closes the recurring
-  Metro-dependent-debug-build trap that masked the fix as a "scraper bug."
-- `c878f52`, `e3b6d12` — branch-retirement records for the two landed branches.
-- On the parked `feat/hrv-node-dump`: `b66d34b` read-only node-dump instrumentation
-  (used this session to prove the phantom from real nodes; rebased onto master).
+- `88652fb` — **feat(scripts): reusable Hevy exercise-template title query** (PR #8).
+  New `scripts/hevy-exercise-query.ps1`: paginates `GET /v1/exercise_templates`
+  (pageSize 100), filters client-side on a case-insensitive title substring
+  (`-Search`, default `Pallof`), prints title / id / type / primary_muscle_group +
+  a count. Key from `$env:HEVY_API_KEY` with a clear unset error. Generalises the
+  ad-hoc Pallof lookup; `$found` accumulator avoids shadowing the automatic
+  `$Matches`.
+- `536c2dd` — **fix(scripts): render Hevy query table at full width** (PR #9).
+  `Format-Table -AutoSize` truncated the last column under a narrow console
+  (`primary_muscle_group` wrapped one char per line); piped through
+  `Out-String -Width 4096 | Write-Host` to force a wide virtual render.
 
-### On-device verification (this session)
-Rebuilt from `feat/hrv-node-dump`, dex-gated the **installed** APK
-(`findByIdValidBounds` PRESENT), ran a live extraction: logcat
-`findByIdValidBounds(last_shrv): 2 matches, chose … text="Average: 97 ms"` →
-POST `hrv_ms:97` → `Synced 1 reading(s)` → Room row `2026-07-11 = 97.0, synced=1`.
-Standalone release build proven Metro-independent (loads with Metro killed).
+### On-device / live verification (this session)
+Run on Luke's Windows box against the live Hevy API: two Pallof templates returned —
+`Anti‑Rotation Pallof Press` (`12b590de-078b-411d-ac22-dce2cf745ad0`) and
+`Cable Core Pallof Press` (`CC55119B`), both `weight_reps` / `abdominals`. The
+full-width fix (#9) was confirmed on a second run: `primary_muscle_group` renders
+`abdominals` in full, no truncation. (This container is Linux with the Hevy host
+off its egress allowlist — the tool could only be exercised on-device.)
 
 ### Branch dispositions (terminal state)
-- `fix/scraper-sh-relayout` — **merged+deleted** (code landed as `1db8833`/#19;
-  byte-identical upstream). Recorded in `BRANCHES.md`.
-- `chore/block-metro-debug-build` — **merged+deleted** (clean `--ff-only` → `db6f50e`).
-  Recorded in `BRANCHES.md`.
-- `feat/hrv-node-dump` — **parked** in `BRANCHES.md` (+1 vs origin/master, `b66d34b`
-  instrumentation); disposition pending day-lag verification.
-- `fix/hrv-capture-regression` — **parked** in `BRANCHES.md`, untouched this session.
+- `claude/hevy-api-exercise-query-hc8zgh` — feature **merged+deleted** (PR #8
+  `88652fb`, PR #9 `536c2dd`, both rebase-merged; remote branch auto-deleted).
+  Name reused to carry this close-out; `BRANCHES.md` row removed.
+- `feat/hrv-node-dump`, `fix/hrv-capture-regression` — **parked** in `BRANCHES.md`,
+  untouched this session.
 
 ### Decisions
-- **#19** appended — Energy-score reads select first valid-bounds node (phantom-duplicate
-  fix); supersedes #12 (value-read portion). Renumbered from the stale branch `#16`.
-  DECISIONS_LOG max is now **#19**.
+No new DECISIONS_LOG entry — a utility script embodies no architecture decision.
+DECISIONS_LOG max remains **#19** (unchanged; #19 landed in the concurrent HRV session).
 
-### Open (carried forward)
+### Open (carried forward — UNTOUCHED this session)
 - **Q4 — day-lag / read-freshness** (OPEN_QUESTIONS): #19 fixed *selection*, not
   freshness; verify by watching one real ~5am sync land today's value in Railway.
 - **Q5 — historical stale-row reconciliation** (τ-window bleed; e.g. `2026-07-09=117`).
-- Pre-existing structural debt **UNTOUCHED**: HRV context firewall #8 D2 unbacked
+- Structural debt still standing: HRV context firewall #8 D2 unbacked
   (`src/contract/` has no `CaptureSource`/`CaptureContext`); #18 Postgres
   `source_package` gate still owed; Q4 HC date-attribution root cause.
 
 ### Next action
-Watch ONE real overnight/~5am sync land today's HRV value in Railway (Postgres
-query, not on-device UI) on the fixed standalone build — resolves Q4 day-lag and
-unblocks `feat/hrv-node-dump` disposition. The standalone release build made this
-session is what makes that unattended capture possible.
+Unchanged from the HRV session, still the top priority: watch ONE real
+overnight/~5am sync land today's HRV value in Railway (Postgres query, not
+on-device UI) on the fixed standalone build — resolves Q4 day-lag and unblocks
+`feat/hrv-node-dump` disposition. Housekeeping: rotate the Hevy API key (exposed
+in a chat transcript this session).

@@ -246,7 +246,6 @@ export default function SyncScreen({ token, username, onLogout }) {
               />
             ))}
             <ResultRow t={t} label="if DEEP=5" value={`${gate.deepIfConst5.segments} seg · ${gate.deepIfConst5.totalMin}m`} />
-            <ResultRow t={t} label="if DEEP=4" value={`${gate.deepIfConst4.segments} seg · ${gate.deepIfConst4.totalMin}m`} />
 
             <Text style={[styles.sectionHeader, { color: t.subtext }]}>
               GATE 2 — SLIVER SURVIVAL

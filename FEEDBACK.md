@@ -22,6 +22,29 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-07-13 — a "scraper broken" brief was really an app-process crash  [workflow]
+**Friction:** The brief diagnosed the dead HRV scraper as a selector mismatch (SH
+relayout) and scoped a node-dump build to prove it. The device falsified that: SH
+unchanged since 2026-06-24, and the already-present `nodedump.txt` showed the scraper
+walking every screen and extracting HRV/HR/RR cleanly as recently as 07-12 05:51. The
+real cause was a JS render crash — `SyncScreen` read `gate.deepIfConst4`, which
+`validateNight` no longer returns — that killed the RN process and, with it, the
+co-hosted `HRVAccessibilityService` (framework marked it `Crashed services`). A reboot
+rebound the service, masking the bug. Two things generalise: (1) **a scraper
+"opens SH, no progression, timeout" symptom can be an app-process crash, not a
+selector problem** — check `dumpsys accessibility` `Crashed services` and the crash
+buffer before rebuilding the scraper; the a11y service shares the RN PID and dies with
+it. (2) **Parked-on-observation needs a liveness check.** `feat/hrv-node-dump` and
+`fix/hrv-capture-regression` were both parked on "empirical verification not yet run,"
+and that verification could not run because the app was crashing — a park whose unblock
+condition is silently unrunnable reads as "waiting" when it is actually "blocked."
+**Cost:** A full diagnostic pass chasing selectors before the device evidence redirected
+it; the fix itself was a one-line deletion (`e677f9e`).
+**Fix:** Before treating a scraper failure as a selector/relayout issue, adjudicate
+against the device first: SH `versionName`/`lastUpdateTime`, `dumpsys accessibility`
+Crashed-services state, and the crash buffer. Selector re-map is the response only once
+progression is confirmed reaching SH's tree. See [[uiautomator-blind-to-scraper-nodes]].
+
 ### 2026-07-11 — debug rebuilds keep re-installing a Metro-dependent APK  [workflow]
 **Friction:** Every time we rebuild to debug on-device, `npx expo run:android` (and the
 `npm run android` script) installed the **debug** variant, which loads its JS bundle from

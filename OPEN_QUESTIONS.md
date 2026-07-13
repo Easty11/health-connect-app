@@ -38,6 +38,13 @@ scrape reads the correct night at ~5am. Resolve only by watching ONE real
 overnight/morning sync land today's value in Railway (Postgres query, not
 on-device UI) on the fixed standalone release build. Blocks `feat/hrv-node-dump`
 disposition.
+**Now runnable (2026-07-13):** this verification was silently blocked — the
+scraper appeared "broken" (opened SH, no progression, timeout) but the real cause
+was a `SyncScreen` render crash killing the co-hosted accessibility service, not
+the scrape path (device-confirmed healthy: SH 7.00.0.107 unchanged since 06-24,
+full screen progression + HRV/HR/RR extraction as of 07-12 05:51). Fixed
+`e677f9e`; service rebound and scraping confirmed live post-reboot. Q4 stays
+PENDING but the overnight sync can now actually run.
 
 ### Q5 — Historical stale-row reconciliation (τ-window bleed)  ·  PENDING
 Pre-fix phantom values already POSTed and persisted are NOT reconciled — e.g. the

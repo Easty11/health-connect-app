@@ -68,52 +68,67 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
-**Branch:** `master` (trunk, via `claude/hevy-api-exercise-query-hc8zgh`)  
-**Closed:** 2026-07-11 (Hevy exercise-template query tool — a small utility session, concurrent with the HRV phantom-selector session)
+**Branch:** `master` (trunk)  
+**Closed:** 2026-07-13 (HRV-scraper failure diagnosed to a SyncScreen crash; one-line fix landed)
 
 ### This session — landed on master
-- `88652fb` — **feat(scripts): reusable Hevy exercise-template title query** (PR #8).
-  New `scripts/hevy-exercise-query.ps1`: paginates `GET /v1/exercise_templates`
-  (pageSize 100), filters client-side on a case-insensitive title substring
-  (`-Search`, default `Pallof`), prints title / id / type / primary_muscle_group +
-  a count. Key from `$env:HEVY_API_KEY` with a clear unset error. Generalises the
-  ad-hoc Pallof lookup; `$found` accumulator avoids shadowing the automatic
-  `$Matches`.
-- `536c2dd` — **fix(scripts): render Hevy query table at full width** (PR #9).
-  `Format-Table -AutoSize` truncated the last column under a narrow console
-  (`primary_muscle_group` wrapped one char per line); piped through
-  `Out-String -Width 4096 | Write-Host` to force a wide virtual render.
+- `e677f9e` — **fix(sync): drop stale `gate.deepIfConst4` row crashing SyncScreen.**
+  `SyncScreen.js:249` rendered `gate.deepIfConst4.segments`, but `validateNight`
+  stopped returning `deepIfConst4` when the deep-sleep gate consolidated to DEEP=5
+  as the single source (`deepSleepConfidence.js:163`). The undefined access threw
+  `TypeError: Cannot read property 'segments' of undefined`, crashing the RN
+  process — which killed the co-hosted `HRVAccessibilityService` (framework marked
+  it `Crashed services`), so the HRV scraper opened Samsung Health but processed no
+  frames and timed out until a reboot rebound the service. One-line deletion;
+  every remaining `gate.*` access verified against the `validateNight` contract.
+
+### Diagnosis (device-adjudicated) — the brief's premise was falsified
+The brief hypothesised a selector mismatch / SH relayout. The device disproved it:
+- SH `7.00.0.107`, `lastUpdateTime 2026-06-24` — unchanged since *before* the last
+  known-good scrape.
+- The on-device `nodedump.txt` (from the parked `feat/hrv-node-dump` instrumentation)
+  held 4 complete runs through 07-12 05:51, each walking all six states and
+  extracting HRV/HR/RR with valid bounds (#19's phantom skip working).
+- `dumpsys accessibility` → `Crashed services:{{…HRVAccessibilityService}}`; crash
+  buffer → the `SyncScreen` JS fatal at 07-12 05:52:53.
+- Post-reboot confirmation: `Crashed services:{}`, fresh dump frames 07-13 21:49 —
+  scraping healthy again. Root cause was app-process stability, never selectors.
 
 ### On-device / live verification (this session)
-Run on Luke's Windows box against the live Hevy API: two Pallof templates returned —
-`Anti‑Rotation Pallof Press` (`12b590de-078b-411d-ac22-dce2cf745ad0`) and
-`Cable Core Pallof Press` (`CC55119B`), both `weight_reps` / `abdominals`. The
-full-width fix (#9) was confirmed on a second run: `primary_muscle_group` renders
-`abdominals` in full, no truncation. (This container is Linux with the Hevy host
-off its egress allowlist — the tool could only be exercised on-device.)
+Read-only adjudication on SM-S921B (`RFCX108PF1J`): SH version query, `dumpsys
+accessibility` bound/crashed state, crash-buffer stack, and the pulled `nodedump.txt`
+(4 runs). Post-reboot: service rebound and a fresh 07-13 21:49 capture confirmed the
+scrape path live. The landed fix itself is a stale-ref deletion validated statically
+against the `validateNight` return contract; not yet exercised via an on-device render
+(would require a standalone rebuild replacing the working build) — carried as optional.
 
 ### Branch dispositions (terminal state)
-- `claude/hevy-api-exercise-query-hc8zgh` — feature **merged+deleted** (PR #8
-  `88652fb`, PR #9 `536c2dd`, both rebase-merged; remote branch auto-deleted).
-  Name reused to carry this close-out; `BRANCHES.md` row removed.
-- `feat/hrv-node-dump`, `fix/hrv-capture-regression` — **parked** in `BRANCHES.md`,
-  untouched this session.
+- `fix/syncscreen-deepifconst4-crash` — **merged+deleted** (`e677f9e`, ff-only onto
+  `origin/master`, pushed; local branch deleted). Not in `BRANCHES.md` — terminal.
+- `feat/hrv-node-dump` — **parked** in `BRANCHES.md`; `cherry` `+` (`b66d34b`, ahead 1).
+  Read-only inspected this session (its `nodedump.txt` cracked the diagnosis); no work
+  committed to it. Row updated: day-lag verification is now UNBLOCKED by this fix.
+- `fix/hrv-capture-regression` — **parked** in `BRANCHES.md`; `cherry` mixed `-/+`
+  (fix itself upstream by patch; test commits ahead). Untouched this session.
 
 ### Decisions
-No new DECISIONS_LOG entry — a utility script embodies no architecture decision.
-DECISIONS_LOG max remains **#19** (unchanged; #19 landed in the concurrent HRV session).
+No new DECISIONS_LOG entry — this was diagnosis + a bug fix, no architecture decision
+(the fix embodies none). DECISIONS_LOG max remains **#19**.
 
-### Open (carried forward — UNTOUCHED this session)
-- **Q4 — day-lag / read-freshness** (OPEN_QUESTIONS): #19 fixed *selection*, not
-  freshness; verify by watching one real ~5am sync land today's value in Railway.
+### Open (carried forward)
+- **Q4 — day-lag / read-freshness** (OPEN_QUESTIONS): **now runnable** — the blocker
+  was this session's crash, not the scraper. Verify by watching one real ~5am sync
+  land today's value in Railway.
 - **Q5 — historical stale-row reconciliation** (τ-window bleed; e.g. `2026-07-09=117`).
 - Structural debt still standing: HRV context firewall #8 D2 unbacked
   (`src/contract/` has no `CaptureSource`/`CaptureContext`); #18 Postgres
   `source_package` gate still owed; Q4 HC date-attribution root cause.
+- Uncommitted, unrelated, left in tree: `src/healthConnect.js` (steps `sourcePackage`),
+  untracked `checkin_build_brief.md` / `hevy_routine.json` / `nodedump.txt`
+  (stray-artifact policy #9). Not this session's concern; preserved, not staged.
 
 ### Next action
-Unchanged from the HRV session, still the top priority: watch ONE real
-overnight/~5am sync land today's HRV value in Railway (Postgres query, not
-on-device UI) on the fixed standalone build — resolves Q4 day-lag and unblocks
-`feat/hrv-node-dump` disposition. Housekeeping: rotate the Hevy API key (exposed
-in a chat transcript this session).
+Watch ONE real overnight/~5am sync land today's HRV value in Railway (Postgres query,
+not on-device UI) on the standalone build — now unblocked by `e677f9e`; resolves Q4
+day-lag and unblocks `feat/hrv-node-dump` disposition. Housekeeping still owed:
+rotate the Hevy API key (exposed in a chat transcript on 2026-07-11).

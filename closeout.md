@@ -1,57 +1,61 @@
-# closeout.md — health-connect-app
+# closeout — health-connect-app
 
 ## Commits this session
-
-Session-open ref was `c8be2fa` (`origin/master` at open). This was a small
-utility session (the Hevy exercise-template query tool), running concurrently
-with the larger HRV phantom-selector session whose commits also landed on
-master in the same window. This session's own work, both merged to master:
-
 ```
-536c2dd fix(scripts): render Hevy query table at full width          (PR #9)
-88652fb feat(scripts): reusable Hevy exercise-template title query   (PR #8)
+e677f9e fix(sync): drop stale gate.deepIfConst4 row crashing SyncScreen
 ```
+Landed on `master`, ff-only onto `origin/master`, pushed (`7efd79a..e677f9e`).
+(The `7efd79a` / `536c2dd` commits beneath it are the concurrent Hevy session's,
+pre-existing on origin and pulled in via fast-forward during the land — not this
+session's authored work.)
 
-Concurrent (other-session) commits that landed on master in the same window,
-NOT this session's work: `8055670` (HRV session close-out), `e3b6d12`,
-`db6f50e`, `c878f52`, `1db8833`.
-
-Both PRs rebase-merged (linear history); remote branch auto-deleted on each
-merge. The close-out itself commits on `claude/hevy-api-exercise-query-hc8zgh`
-(name reused off current master) since direct master pushes are out of scope
-for this session.
+The close-out commit itself (governance stores below) lands after this file is written.
 
 ## PENDING reconciliation
+The chat handoff (brief) carried no DECISIONS_LOG PENDING items — it was scoped as
+diagnosis. Its three non-code asks are reconciled:
 
-No `;cc` pending-commit queue was carried into this session — it was driven by
-a pasted ad-hoc Hevy query, not a chat close-out payload. Nothing to reconcile.
+- **DECISIONS_LOG: None** — brief said so; upheld. Diagnosis + a one-line bug fix
+  embody no architecture decision. Max remains **#19**. Nothing to land.
+- **BRANCHES.md dependency correction (feat/hrv-node-dump "circular unblocks-on")** —
+  addressed, but NOT as the brief framed it. The brief called the dependency circular
+  ("an overnight sync can't run while the scraper is broken"). The device falsified the
+  premise: the scraper was never broken (SH unchanged; full extraction as of 07-12
+  05:51). The blocker was the `SyncScreen` crash, fixed this session (`e677f9e`), so the
+  overnight sync is now runnable. Row updated to record that + the dump's proven
+  diagnostic worth. **Landed** in `BRANCHES.md`.
+- **FEEDBACK (2 items: scraper-symptom-was-app-crash; parked-on-observation needs a
+  liveness check)** — **landed** as the 2026-07-13 `FEEDBACK.md` entry.
+
+Provisional / still owed (not resolvable this session):
+- On-device render verification of the fix — deferred (would need a standalone rebuild
+  replacing the working build). Fix validated statically against the `validateNight`
+  contract.
+- Q4 day-lag overnight sync — now unblocked, not yet run.
 
 ## Cold-resume handoff
+**Branch:** `master` (clean, 0/0 with origin). Working tree carries only unrelated,
+unstaged work (`src/healthConnect.js` steps `sourcePackage`; untracked
+`checkin_build_brief.md` / `hevy_routine.json` / `nodedump.txt` — stray-artifact
+policy #9). Left untouched.
 
-**State:** master `536c2dd`. DECISIONS_LOG max **#19** (unchanged this session).
+**What landed:** `e677f9e` — removed the stale `gate.deepIfConst4` render in
+`SyncScreen.js` that crashed the RN process and took the co-hosted HRV accessibility
+service down with it (the "scraper opens SH, no progression, timeout" symptom). The
+scraper itself was device-confirmed healthy throughout; this was app-process stability,
+never a selector mismatch.
 
-- Landed: `scripts/hevy-exercise-query.ps1` — a reusable, parameterized Hevy
-  exercise-template title-query (PR #8) plus a full-width render fix (PR #9).
-  Verified on-device against the live Hevy API (two Pallof templates returned,
-  both `abdominals`; full-width fix confirmed). Not runnable from this container —
-  Linux, no PowerShell, and the Hevy host is off the egress allowlist.
+**Branch terminal states:** `fix/syncscreen-deepifconst4-crash` merged+deleted.
+`feat/hrv-node-dump` (cherry `+`, ahead 1) and `fix/hrv-capture-regression` (test
+commits ahead) both parked in `BRANCHES.md`.
 
-**Governance stores changed this session:** `ROADMAP` (sprint block regenerated),
-`BRANCHES` (merged Hevy row removed). No `DECISIONS_LOG` / `OPEN_QUESTIONS` /
-`FEEDBACK` change — a utility script is no decision, no defect, no new friction.
+**Open questions:** Q1 (SDK-migration trigger), Q2 (native scrape→DB persisted-row),
+Q4 (day-lag freshness — now runnable), Q5 (historical stale-row reconciliation) all
+PENDING. Q3 resolved. Structural debt standing: #8 D2 HRV context firewall unbacked;
+#18 Postgres `source_package` gate owed; Q4 HC date-attribution root cause.
 
-**Branch state:** `claude/hevy-api-exercise-query-hc8zgh` feature work
-merged+deleted (PR #8/#9); name reused for this close-out (open PR). Parked
-branches `feat/hrv-node-dump` and `fix/hrv-capture-regression` untouched, both
-in `BRANCHES.md`. No branch in undefined limbo.
-
-**Open questions (OPEN_QUESTIONS.md, unchanged this session):** Q1 (SH-relayout
-cadence vs #12 SDK-migration trigger), Q2 (native HRV scrape end-to-end to DB),
-Q4 (HRV day-lag / read-freshness), Q5 (historical stale-row reconciliation) —
-all PENDING. Q3 resolved 2026-07-11 in the HRV session.
-
-**Single clearest next action:** Unchanged top priority from the HRV session —
-watch ONE real overnight/~5am sync land today's HRV value in Railway (Postgres
-query, not on-device UI) on the fixed standalone build; resolves Q4 day-lag and
-unblocks `feat/hrv-node-dump` disposition. Housekeeping owed by Luke: rotate the
-Hevy API key (exposed in this session's chat transcript).
+**Single clearest next action:** Watch ONE real overnight/~5am HRV sync land today's
+value in Railway (Postgres query, not on-device UI) on the standalone build — now
+unblocked by `e677f9e`. Resolves Q4 day-lag and unblocks the `feat/hrv-node-dump`
+keep-behind-a-flag-vs-strip disposition. Housekeeping still owed: rotate the Hevy API
+key exposed in a chat transcript on 2026-07-11.

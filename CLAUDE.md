@@ -45,7 +45,7 @@ report; never land on it.
 | Store | Holds | Discipline |
 |-------|-------|-----------|
 | `DECISIONS_LOG.md` | Architecture decisions | Append-only. Supersede via a new entry that references the superseded number. Never edit a locked entry in place. |
-| `OPEN_QUESTIONS.md` | Undecided forks, unverified-at-machine items | One status per item: `open` / `verifying` / `resolved → #`. |
+| `OPEN_QUESTIONS.md` | Undecided forks, unverified-at-machine items | One status per item, from the four states — see **State vocabulary** below; that section is the sole definition. `DONE → #N` names the decision that resolved the question, as `DONE` names its SHA in `BRANCHES.md`. |
 | `ROADMAP.md` | Current sprint + horizon | Mutable. Code updates it at close-out. |
 | `FEEDBACK.md` | Behavioural corrections and standing rules | Repo-canonical. Code reads it at session start. The project-knowledge copy is a refreshed mirror, not the master. |
 | `ptb-tasks` (external board) | Task status | Single live board. Mutable. Referenced by task ID — never mirrored into the repo. |
@@ -62,8 +62,10 @@ Four states, exhaustive, no fifth. Applies to `BRANCHES.md` Status, `OPEN_QUESTI
 
 - **DONE** — landed on master (SHA) or applied to a named UI file. Nothing further required by
   anyone.
-- **BLOCKED** — cannot proceed; names the blocker and its owner.
-- **OWED** — work finished, loop not closed; names the exact command or check outstanding.
+- **BLOCKED** — cannot proceed; names the blocker and its owner. A trigger for when work
+  becomes *worth* doing is not a blocker on its being *possible* — that is UNSTARTED.
+- **OWED** — work or decision settled, loop not closed; names the exact command or check
+  outstanding.
 - **UNSTARTED** — untouched.
 
 No "in progress": half-done work is **BLOCKED** (has a blocker) or **UNSTARTED** (doesn't).

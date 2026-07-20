@@ -22,6 +22,59 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-07-20 — propagation is not parity  [ritual]
+**Friction:** #16 established the shared loop-rules block in this repo and #17 re-mirrored
+it back to health-app, yet this repo's own `OPEN_QUESTIONS.md` and `BRANCHES.md` went on
+carrying `PENDING`, `parked` and `retired` — labels the block never sanctioned. The block
+was byte-identical the whole time; the stores it governs were not swept.
+**Cost:** Two further sessions read and wrote a vocabulary no rule licensed, and a
+third (this one) was needed to sweep it.
+**Fix:** Copying a rules block does not adopt the rules. Adoption is complete only when
+every store the block governs has been swept to it — treat a propagation commit as
+unfinished until that sweep runs, and name the stores in the same session.
+
+### 2026-07-20 — a brief's ANCHOR was read as observed state, and wasn't  [chat]
+**Friction:** The brief's ANCHOR stated the branch `gov/branches-vocabulary` was "cut from
+master" and the tree clean. Neither was true — the branch did not exist locally or on
+origin, and `src/healthConnect.js` was modified. Written in the declarative, an ANCHOR
+reads as an attestation the author cannot make: chat has not seen the tree. Phase 1 had
+the same shape and only survived because that session happened to cut the branch first.
+**Cost:** A halted gate and a round trip before any work began. Cheap here; the same
+pattern silently passing is the expensive version.
+**Fix:** ANCHOR separates required state from how to reach it, and names which failures
+are hard stops. Only the repo root is a genuine hard stop; a missing branch is cut, not
+halted on. The "clean tree" line reads "clean except known untracked strays." Corollary
+already standing: a statement about a surface chat cannot read is an instruction to
+verify, never a report of fact.
+
+### 2026-07-20 — barrier-vs-trigger, and which way to fail  [ritual]
+**Friction:** `fix/hrv-capture-regression` names a D2 firewall-gap dependency without
+settling whether that dependency prevents the work or merely makes it not-yet-worthwhile.
+The four-state rules said a trigger is not a blocker, but said nothing about the case
+where the evidence does not settle which one you have.
+**Cost:** None yet — caught at the gate. Untreated it produces false BLOCKED rows, which
+are the costly direction.
+**Fix:** Where the evidence does not settle barrier-vs-trigger, take UNSTARTED — the label
+that asserts less. The errors are asymmetric: a false BLOCKED tells a future reader not to
+try, while a false UNSTARTED just means someone picks the work up and discovers the
+dependency. Now in the shared block (#20). Keep the dependency in the row text as context,
+never as an assertion that the work is impossible.
+
+### 2026-07-20 — counting the word instead of counting the field  [chat]
+**Friction:** The brief reported this repo carrying "`PENDING` ×6". There were four
+PENDING rows: the count included the header's "stays PENDING until" and Q4's body text
+"Q4 stays PENDING". The same substitution has now produced wrong counts three times
+(health-app's 21/16/2, and this).
+**Cost:** Small individually — a scope figure wrong by two. Cumulatively it means every
+population figure in a brief has to be re-derived rather than trusted.
+**Fix:** Count the field, never the word, and check the total against the population
+before reporting. The failure is not carelessness but a substitution that feels
+equivalent: full-text search for a label looks like counting the label, and it is not —
+it counts prose, headers and cross-references too. Recurred twice after being written
+down, so the rule is not yet a rule. **Return trip:** health-app `FEEDBACK` §14 already
+carries the rule and needs this recurrence appended; it is unreachable from an
+HCA-rooted session (see #20, Q8).
+
 ### 2026-07-13 — a "scraper broken" brief was really an app-process crash  [workflow]
 **Friction:** The brief diagnosed the dead HRV scraper as a selector mismatch (SH
 relayout) and scoped a node-dump build to prove it. The device falsified that: SH

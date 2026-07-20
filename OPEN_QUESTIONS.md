@@ -85,6 +85,21 @@ through the aggregate row, the first-contributor path (`??=`), and the
 projection. Unreviewed and unlanded — owner Luke. A stash is a surface nothing
 points at; this row is what points at it. Recover with `git stash list`.
 
+### Q9 — Struck vocabulary survives outside the two swept stores  ·  UNSTARTED
+The #20 sweep covered `BRANCHES.md` and `OPEN_QUESTIONS.md`, and the exit-condition
+grep returns zero across both. But the shared block names `ROADMAP.md` and close-outs
+as governed too, and two surfaces still carry the struck dialect:
+1. **`ROADMAP.md`'s work queue** above the sprint block — `Q2 … RESOLVED`, `parked`,
+   `Blocked on`. Prose in places, labels in others; needs reading, not a regex.
+2. **The `/closeout` command definition itself**, which instructs a
+   "purpose / why-parked / unblocks-on" column set for `BRANCHES.md` and a
+   "PENDING queue" reconciliation section.
+(2) is the higher priority and the reason this is a row rather than a footnote: a ritual
+definition that teaches the dead dialect re-emits it every session, re-creating exactly
+the drift #20 just removed. It is also the command that regenerates the sprint block, so
+it writes to a governed store on every run. Sweeping it was outside this brief's scope
+fence; doing it unbidden on a ritual definition is not Code's call.
+
 ### Q8 — Shared loop-rules block parity is inverted; health-app return trip  ·  OWED
 This session amended the shared block *here* (barrier-vs-trigger tie-break), so
 HCA is now ahead of health-app rather than mirroring it:

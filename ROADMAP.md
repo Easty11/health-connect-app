@@ -69,66 +69,67 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 ## Sprint block
 
 **Branch:** `master` (trunk)  
-**Closed:** 2026-07-13 (HRV-scraper failure diagnosed to a SyncScreen crash; one-line fix landed)
+**Closed:** 2026-07-20 (HCA vocabulary parity — #91's four-state set adopted; `HANDOFF.md` established)
 
-### This session — landed on master
-- `e677f9e` — **fix(sync): drop stale `gate.deepIfConst4` row crashing SyncScreen.**
-  `SyncScreen.js:249` rendered `gate.deepIfConst4.segments`, but `validateNight`
-  stopped returning `deepIfConst4` when the deep-sleep gate consolidated to DEEP=5
-  as the single source (`deepSleepConfidence.js:163`). The undefined access threw
-  `TypeError: Cannot read property 'segments' of undefined`, crashing the RN
-  process — which killed the co-hosted `HRVAccessibilityService` (framework marked
-  it `Crashed services`), so the HRV scraper opened Samsung Health but processed no
-  frames and timed out until a reboot rebound the service. One-line deletion;
-  every remaining `gate.*` access verified against the `validateNight` contract.
+### This session — landed on master (`271abdd`)
+Governance only. Six files, no `app/`, no scraper source, no build config.
+- `e28e40f` — **HANDOFF.md established here.** Closes the interruption-ledger asymmetry
+  #88 left when it scoped that file to health-app only; the single-repo rule makes
+  health-app's unreachable from an HCA-rooted session. Header convention copied from
+  health-app `9fa18cc`; first entry is the CHAT→CODE receipt, written before any work.
+- `c6daa92` — **shared loop-rules block re-mirrored** from health-app `9fa18cc`, carrying
+  #91's four-state vocabulary. Index content verified byte-identical at
+  153 lines / 10080 bytes / md5 `9436cb22…`, `cmp` clean against the fetched source.
+- `4fa44e6` — **barrier/trigger tie-break added** to the block: where evidence does not
+  settle whether a dependency is a barrier or a trigger, the row is UNSTARTED.
+- `f15b545` — **`BRANCHES.md` swept**; `claude/hevy-api-workout-query-teulc2` rowed.
+- `0f7ff89` — **`OPEN_QUESTIONS.md` swept**; Q6–Q8 added.
+- `3547e72` — **DECISIONS_LOG #20.**
+- `7aa06bb` — **FEEDBACK ×4.**
+- `271abdd` — HANDOFF CODE→CHAT entry.
 
-### Diagnosis (device-adjudicated) — the brief's premise was falsified
-The brief hypothesised a selector mismatch / SH relayout. The device disproved it:
-- SH `7.00.0.107`, `lastUpdateTime 2026-06-24` — unchanged since *before* the last
-  known-good scrape.
-- The on-device `nodedump.txt` (from the parked `feat/hrv-node-dump` instrumentation)
-  held 4 complete runs through 07-12 05:51, each walking all six states and
-  extracting HRV/HR/RR with valid bounds (#19's phantom skip working).
-- `dumpsys accessibility` → `Crashed services:{{…HRVAccessibilityService}}`; crash
-  buffer → the `SyncScreen` JS fatal at 07-12 05:52:53.
-- Post-reboot confirmation: `Crashed services:{}`, fresh dump frames 07-13 21:49 —
-  scraping healthy again. Root cause was app-process stability, never selectors.
+### G1 breached by our own hand — this repo is authoritative for the block
+The tie-break was added from a session that could not reach health-app, so the two repos
+now hold different blocks: HCA 155/10232/`4243c91c…` vs health-app `9fa18cc`
+153/10080/`9436cb22…`. Recorded in #20 itself (append-only) as well as Q8, because a
+mutable store is the wrong home for a breached core invariant. Discharged only by the
+return trip.
 
-### On-device / live verification (this session)
-Read-only adjudication on SM-S921B (`RFCX108PF1J`): SH version query, `dumpsys
-accessibility` bound/crashed state, crash-buffer stack, and the pulled `nodedump.txt`
-(4 runs). Post-reboot: service rebound and a fresh 07-13 21:49 capture confirmed the
-scrape path live. The landed fix itself is a stale-ref deletion validated statically
-against the `validateNight` return contract; not yet exercised via an on-device render
-(would require a standalone rebuild replacing the working build) — carried as optional.
+### Vocabulary state
+Status **fields** — not word occurrences — across both swept stores: 2 BLOCKED / 3 DONE /
+4 OWED / 4 UNSTARTED = 13, reconciling against 5 branch rows + 8 question rows.
+Exit-condition grep for `PENDING|parked|retired|verifying|resolved|open` across
+`BRANCHES.md` + `OPEN_QUESTIONS.md` on `origin/master`: **zero matches.**
+Not yet swept, logged as Q9: this file's work queue above, and the `/closeout` command
+definition — which re-emits the struck dialect every session until amended.
 
 ### Branch dispositions (terminal state)
-- `fix/syncscreen-deepifconst4-crash` — **merged+deleted** (`e677f9e`, ff-only onto
-  `origin/master`, pushed; local branch deleted). Not in `BRANCHES.md` — terminal.
-- `feat/hrv-node-dump` — **parked** in `BRANCHES.md`; `cherry` `+` (`b66d34b`, ahead 1).
-  Read-only inspected this session (its `nodedump.txt` cracked the diagnosis); no work
-  committed to it. Row updated: day-lag verification is now UNBLOCKED by this fix.
-- `fix/hrv-capture-regression` — **parked** in `BRANCHES.md`; `cherry` mixed `-/+`
-  (fix itself upstream by patch; test commits ahead). Untouched this session.
+- `gov/branches-vocabulary` — **merged+deleted** (ff-only onto `origin/master` at
+  `271abdd`, pushed; local branch deleted). Terminal, so no `BRANCHES.md` row.
+- `feat/hrv-node-dump` — **BLOCKED** in `BRANCHES.md`. **Pushed to origin this session**
+  before rowing; its one commit (`b66d34b`) previously existed on local disk only.
+- `fix/hrv-capture-regression` — **UNSTARTED** in `BRANCHES.md` (was `parked`). Its D2
+  firewall-gap dependency is unsettled as barrier-or-trigger; the tie-break takes the
+  label that asserts less. Untouched otherwise.
+- `claude/hevy-api-workout-query-teulc2` — **OWED** in `BRANCHES.md`, rowed for the first
+  time. Origin-only; deletion is Luke's call, not Code's.
 
 ### Decisions
-No new DECISIONS_LOG entry — this was diagnosis + a bug fix, no architecture decision
-(the fix embodies none). DECISIONS_LOG max remains **#19**.
+**#20** minted (max was #19). Number claimed at merge per the number-at-merge rule.
 
 ### Open (carried forward)
-- **Q4 — day-lag / read-freshness** (OPEN_QUESTIONS): **now runnable** — the blocker
-  was this session's crash, not the scraper. Verify by watching one real ~5am sync
-  land today's value in Railway.
-- **Q5 — historical stale-row reconciliation** (τ-window bleed; e.g. `2026-07-09=117`).
-- Structural debt still standing: HRV context firewall #8 D2 unbacked
-  (`src/contract/` has no `CaptureSource`/`CaptureContext`); #18 Postgres
-  `source_package` gate still owed; Q4 HC date-attribution root cause.
-- Uncommitted, unrelated, left in tree: `src/healthConnect.js` (steps `sourcePackage`),
-  untracked `checkin_build_brief.md` / `hevy_routine.json` / `nodedump.txt`
-  (stray-artifact policy #9). Not this session's concern; preserved, not staged.
+- **Q4 — day-lag / read-freshness**: the one BLOCKED row. Blocker holds now.
+- **Q7 — #18's flat-`sourcePackage` contract unfulfilled in `aggregateSteps`.** The fix
+  is stashed at `stash@{0}`, unreviewed and unlanded; #18 is currently overstated on
+  master. The row exists so something points at the stash.
+- **Q8 — the G1 inversion + health-app return trip.** Last open item of the two-repo sweep.
+- Structural debt still standing: HRV context firewall #8 D2 unbacked; Q4 HC
+  date-attribution root cause.
+- Untracked, preserved, not staged: `checkin_build_brief.md`, `hevy_routine.json`,
+  `nodedump.txt` (the last is #19's consumed evidence, not a fresh artifact).
 
 ### Next action
-Watch ONE real overnight/~5am sync land today's HRV value in Railway (Postgres query,
-not on-device UI) on the standalone build — now unblocked by `e677f9e`; resolves Q4
-day-lag and unblocks `feat/hrv-node-dump` disposition. Housekeeping still owed:
+Watch ONE real overnight/~5am sync land today's HRV value in Railway (Postgres query, not
+on-device UI) on the standalone build — resolves Q4 and unblocks `feat/hrv-node-dump`.
+Then the health-app return trip (4 items, see `closeout.md`). Housekeeping still owed:
 rotate the Hevy API key (exposed in a chat transcript on 2026-07-11).

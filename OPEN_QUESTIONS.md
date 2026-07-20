@@ -136,13 +136,21 @@ had a source and sweeps downstream of a source are temporary. **Item (1) remains
 inert debt, carried rather than regenerated, which is why it outranks nothing.
 
 ### Q8 — Shared loop-rules block parity is inverted; health-app return trip  ·  OWED
-This session amended the shared block *here* (barrier-vs-trigger tie-break), so
-HCA is now ahead of health-app rather than mirroring it:
-health-app master `9fa18cc` = 153 lines / 10080 bytes / md5
-`9436cb223c4b601252152ab4fa6a3547`; HCA = 155 / 10232 / md5
-`4243c91ce78e0331ddfa5178aa3006b8`. Until re-mirrored, the two repos hold
-different blocks — the exact drift #1 exists to kill.
-**Outstanding, on a health-app-rooted session (single-repo rule forbids it from
-here) — owner Luke:** re-mirror the amended block to health-app, and set
-health-app `Q25` to `DONE → #91` now that
-`claude/hevy-api-workout-query-teulc2` carries a row here.
+#20 amended the shared block *here* (barrier-vs-trigger tie-break) from a session that
+could not reach health-app, leaving G1 breached with HCA ahead at 155/10232 against
+health-app `9fa18cc`'s 153/10080.
+**The G1 limb is DISCHARGED** (verified at #21's exit gate): both repos' blocks extracted
+independently, each asserted non-empty and ≥100 lines before comparison, both measuring
+155 lines / 10232 bytes / md5 `4243c91ce78e0331ddfa5178aa3006b8`, `cmp` identical. The
+tie-break clause arrived inside the block, so that limb needed no separate edit.
+**Still outstanding, on a health-app-rooted session (single-repo rule forbids it from
+here) — owner Luke, two items:**
+1. Set health-app `Q25` to `DONE → #91`. Q25's entire content was that
+   `claude/hevy-api-workout-query-teulc2` had no row in HCA's `BRANCHES.md`. It acquired
+   one on 2026-07-20 (`f15b545`), and **the operator deleted the branch from origin the
+   same day** — verified from here, `git ls-remote --heads origin` returns empty for that
+   ref. Both the omission Q25 records and the branch it records it about are gone, so Q25
+   resolves on sight; no investigation needed on the return trip.
+2. Append the count-the-field recurrence to health-app `FEEDBACK` §14 — it now has a
+   third instance (the brief's "77 lines" against an actual 80).
+See also Q11 for the two ritual/frame items on the same return trip.

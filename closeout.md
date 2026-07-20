@@ -79,12 +79,14 @@ Counted by **field**, not by word, with every extraction asserted non-empty firs
 
 | Store | DONE | BLOCKED | OWED | UNSTARTED | fields / rows |
 |---|---|---|---|---|---|
-| HCA `BRANCHES.md` | 2 | 1 | 1 | 1 | 5 / 5 |
+| HCA `BRANCHES.md` | 3 | 1 | 0 | 1 | 5 / 5 |
 | HCA `OPEN_QUESTIONS.md` | 1 | 1 | 4 | 5 | 11 / 11 |
 | health-app `BRANCHES.md` | 12 | 0 | 9 | 1 | 22 / 22 |
 | health-app `OPEN_QUESTIONS.md` | 11 | 2 | 5 | 14 | 32 / 32 |
 
 70 status fields against 70 rows. **Zero outside the four states in all four files.**
+(HCA `BRANCHES.md` re-counted after the post-close-out row flip below — the OWED row
+became DONE, so 2→3 DONE and 1→0 OWED.)
 The grep, run per store after extracting the Status *field* (column 3 of a `BRANCHES.md`
 row; the `·`-suffix of an HCA `### Qn` heading; the `**Status:**` lead in health-app):
 
@@ -113,7 +115,11 @@ This session did not touch `CLAUDE.md`; G1 was not re-breached.
 Items 1–4 carried from #20 (Q8); 5–6 added by #21 (Q11).
 
 1. ~~Re-mirror the shared block~~ — **DONE**, verified above. G1 discharged.
-2. **health-app `Q25` → `DONE → #91`** — its subject now carries a row here.
+2. **health-app `Q25` → `DONE → #91`** — resolves on sight, no investigation needed. Q25's
+   entire content was that `claude/hevy-api-workout-query-teulc2` had no row here. It got
+   one (`f15b545`), and **the operator deleted the branch from origin on 2026-07-20** —
+   verified from here, `git ls-remote --heads origin` empty for that ref. The omission and
+   the branch are both gone.
 3. ~~health-app `Q6` tie-break clause~~ — arrived inside the block. **DONE.**
 4. **health-app `FEEDBACK` §14** — append the count-the-field recurrence; §14 exists only
    there, and it now has a third instance (the "77" above).
@@ -131,7 +137,7 @@ Items 1–4 carried from #20 (Q8); 5–6 added by #21 (Q11).
 | Q5 | UNSTARTED | historical stale-row reconciliation |
 | Q6 | UNSTARTED | does `BRANCHES.md` retain DONE rows or drop them? |
 | Q7 | OWED | #18's flat-`sourcePackage` unfulfilled in `aggregateSteps` |
-| Q8 | OWED | return trip, items 2 and 4 |
+| Q8 | OWED | return trip items 2 and 4; **G1 limb discharged** |
 | Q9 | UNSTARTED | item 2 discharged by #21; item 1 (ROADMAP queue) open |
 | Q10 | UNSTARTED | the ritual's own ANCHOR still declarative-mood |
 | Q11 | OWED | health-app ritual `parked` + header frame; divergence ruled |

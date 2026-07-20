@@ -126,8 +126,13 @@ This session did not touch `CLAUDE.md`.
 ### Branch dispositions (terminal state)
 - `gov/ritual-vocabulary` — **merged+deleted** (ff-only at `347af28`, pushed; local
   deleted). Terminal, so no row.
-- `feat/hrv-node-dump` BLOCKED · `fix/hrv-capture-regression` UNSTARTED ·
-  `claude/hevy-api-workout-query-teulc2` OWED — all rowed, none touched this session.
+- `feat/hrv-node-dump` BLOCKED · `fix/hrv-capture-regression` UNSTARTED — rowed, neither
+  touched this session.
+- `claude/hevy-api-workout-query-teulc2` — **DONE → discarded 2026-07-20.** Deleted from
+  origin by the operator after the close-out was written; row flipped from OWED, with the
+  deletion verified from here (`git ls-remote --heads origin` empty for that ref) rather
+  than taken on report. **Discarded, not merged** — `4dfccbe` was `git cherry` `+` to the
+  end and nothing was salvaged.
 
 ### Decisions
 **#21** minted (max was #20). Number claimed at merge.

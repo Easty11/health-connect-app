@@ -293,3 +293,60 @@ confirming the chosen node had `right>left`. **Re-confirmed 11 Jul 2026** on
 cannot see the phantom (it filters `importantForAccessibility=false`); the service
 reads it via `FLAG_INCLUDE_NOT_IMPORTANT_VIEWS`. Backend rows from prior stale POSTs
 are not reconciled here (separate concern).
+
+### #20 — Four-state vocabulary adopted; `HANDOFF.md` established in this repo  ·  active
+**Decision:** The shared loop-rules block is re-mirrored from health-app `9fa18cc`,
+carrying #91's four-state vocabulary (DONE / BLOCKED / OWED / UNSTARTED) as the single
+vocabulary for `BRANCHES.md`, `OPEN_QUESTIONS.md`, `ROADMAP.md` and close-outs.
+`PENDING`, `parked` and `retired` are struck. `HANDOFF.md` is established here, closing
+the interruption-ledger asymmetry #88 left when it scoped that file to health-app only.
+The block is additionally amended here with a barrier-vs-trigger tie-break: where the
+evidence does not settle whether a dependency is a barrier or a trigger, the row is
+UNSTARTED, because a false BLOCKED tells a future reader not to try while a false
+UNSTARTED only means someone picks the work up and discovers the dependency.
+
+**G1 knowingly breached.** This session leaves G1 (shared block byte-identical across
+repos) breached by our own hand: HCA carries 155/10232/`4243c91ce78e0331ddfa5178aa3006b8`,
+health-app `9fa18cc` carries 153/10080/`9436cb223c4b601252152ab4fa6a3547`. The delta is
+the barrier/trigger tie-break, added here because this session could not reach health-app
+under the single-repo rule. Discharged by re-mirroring HCA→health-app, precedent #17.
+Until then **this repo is authoritative for the block.** Recorded here and not only in
+`OPEN_QUESTIONS` Q8 because that store is mutable and this one is append-only — the
+record must survive Q8 being swept, closed, or renumbered.
+
+**Standing rule for the shared block, either side:** Edit it only from a session that can
+reach both repos, or land the edit and its mirror as a paired obligation recorded in an
+append-only store before the session closes. An edit made where the mirror is unreachable
+guarantees divergence for as long as the return trip is outstanding.
+
+**Why:** A vocabulary holding in one repo and not the other is two dialects wearing one
+name — the exact drift #1 exists to kill. `PENDING` was this repo reaching for a state
+its sanctioned set could not express. And propagation is not adoption: #16 established
+the shared block here and #17 re-mirrored it back, yet this repo's own stores kept labels
+the block never sanctioned for two further sessions.
+
+**How you know:**
+- Shared block, index content (`git ls-files --eol CLAUDE.md` → `i/lf`, so the gate is on
+  LF bytes, not the CRLF worktree): fetched health-app `9fa18cc` block measured
+  153 lines / 10080 bytes / md5 `9436cb223c4b601252152ab4fa6a3547`, identical to the
+  staged HCA block after splice (`cmp` clean, commit `c6daa92`). Post-amendment
+  (`4fa44e6`): 155 / 10232 / `4243c91ce78e0331ddfa5178aa3006b8`, `diff` against source
+  showing the two added lines and nothing else.
+- Branch enumeration, local **and** remote, run before relabelling rather than trusting
+  the existing row set: locals `feat/hrv-node-dump`, `fix/hrv-capture-regression`,
+  `gov/branches-vocabulary`, `master`; remotes add
+  `claude/hevy-api-workout-query-teulc2`. That last carried no row — the omission
+  health-app Q25 records — and now has one. `feat/hrv-node-dump` was local-disk-only and
+  was pushed to origin before being rowed.
+- Out-of-vocabulary label sweep across both swept stores returns zero:
+  `grep -nEi '\b(PENDING|parked|retired|verifying|resolved|open)\b' BRANCHES.md OPEN_QUESTIONS.md`
+  → no matches. Status **fields** (not word occurrences) tally 2 BLOCKED / 3 DONE /
+  4 OWED / 4 UNSTARTED = 13, reconciling against a population of 5 branch rows + 8
+  question rows.
+- Q5 was ruled UNSTARTED against the brief's instruction to mark it BLOCKED: its row
+  names no blocker in its own content, and the overnight sync is a trigger for when
+  reconciliation becomes worth doing, not a barrier to settling the policy.
+
+**Do not revisit unless:** a fifth state is genuinely needed — in which case it is added
+to the shared block from a both-repos-reachable session and propagated, never minted in
+one repo's store.

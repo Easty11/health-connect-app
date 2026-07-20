@@ -64,14 +64,16 @@ Anything decided but uncommitted is provisional. The commit is the only sync poi
 
 Every branch touched this session must end in a terminal state:
 - **merged+deleted**, or
-- **listed in `BRANCHES.md`** (repo root) with purpose / why-parked / unblocks-on.
+- **listed in `BRANCHES.md`** (repo root) with its purpose and a Status from the
+  State-vocabulary section of `CLAUDE.md`, carrying whatever that section requires
+  of the Status assigned.
 
 Confirm merge status with `git cherry origin/master <branch>` (patch-id, never
 SHA — rebase/squash merges rewrite SHAs and make ancestry lie). The gate
 enumerates local branches (`git branch`) as well as `refs/remotes/origin`; a local
-branch with `+` commits vs `origin/master` must be pushed, parked in `BRANCHES.md`,
+branch with `+` commits vs `origin/master` must be pushed, rowed in `BRANCHES.md`,
 or discarded before close. If any touched branch is in undefined limbo — neither
-merged+deleted nor parked in `BRANCHES.md` — **HALT** before writing `closeout.md`
+merged+deleted nor rowed in `BRANCHES.md` — **HALT** before writing `closeout.md`
 and resolve it first.
 
 ### 5. Regenerate the ROADMAP.md sprint block

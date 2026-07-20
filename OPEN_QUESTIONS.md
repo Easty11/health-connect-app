@@ -85,20 +85,47 @@ through the aggregate row, the first-contributor path (`??=`), and the
 projection. Unreviewed and unlanded — owner Luke. A stash is a surface nothing
 points at; this row is what points at it. Recover with `git stash list`.
 
+### Q11 — health-app's `/closeout` still instructs `parked`; ritual divergence ruled  ·  OWED
+Step 4 of #21 read both definitions. **Structural divergence is intentional and
+legitimate** — see #21 — but **the vocabulary is not aligned**: health-app's
+`.claude/commands/closeout.md:34` still reads "must be pushed, **parked** in
+`BRANCHES.md`, or discarded before close." Same struck status-verb this repo fixed at
+its own lines 72/74. The #21 brief asserted health-app's ritual was "already struck";
+that is false for this line, and it was verified by reading the file, not assumed.
+Note what is *not* a defect there: line 68's "**retired**" describes a *convention*
+being retired, not a branch status — legitimate prose. Sweeping it would repeat the
+over-application error `PENDING` taught.
+**Outstanding, on a health-app-rooted session (single-repo rule forbids it from here)
+— owner Luke:** strike `parked` at `.claude/commands/closeout.md:34`. **HCA is
+authoritative for the ritual's vocabulary in the interim.** Paired obligation, mirror-
+first, per #20's standing rule.
+
+### Q10 — The `/closeout` ANCHOR states required state in the declarative  ·  UNSTARTED
+`.claude/commands/closeout.md:14-25` still carries the shape last session's FEEDBACK
+entry flagged in briefs: "**ANCHOR — run this first, stop if it fails**", with no
+separation of required state from how to reach it, and no statement of which failures
+are hard stops. In practice only the wrong-repo case is a genuine hard stop — a missing
+branch is a step. The same correction that was applied to brief ANCHORs has not been
+applied to the ritual's own. Out of #21's scope fence (that brief was the column set);
+logged rather than swept, because amending a ritual's halt semantics unbidden is not
+Code's call.
+
 ### Q9 — Struck vocabulary survives outside the two swept stores  ·  UNSTARTED
 The #20 sweep covered `BRANCHES.md` and `OPEN_QUESTIONS.md`, and the exit-condition
 grep returns zero across both. But the shared block names `ROADMAP.md` and close-outs
 as governed too, and two surfaces still carry the struck dialect:
 1. **`ROADMAP.md`'s work queue** above the sprint block — `Q2 … RESOLVED`, `parked`,
    `Blocked on`. Prose in places, labels in others; needs reading, not a regex.
-2. **The `/closeout` command definition itself**, which instructs a
-   "purpose / why-parked / unblocks-on" column set for `BRANCHES.md` and a
-   "PENDING queue" reconciliation section.
-(2) is the higher priority and the reason this is a row rather than a footnote: a ritual
-definition that teaches the dead dialect re-emits it every session, re-creating exactly
-the drift #20 just removed. It is also the command that regenerates the sprint block, so
-it writes to a governed store on every run. Sweeping it was outside this brief's scope
-fence; doing it unbidden on a ritual definition is not Code's call.
+2. ~~**The `/closeout` command definition itself**~~ — **DISCHARGED by #21**
+   (`273a429`). The column set now points at `CLAUDE.md`'s State-vocabulary section, and
+   `parked` as a status verb is struck. The "PENDING queue" section was deliberately left
+   alone: `PENDING` flags the transient chat→Code payload, not a branch or question
+   status.
+Item (2) was the higher priority and the reason this was a row rather than a footnote: a
+ritual definition that teaches the dead dialect re-emits it every session, so the defect
+had a source and sweeps downstream of a source are temporary. **Item (1) remains open**
+— `ROADMAP.md`'s work queue still carries `RESOLVED` / `parked` / `Blocked on`. It is
+inert debt, carried rather than regenerated, which is why it outranks nothing.
 
 ### Q8 — Shared loop-rules block parity is inverted; health-app return trip  ·  OWED
 This session amended the shared block *here* (barrier-vs-trigger tie-break), so

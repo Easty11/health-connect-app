@@ -22,6 +22,34 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-07-20 — a convention holds only where it is generated  [ritual]
+**Friction:** The stores were swept to the four states twice (#16/#17 propagated the
+block, #20 swept `BRANCHES.md` and `OPEN_QUESTIONS.md`), while the ritual that *writes*
+those stores kept instructing the superseded `purpose / why-parked / unblocks-on` column
+set and `parked` as a status verb. The defect had a source, and every close-out would
+have re-emitted it.
+**Cost:** None realised — caught before a close-out ran under the swept stores. Untreated
+it would have silently reintroduced the dialect on the next run, indefinitely.
+**Fix:** When a convention changes, **sweep the generators before the stores.** A store
+fixed under a stale generator is fixed until the next run. The test for whether a surface
+is a generator: does it *re-emit* the governed text each run, or merely *store* it? Inert
+debt is carried; a generator regenerates. Landed as #21.
+
+### 2026-07-20 — a check that agrees with the expected answer is not thereby confirmed  [chat]
+**Friction:** Chat's G1 audit returned PASS by comparing two *empty* extractions — the
+extraction failed, both sides were zero bytes, and `cmp` duly reported them identical.
+Separately, label counts were reported from word-greps three times running (health-app's
+21/16/2, this repo's "`PENDING` ×6", and health-app's ritual at "77" lines against an
+actual 80). Same family: a measurement substituted for the measurement actually needed.
+**Cost:** A false PASS on the repo pair's core invariant, and three scope figures that
+had to be re-derived rather than trusted.
+**Fix:** Every integrity check asserts its input is **non-empty and plausibly sized**
+before the comparison is allowed to mean anything. A verdict that agrees with the
+expected answer is the dangerous case, not the reassuring one — it is where a broken
+check is least likely to be questioned. Applied throughout #21: the `PENDING`-section
+comparison and the health-app fetch both assert non-empty before comparing, and both
+report their byte counts so the assertion is visible rather than merely performed.
+
 ### 2026-07-20 — propagation is not parity  [ritual]
 **Friction:** #16 established the shared loop-rules block in this repo and #17 re-mirrored
 it back to health-app, yet this repo's own `OPEN_QUESTIONS.md` and `BRANCHES.md` went on

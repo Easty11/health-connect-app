@@ -95,10 +95,18 @@ that is false for this line, and it was verified by reading the file, not assume
 Note what is *not* a defect there: line 68's "**retired**" describes a *convention*
 being retired, not a branch status — legitimate prose. Sweeping it would repeat the
 over-application error `PENDING` taught.
+**Second residue, found at #21's exit gate:** health-app's `BRANCHES.md:3` column header
+still reads `| Branch | Purpose | Status | Why parked | Unblocks on |`. Its 22 Status
+*values* are clean (12 DONE / 9 OWED / 1 UNSTARTED, zero outside the four states) — the
+struck dialect survives only in the frame. HCA swept its own headers to
+`| … | Status | Detail | Blocker / outstanding (owner) |` under #20; health-app did not.
+A column header encodes vocabulary as surely as a cell value: it tells the next writer
+what to put there.
 **Outstanding, on a health-app-rooted session (single-repo rule forbids it from here)
-— owner Luke:** strike `parked` at `.claude/commands/closeout.md:34`. **HCA is
-authoritative for the ritual's vocabulary in the interim.** Paired obligation, mirror-
-first, per #20's standing rule.
+— owner Luke, two items:** (1) strike `parked` at `.claude/commands/closeout.md:34`;
+(2) rename the `BRANCHES.md:3` header pair. **HCA is authoritative for the ritual's
+vocabulary and for the header frame in the interim.** Paired obligation, mirror-first,
+per #20's standing rule.
 
 ### Q10 — The `/closeout` ANCHOR states required state in the declarative  ·  UNSTARTED
 `.claude/commands/closeout.md:14-25` still carries the shape last session's FEEDBACK

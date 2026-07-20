@@ -69,67 +69,80 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 ## Sprint block
 
 **Branch:** `master` (trunk)  
-**Closed:** 2026-07-20 (HCA vocabulary parity — #91's four-state set adopted; `HANDOFF.md` established)
+**Closed:** 2026-07-20 (ritual vocabulary — the last self-regenerating surface closed)
 
-### This session — landed on master (`271abdd`)
-Governance only. Six files, no `app/`, no scraper source, no build config.
-- `e28e40f` — **HANDOFF.md established here.** Closes the interruption-ledger asymmetry
-  #88 left when it scoped that file to health-app only; the single-repo rule makes
-  health-app's unreachable from an HCA-rooted session. Header convention copied from
-  health-app `9fa18cc`; first entry is the CHAT→CODE receipt, written before any work.
-- `c6daa92` — **shared loop-rules block re-mirrored** from health-app `9fa18cc`, carrying
-  #91's four-state vocabulary. Index content verified byte-identical at
-  153 lines / 10080 bytes / md5 `9436cb22…`, `cmp` clean against the fetched source.
-- `4fa44e6` — **barrier/trigger tie-break added** to the block: where evidence does not
-  settle whether a dependency is a barrier or a trigger, the row is UNSTARTED.
-- `f15b545` — **`BRANCHES.md` swept**; `claude/hevy-api-workout-query-teulc2` rowed.
-- `0f7ff89` — **`OPEN_QUESTIONS.md` swept**; Q6–Q8 added.
-- `3547e72` — **DECISIONS_LOG #20.**
-- `7aa06bb` — **FEEDBACK ×4.**
-- `271abdd` — HANDOFF CODE→CHAT entry.
+### This session — landed on master (`347af28`)
+Governance and `.claude/` only. Five files; no `app/`, no `src/`, no scraper source, no
+build config. `CLAUDE.md` absent from the diff, so the shared block is untouched by
+construction.
+- `616b801` — HANDOFF receipt, committed alone before any work.
+- `273a429` — **`/closeout` column vocabulary struck.** Line 67's
+  `purpose / why-parked / unblocks-on` now points at `CLAUDE.md`'s State-vocabulary
+  section without restating it; lines 72/74's `parked`-as-status-verb → `rowed`.
+  The `PENDING` section deliberately untouched.
+- `b686801` — **stale-reference fix:** step 5 named `## Current Sprint`, a heading that
+  does not exist. Real one is `## Sprint block`.
+- `61c4f95` — **DECISIONS_LOG #21**, carrying the divergence ruling.
+- `c6cfeae` — FEEDBACK ×2; Q10/Q11 added; Q9 item 2 discharged.
+- `347af28` — HANDOFF CODE→CHAT entry.
 
-### G1 breached by our own hand — this repo is authoritative for the block
-The tie-break was added from a session that could not reach health-app, so the two repos
-now hold different blocks: HCA 155/10232/`4243c91c…` vs health-app `9fa18cc`
-153/10080/`9436cb22…`. Recorded in #20 itself (append-only) as well as Q8, because a
-mutable store is the wrong home for a breached core invariant. Discharged only by the
-return trip.
+### Why this brief existed at all
+#20 swept the stores; the ritual that *writes* them kept the old dialect, so every
+close-out would have re-emitted it. Inert debt is carried — a generator regenerates.
+This was the only remaining surface of the second kind. Confirmed live: the re-invoked
+ritual read back its own swept text this session.
 
-### Vocabulary state
-Status **fields** — not word occurrences — across both swept stores: 2 BLOCKED / 3 DONE /
-4 OWED / 4 UNSTARTED = 13, reconciling against 5 branch rows + 8 question rows.
-Exit-condition grep for `PENDING|parked|retired|verifying|resolved|open` across
-`BRANCHES.md` + `OPEN_QUESTIONS.md` on `origin/master`: **zero matches.**
-Not yet swept, logged as Q9: this file's work queue above, and the `/closeout` command
-definition — which re-emits the struck dialect every session until amended.
+### The 77-vs-132 divergence — ruled
+**Structure: intentional.** The rituals legitimately differ because the repos do —
+health-app carries a "Recent landings" block and the #38/#39 copy-back retirement; HCA
+carries the ANCHOR wrong-repo self-check (#10/#11) and the write-a-Python-script DB rule.
+`CLAUDE.md` permits repo-specific content, and none of it is vocabulary.
+**Vocabulary: NOT aligned.** health-app's `.claude/commands/closeout.md:34` still reads
+"pushed, **parked** in `BRANCHES.md`" — the brief's "already struck" was false. Logged
+Q11; **HCA is authoritative for the ritual's vocabulary in the interim.**
+
+### Exit condition — met on values, one residue in the frame
+Status **fields**, counted by field across four files in both repos, totals reconciling
+against row populations:
+
+| Store | DONE | BLOCKED | OWED | UNSTARTED | fields / rows |
+|---|---|---|---|---|---|
+| HCA `BRANCHES.md` | 2 | 1 | 1 | 1 | 5 / 5 |
+| HCA `OPEN_QUESTIONS.md` | 1 | 1 | 4 | 5 | 11 / 11 |
+| health-app `BRANCHES.md` | 12 | 0 | 9 | 1 | 22 / 22 |
+| health-app `OPEN_QUESTIONS.md` | 11 | 2 | 5 | 14 | 32 / 32 |
+
+**Zero status fields outside the four states, all four files.** Residue is in the *frame*,
+not the values: health-app `BRANCHES.md:3` still heads its columns
+`| Why parked | Unblocks on |`. HCA swept its headers under #20. Folded into Q11 — a
+column header tells the next writer what to put there.
+
+### G1 — verified, still discharged
+Both blocks independently extracted and compared, each asserted non-empty and ≥100 lines
+before `cmp` was allowed to mean anything: HCA and health-app both
+155 lines / 10232 bytes / md5 `4243c91ce78e0331ddfa5178aa3006b8`, `cmp` identical.
+This session did not touch `CLAUDE.md`.
 
 ### Branch dispositions (terminal state)
-- `gov/branches-vocabulary` — **merged+deleted** (ff-only onto `origin/master` at
-  `271abdd`, pushed; local branch deleted). Terminal, so no `BRANCHES.md` row.
-- `feat/hrv-node-dump` — **BLOCKED** in `BRANCHES.md`. **Pushed to origin this session**
-  before rowing; its one commit (`b66d34b`) previously existed on local disk only.
-- `fix/hrv-capture-regression` — **UNSTARTED** in `BRANCHES.md` (was `parked`). Its D2
-  firewall-gap dependency is unsettled as barrier-or-trigger; the tie-break takes the
-  label that asserts less. Untouched otherwise.
-- `claude/hevy-api-workout-query-teulc2` — **OWED** in `BRANCHES.md`, rowed for the first
-  time. Origin-only; deletion is Luke's call, not Code's.
+- `gov/ritual-vocabulary` — **merged+deleted** (ff-only at `347af28`, pushed; local
+  deleted). Terminal, so no row.
+- `feat/hrv-node-dump` BLOCKED · `fix/hrv-capture-regression` UNSTARTED ·
+  `claude/hevy-api-workout-query-teulc2` OWED — all rowed, none touched this session.
 
 ### Decisions
-**#20** minted (max was #19). Number claimed at merge per the number-at-merge rule.
+**#21** minted (max was #20). Number claimed at merge.
 
 ### Open (carried forward)
-- **Q4 — day-lag / read-freshness**: the one BLOCKED row. Blocker holds now.
-- **Q7 — #18's flat-`sourcePackage` contract unfulfilled in `aggregateSteps`.** The fix
-  is stashed at `stash@{0}`, unreviewed and unlanded; #18 is currently overstated on
-  master. The row exists so something points at the stash.
-- **Q8 — the G1 inversion + health-app return trip.** Last open item of the two-repo sweep.
-- Structural debt still standing: HRV context firewall #8 D2 unbacked; Q4 HC
-  date-attribution root cause.
-- Untracked, preserved, not staged: `checkin_build_brief.md`, `hevy_routine.json`,
-  `nodedump.txt` (the last is #19's consumed evidence, not a fresh artifact).
+- **Q4** — day-lag / read-freshness. Still the only BLOCKED row in the repo.
+- **Q7** — #18's flat-`sourcePackage` unfulfilled in `aggregateSteps`; fix at `stash@{0}`,
+  unreviewed and unlanded, so #18 is overstated on master.
+- **Q8, Q11** — the health-app return trip, now **six items** across both.
+- **Q9 item 1** — `ROADMAP.md`'s own work queue above still carries `RESOLVED` / `parked`
+  / `Blocked on`. Inert debt, not a generator.
+- **Q10** — the ritual's own ANCHOR still states required state in the declarative.
 
 ### Next action
 Watch ONE real overnight/~5am sync land today's HRV value in Railway (Postgres query, not
-on-device UI) on the standalone build — resolves Q4 and unblocks `feat/hrv-node-dump`.
-Then the health-app return trip (4 items, see `closeout.md`). Housekeeping still owed:
-rotate the Hevy API key (exposed in a chat transcript on 2026-07-11).
+on-device UI) on the standalone release build — resolves Q4 and unblocks
+`feat/hrv-node-dump`. Housekeeping still owed: rotate the Hevy API key (exposed in a chat
+transcript 2026-07-11).

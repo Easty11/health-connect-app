@@ -350,3 +350,58 @@ the block never sanctioned for two further sessions.
 **Do not revisit unless:** a fifth state is genuinely needed — in which case it is added
 to the shared block from a both-repos-reachable session and propagated, never minted in
 one repo's store.
+
+### #21 — `/closeout` ritual swept to the four states; the last self-regenerating surface closed  ·  active
+**Decision:** `.claude/commands/closeout.md` no longer instructs the superseded
+`purpose / why-parked / unblocks-on` column set; it references `CLAUDE.md`'s
+State-vocabulary section instead, without restating the states — one definition, one
+location. A second form the brief did not anticipate was struck with it: `parked` used as
+a *status verb* ("must be pushed, parked in `BRANCHES.md`"), at lines 72 and 74, replaced
+with `rowed` — which names the mechanical act without asserting a state, so the ritual can
+no longer suggest a label.
+
+The `PENDING` handoff-queue section is **deliberately unchanged**. `PENDING` flags a
+transient chat→Code payload — a different object from a branch or question status — and
+remains canonical in the stores table. Verified byte-identical across the edit (313 bytes
+both sides, non-empty asserted before the comparison was allowed to mean anything).
+
+**The 77-vs-132 divergence is ruled INTENTIONAL as to structure, and NOT ALIGNED as to
+vocabulary.** Structure: the two rituals legitimately differ because the repos differ —
+health-app's carries a "Recent landings" `CLAUDE.md` block (its step 6) and the #38/#39
+copy-back retirement (step 9); HCA's carries the ANCHOR wrong-repo self-check earned by
+#10/#11 and the write-a-Python-script DB-query rule earned by this repo's environment.
+`CLAUDE.md` permits repo-specific content below the shared block, and none of that content
+is vocabulary. Vocabulary: **not aligned** — health-app's
+`.claude/commands/closeout.md:34` still reads "must be pushed, **parked** in
+`BRANCHES.md`". The #21 brief asserted health-app's ritual was "already struck"; that is
+false for this line. Logged as Q11, paired obligation, mirror-first in the next health-app
+session; **HCA is authoritative for the ritual's vocabulary in the interim.**
+
+**Why:** #20 swept the stores; the ritual that writes them kept the old dialect, so every
+close-out would have re-emitted it. Inert debt is merely carried — a ritual *regenerates*.
+This was the only remaining surface of the second kind, which is why it was worth its own
+brief. It also refines #91's finding: **over-application is a failure mode alongside
+under-application.** Sweeping `PENDING` would have destroyed a live distinction while
+claiming to enforce consistency; so would sweeping health-app's line-68 "retired", which
+describes a convention being retired, not a branch status. Consistency is enforced on the
+*object* the rule governs, never on the *word*.
+
+**How you know:**
+- The struck lines, by number, in this repo's copy at 132 lines / 5067 bytes:
+  `67` (`purpose / why-parked / unblocks-on` — hyphenated, which is why a `why parked`
+  search missed it), `72` and `74` (`parked` as status verb). Post-edit residual grep for
+  `why[- ]parked|\bparked\b|unblocks-on|\bretired\b|\bverifying\b`: **zero**.
+- `git diff` confined to exactly those three sites (three hunks, `@@ -67 +67,3`,
+  `@@ -72 +74`, `@@ -74 +76`); zero changes inside the `PENDING` section (lines 55–61
+  byte-identical, both extractions asserted non-empty first); the output template's
+  `## PENDING reconciliation` shifted 98→100 by the two inserted lines, content unchanged.
+- Shared block untouched by this session and still at 155 lines / 10232 bytes / md5
+  `4243c91ce78e0331ddfa5178aa3006b8` — G1 not re-breached.
+- health-app's ritual read from `raw.githubusercontent.com` at 80 lines / 5205 bytes
+  (the brief said 77 — a third count discrepancy of the same family), non-empty asserted
+  before any comparison; `parked` located at its line 34.
+
+**Do not revisit unless:** a further generator of governed text is found — the test is
+whether a surface *re-emits* the vocabulary on each run or merely *stores* it. Generators
+are swept before stores; a store fixed under a stale generator is fixed only until the
+next run.

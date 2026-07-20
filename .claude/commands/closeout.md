@@ -78,7 +78,7 @@ and resolve it first.
 
 ### 5. Regenerate the ROADMAP.md sprint block
 
-Update the `## Current Sprint` section of `ROADMAP.md` to reflect what landed this
+Update the `## Sprint block` section of `ROADMAP.md` to reflect what landed this
 session. Rules:
 - Completed items → checked off or removed from the sprint block.
 - New work surfaced this session → added to the appropriate Q-section.

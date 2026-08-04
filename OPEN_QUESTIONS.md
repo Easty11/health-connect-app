@@ -85,8 +85,8 @@ through the aggregate row, the first-contributor path (`??=`), and the
 projection. Unreviewed and unlanded — owner Luke. A stash is a surface nothing
 points at; this row is what points at it. Recover with `git stash list`.
 
-### Q#NEXT — The guard cannot see the `@claude` Action's pushes  ·  OPEN
-**State:** OPEN. **Mirrors:** health-app `Q79`. **Related:** the guard decision above.
+### Q12 — The guard cannot see the `@claude` Action's pushes  ·  OPEN
+**State:** OPEN. **Mirrors:** health-app `Q79`. **Related:** `#22` (the guard).
 
 `core.hooksPath` is a **per-clone, client-side** setting; it cannot bind a runner. The
 `@claude` GitHub Action pushes from a checkout that never ran
@@ -114,8 +114,8 @@ image need not.
 **Outstanding — owner Luke.** Paired with health-app `Q79`; both close together or the
 asymmetry returns.
 
-### Q#NEXT — The imported block's question-state axis is not the axis this store uses  ·  OPEN
-**State:** OPEN. **Created by:** the verbatim shared-block copy in the decision above.
+### Q13 — The imported block's question-state axis is not the axis this store uses  ·  OPEN
+**State:** OPEN. **Created by:** the verbatim shared-block copy in `#22`.
 **Related:** `#20` (four states adopted here), `#21`, `Q9` (struck vocabulary outside the
 swept stores — the inverse direction of the same seam).
 

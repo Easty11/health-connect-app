@@ -406,7 +406,7 @@ whether a surface *re-emits* the vocabulary on each run or merely *stores* it. G
 are swept before stores; a store fixed under a stale generator is fixed only until the
 next run.
 
-### #NEXT — Placeholder guard propagated to HCA; verbatim propagation gains a verify-first precondition  ·  active
+### #22 — Placeholder guard propagated to HCA; verbatim propagation gains a verify-first precondition  ·  active
 
 **Decision:** three things land together, and the third is the one that outlives the
 other two.
@@ -511,6 +511,8 @@ guard. The hook is the sole enforcement, and it does cover `land` because `land`
 The claim was not corrected because correcting it here would be fixing the copy in transit,
 which #16/#17 forbid and clause 3 above re-forbids. It belongs in a health-app-rooted
 session.
+
+**Number claimed at merge.** `origin/master`'s maxima were re-read at the instant of the fast-forward and are quoted here rather than carried from the brief: `git show origin/master:DECISIONS_LOG.md | grep -oE '^### #?[0-9]+'` gives max **`### #21`**; the same sweep over `OPEN_QUESTIONS.md` with `^#{2,3} Q[0-9]+` gives max **`### Q11`**. This branch therefore takes **#22**, **Q12** and **Q13**. The brief's last-verified figures (21 / Q11, 3 Aug) happened to still hold; they were re-read, not assumed.
 
 **Q resolution order at the ff:** two `Q#NEXT` tokens are introduced by this branch. They
 resolve **in file order, top to bottom, to the next two integers ascending** — the CI-gap

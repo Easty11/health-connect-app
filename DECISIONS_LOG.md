@@ -524,3 +524,46 @@ without running the hook. The first makes "one implementation both repos can run
 question rather than a hypothetical; the second is already tracked below and is the known,
 named limit of this work — `core.hooksPath` is per-clone and client-side and cannot bind a
 runner, so the `@claude` Action's pushes stay unguarded in HCA exactly as in health-app.
+
+### #23 — The propagated hook landed non-executable; mode is part of the copy  ·  active  ·  rider to #22
+
+**Decision:** `.githooks/pre-push` is tracked **100755**, not 100644. Set with
+`git update-index --chmod=+x`, because `core.filemode=false` on this Windows clone means
+git will not notice the bit either way and `cp` does not carry it.
+
+**Why it is a defect and not a tidy-up.** `#22` verified the copy with `diff` and got
+empty, which is true and insufficient: `diff` compares **content**, and a git hook's
+executability is **mode**. Both repos' blobs are the same object —
+`8cd10013aa69f4170856c01a7f20b0f265f42039` — while health-app tracked it `100755` and HCA
+tracked it `100644`. On a POSIX clone git checks the executable bit and **silently skips a
+hook that lacks it**: no error, no output, push succeeds. That is a guard that is
+installed, green and blind — the exact failure `#169`/`#22` exist to kill, reproduced
+inside the propagation of the fix, one layer below where anyone was looking.
+
+**It did not fire as a false green here**, which is why it survived `#22`'s controls:
+Git for Windows treats a file with a shebang as executable regardless of mode, so every
+control in `#22` — including the synthetic both-arms refusal — ran a hook that a Linux
+clone would have ignored. **A control passing on the only platform that cannot detect the
+defect is not evidence about the platforms that can.**
+
+**How you know:**
+- `git ls-files -s .githooks/pre-push`: health-app `100755`, HCA `100644` pre-fix, HCA
+  `100755` post-fix; blob SHA identical across all three, so the content copy was and
+  remains byte-exact.
+- `git config core.filemode` → `false` in both clones, which is why neither `git status`
+  nor `git diff` would ever have raised it.
+- **Scope of the POSIX claim, stated narrowly per the empirical-specificity rule:** the
+  mode difference is directly observed; git's skip-if-not-executable behaviour on POSIX is
+  documented behaviour and was **not** exercised here — no Linux clone was tested. What is
+  attested is the mode, not the skip.
+
+**The generalisation, which is the reason this is a numbered entry and not a chore
+commit:** `#22` clause 3 made *verify the source against the destination's shape* a
+precondition of verbatim propagation. This adds the dimension that clause did not name —
+**verbatim means every attribute git tracks, not merely the bytes.** A copy checked only
+by `diff` is checked on one axis. For anything git executes, check `ls-files -s` too.
+
+**Number claimed at merge:** `origin/master`'s max re-read at the fast-forward instant with `^### #?[0-9]+` gives **`### #22`**; this entry takes **#23**.
+
+**Do not revisit unless:** another executable is propagated between repos, in which case
+the mode check is part of the copy and not a follow-up to it.

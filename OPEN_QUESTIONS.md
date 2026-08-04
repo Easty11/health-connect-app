@@ -85,14 +85,29 @@ through the aggregate row, the first-contributor path (`??=`), and the
 projection. Unreviewed and unlanded — owner Luke. A stash is a surface nothing
 points at; this row is what points at it. Recover with `git stash list`.
 
-### Q12 — The guard cannot see the `@claude` Action's pushes  ·  OPEN
+### Q12 — The guard cannot see server-side ref updates  ·  OPEN
 **State:** OPEN. **Mirrors:** health-app `Q79`. **Related:** `#22` (the guard).
 
-`core.hooksPath` is a **per-clone, client-side** setting; it cannot bind a runner. The
-`@claude` GitHub Action pushes from a checkout that never ran
-`git config core.hooksPath .githooks`, so every push on that path is unguarded — a
-placeholder can reach HCA master by the one route the guard structurally cannot watch.
-The guard is therefore installed and green over a surface it does not observe.
+`core.hooksPath` is a **per-clone, client-side** setting; it cannot bind a runner *or a
+merge button*. Some ref update reaches HCA master without ever running the hook, so the
+guard is installed and green over a surface it does not observe.
+
+**CORRECTED 2026-08-04, same day this row was minted — the gap is real, the agent named
+was not.** As first written (and as health-app's `Q79` was written), this row said the
+`@claude` GitHub Action pushes from a checkout that never ran `git config core.hooksPath`.
+**HCA has no `.github` directory in any commit on any ref** — `git log --all -- .github`
+returns empty — so the Action has never been wired to this repo and that push path does
+not exist. The claim came from the shared block's *"Code — and the `@claude` GitHub
+Action — is the only writer"*, carried as fact about a surface nobody checked: `FEEDBACK`
+§12, committed by Code rather than chat, which is the failure this row now also records.
+health-app `#170` made the identical correction to `Q79` independently.
+
+**The real uncovered path is demonstrated, not hypothesised.** `a7cc309` on HCA master is
+committed by `GitHub <noreply@github.com>` — a github.com **web-UI merge**, i.e. a
+server-side ref update (`Merge pull request #4 from Easty11/chore/governance-held-writes`).
+One instance here against five in health-app. Its positive control needed no construction.
+**A gap recorded against the wrong agent would have been "closed" by covering a path that
+does not exist, leaving the merge button open behind a green check.**
 
 **Why this is minted rather than left in the decision entry.** health-app's `#167`
 recorded exactly this gap in its own prose and a `BRANCHES` row — and neither outlives the
@@ -103,16 +118,25 @@ just fixed: an instrument reading green over what it cannot see. **Two repos wit
 hole recorded is honest; one admitting it and one not is how the hole rides another four
 sessions.**
 
-**Closing it requires a CI check, not a hook.** A workflow step running
-`python scripts/check_governance_placeholders.py --ref "$GITHUB_SHA"` on pushes to master
-covers every path into the ref including the Action's; the script already exits 0/1/2 with
-2 reserved for cannot-run, so it is CI-shaped as written. Open forks: whether it duplicates
-the hook or replaces it, and whether HCA's runner is guaranteed a Python the script can use
-— an assumption the local install does not test, since this machine has 3.14.5 and a runner
-image need not.
+**Closing it requires a CI check, not a hook — and health-app has already built the one to
+propagate.** `#170` landed `.github/workflows/governance-guard.yml` on `ubuntu-latest`:
+(2a) hook tracked mode `100755`, (2b) the hook *executed* as git executes it, (2c) the guard
+against the ref that would land, on `pull_request` **and** `push: [master]`. Per the `#169`
+preamble clause this arrives here **by propagation, not parallel authorship** — authoring a
+second implementation is the exact defect that clause exists to prevent.
 
-**Outstanding — owner Luke.** Paired with health-app `Q79`; both close together or the
-asymmetry returns.
+**`#170`'s prevention-vs-detection distinction carries across and must not be lost in the
+copy.** `push: [master]` fires *after* the ref has moved: against the merge button that is
+**detection**, not prevention. Prevention needs the `pull_request` arm **plus branch
+protection requiring the check** — GitHub-side repo config, not committable, **owner Luke**.
+Enforcement then spans three layers of which only the workflow file has a diff.
+
+**Open fork, untested here:** whether an HCA runner image ships a Python the script can use.
+The local install does not test it — this machine has 3.14.5 and a runner image need not.
+
+**Outstanding — owner Luke.** health-app's half is **closed** (`Q79` → `#170`); HCA's is not, so
+the asymmetry this row warned about is now live and pointed the other way. Propagate `#170`'s
+workflow in an HCA-rooted session, then set branch protection in **both** repos.
 
 ### Q13 — The imported block's question-state axis is not the axis this store uses  ·  OPEN
 **State:** OPEN. **Created by:** the verbatim shared-block copy in `#22`.

@@ -14,6 +14,16 @@ repo in this project. Edit it only here, then copy it verbatim into
 `health-connect-app/CLAUDE.md` and any future repo. Never edit a copy in place — that
 re-creates the two-master drift this whole model exists to kill.*
 
+***Verbatim propagation replicates a defect at full fidelity.*** *Copy-not-hand-merge kills
+drift, and it silently assumes the source is the better copy. It is not always: on
+2026-08-04 the destination's wording of the session-open rule was **generic and correct**
+where `health-app`'s was pinned to `health-app`'s own heading grammar and returned zero
+against the destination's file. Copying would have replaced a correct line with a broken
+one. So before any copy, **verify the source's rule against the destination's actual
+shape** — run the regex, count the store, check the paths exist. If the source is wrong,
+fix it here first and copy after; never fix it in the copy, and never hand-merge the two.
+The verification is a precondition of propagation, not a review of it.*
+
 ### The loop (source-of-truth model)
 
 - The **repo is the single source of truth** for all volatile state.
@@ -57,8 +67,9 @@ report; never land on it.
 
 ### State vocabulary
 
-Four states, exhaustive, no fifth. Applies to `BRANCHES.md` Status, `OPEN_QUESTIONS.md`,
-`ROADMAP.md`, and close-outs.
+Four work-states, exhaustive, no fifth. Applies to `BRANCHES.md` Status, `ROADMAP.md`, and
+close-outs. `OPEN_QUESTIONS.md` uses the **question-state** axis below instead — a question is
+not a work item.
 
 - **DONE** — landed on master (SHA) or applied to a named UI file. Nothing further required by
   anyone.
@@ -71,6 +82,17 @@ Four states, exhaustive, no fifth. Applies to `BRANCHES.md` Status, `OPEN_QUESTI
 - **UNSTARTED** — untouched.
 
 No "in progress": half-done work is **BLOCKED** (has a blocker) or **UNSTARTED** (doesn't).
+
+**Question state (`OPEN_QUESTIONS.md` only).** The four work-states do not fit a question — an
+untouched question is a live fork, not "UNSTARTED", and a question awaiting a dependency is not
+"BLOCKED". A question carries exactly one state, under the sole label `**State:**` (never
+`**Status:**`):
+
+- **OPEN** — the fork is live; no decision answers it yet. A question gated on a dependency
+  before it is *worth* deciding is OPEN with a `**Blocked by:**` note — not BLOCKED.
+- **OWED** — the fork is decided, but a named verification or loop-close is still outstanding
+  (mirrors the work-state OWED).
+- **DONE → #N** — resolved; decision `#N` is the answer (mirrors the work-state `DONE → #N`).
 
 ### DECISIONS_LOG discipline
 
@@ -87,15 +109,41 @@ Preserve the existing entry format:
   claimed only when the governance commit fast-forwards to master (next sequential at that
   instant). Eliminates the two-branches-both-claim-#N collision and the
   renumber-on-`--ff` dance.
+- **Number-at-merge is ENFORCED, not trusted.** `scripts/check_governance_placeholders.py`
+  refuses any push to master whose `DECISIONS_LOG.md` still carries `^#{2,3} #NEXT` or whose
+  `OPEN_QUESTIONS.md` still carries `^#{2,3} Q#NEXT`. It guards the **ref**, not one command:
+  the merge that made this necessary was done by hand, so a guard living inside the `land`
+  alias would not have fired. Branch pushes are untouched — a placeholder is *correct* on a
+  branch and only wrong on master. Anchored on the heading form, never a substring, because
+  the rule text and every corrected entry legitimately quote the token (`#113`). The anchor
+  tolerates the heading **level** and never the **form**: the repos disagree on level —
+  `health-app` heads a question `## Q77.`, `health-connect-app` heads it `### Q8 — …` — so a
+  level-pinned pattern reads one of them as permanently clean, which is a guard that is
+  installed, green and blind. One rule, one implementation, matched to each repo's grammar.
+  Install once per clone, alongside the aliases: `git config core.hooksPath .githooks`.
+  Bypass is `git push --no-verify`, and needing it twice is a signal the ritual is wrong,
+  not the guard. Earned: the placeholder reached master three sessions running and left a
+  permanent hole at `#162`.
 
 ### Session rituals (the contract the close-outs conform to)
 
 The trigger is not the payload. The payload is defined here; the snippet/command bodies
 must match it.
 
-- **Session open** — at session start, before acting on any brief, Code reports the current
-  `DECISIONS_LOG.md` max decision number (matching the file's actual `###` heading format).
-  Chat re-aims any brief against it, so a stale project copy never masquerades as canon.
+- **Session open** — at session start, before acting on any brief, Code reports **both**
+  maxima: the `DECISIONS_LOG.md` max decision number, counted with `^### #?[0-9]+`, and the
+  `OPEN_QUESTIONS.md` max question number, counted with `^#{2,3} Q[0-9]+`. Never
+  `^### [0-9]+\.`, never `^### [0-9]+`, never `^## Q[0-9]+`. **Period-agnostic** because
+  `health-app` entries `126`–`128` carry no trailing period and a period-requiring sweep
+  undercounts by three and invents phantom gaps (verified 2026-08-02). **Sigil- and
+  level-agnostic** because `health-connect-app` heads a decision `### #21 — …` and a
+  question `### Q8 — …`, against `health-app`'s `### 166.` and `## Q77.`: the pinned forms
+  return **0 / 78** and **0 / 168** across the two repos (verified against both trees
+  2026-08-04). A sweep that returns zero does not look broken — it looks like an empty
+  store, at the one moment whose entire job is establishing canon. **Both arms are named
+  because only one used to be**, and the missing arm was filled in by analogy to the arm
+  that was there — which is how a health-app-shaped `^## Q` got reached for. Chat re-aims
+  any brief against these, so a stale project copy never masquerades as canon.
 - **Chat close-out (`;cc`)** emits the **pending-commit queue**: canonical-format
   `DECISIONS_LOG` / `OPEN_QUESTIONS` entries for everything decided that session, each
   flagged `PENDING`, ready to paste or file as an issue with zero reformatting. Writes
@@ -143,6 +191,17 @@ must match it.
   `confidence`-tagged schema before any algorithm or AI layer. The intelligence layer
   never references device-specific schemas.
 - **Data verification = Postgres query against Railway**, not on-device UI.
+- **Never run a command that renders a secret value.** Includes `railway variables` in
+  any form (`--kv`, `-k`, `--json`, the `variable` singular, and the bare `list` — the
+  CLI's own help states that both `--kv` and `--json` print raw values), `printenv`,
+  `env`, and reading any `.env` by any tool or alias. **To check existence**, read names
+  or presence. **To use a value**, inject it with `railway run <cmd>` — the value enters
+  the child process and never the transcript. **To compare values**, compare SHA-256
+  digests, first 12 characters, both sides. Earned twice: a `--kv` invocation put a live
+  Postgres credential into four session transcripts, and a `.env` grep matching key
+  *names* printed a live API key and a Fernet key while establishing that nothing had
+  been printed. `.claude/settings.json` carries deny patterns as a second layer; it is a
+  speed bump, not the enforcement — this instruction is (DECISIONS_LOG #111).
 - **Branch disposition (patch-id, never SHA).** Merged-vs-pending is decided by
   `git cherry origin/master <branch>` (`-` = patch-upstream, delete; `+` = real work),
   never `merge-base`/`rev-list` — rebase/squash merges rewrite SHAs and make ancestry lie.
@@ -151,6 +210,7 @@ must match it.
   PowerShell-safe):
   `git config --global alias.stale '!f() { git fetch origin -q; git cherry origin/master "${1:-HEAD}"; }; f'`
   `git config --global alias.land '!f() { b="${1:-$(git branch --show-current)}"; git checkout master && git merge --ff-only "$b" && git push origin master && git branch -d "$b" && git push origin --delete "$b"; }; f'`
+  `git config core.hooksPath .githooks`  (per clone, not global — the hook is repo-versioned)
 - **Branch naming & reuse.** One branch per concern, concern-named
   (`fix/validatenight-dedup`), reused across sessions until merged. Claude Code
   `claude/<session-hash>` auto-names are banned for in-flight work — they spawn duplicates.

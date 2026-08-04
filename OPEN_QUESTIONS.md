@@ -85,6 +85,68 @@ through the aggregate row, the first-contributor path (`??=`), and the
 projection. Unreviewed and unlanded — owner Luke. A stash is a surface nothing
 points at; this row is what points at it. Recover with `git stash list`.
 
+### Q#NEXT — The guard cannot see the `@claude` Action's pushes  ·  OPEN
+**State:** OPEN. **Mirrors:** health-app `Q79`. **Related:** the guard decision above.
+
+`core.hooksPath` is a **per-clone, client-side** setting; it cannot bind a runner. The
+`@claude` GitHub Action pushes from a checkout that never ran
+`git config core.hooksPath .githooks`, so every push on that path is unguarded — a
+placeholder can reach HCA master by the one route the guard structurally cannot watch.
+The guard is therefore installed and green over a surface it does not observe.
+
+**Why this is minted rather than left in the decision entry.** health-app's `#167`
+recorded exactly this gap in its own prose and a `BRANCHES` row — and neither outlives the
+branch: a decision entry is append-only history, a `BRANCHES` row dies at merge. The hole
+had no home a reader of `OPEN_QUESTIONS` would find, so the store whose job is "what is
+undecided" showed a fully-enforced guard. That is the same shape as the defect this work
+just fixed: an instrument reading green over what it cannot see. **Two repos with the same
+hole recorded is honest; one admitting it and one not is how the hole rides another four
+sessions.**
+
+**Closing it requires a CI check, not a hook.** A workflow step running
+`python scripts/check_governance_placeholders.py --ref "$GITHUB_SHA"` on pushes to master
+covers every path into the ref including the Action's; the script already exits 0/1/2 with
+2 reserved for cannot-run, so it is CI-shaped as written. Open forks: whether it duplicates
+the hook or replaces it, and whether HCA's runner is guaranteed a Python the script can use
+— an assumption the local install does not test, since this machine has 3.14.5 and a runner
+image need not.
+
+**Outstanding — owner Luke.** Paired with health-app `Q79`; both close together or the
+asymmetry returns.
+
+### Q#NEXT — The imported block's question-state axis is not the axis this store uses  ·  OPEN
+**State:** OPEN. **Created by:** the verbatim shared-block copy in the decision above.
+**Related:** `#20` (four states adopted here), `#21`, `Q9` (struck vocabulary outside the
+swept stores — the inverse direction of the same seam).
+
+The shared block now defines a **question-state axis** for `OPEN_QUESTIONS.md` — `OPEN` /
+`OWED` / `DONE → #N`, carried under the sole label `**State:**`, on the reasoning that a
+question is not a work item: an untouched question is a live fork, not `UNSTARTED`, and a
+question gated on a dependency is `OPEN` with a `**Blocked by:**` note, not `BLOCKED`.
+
+**This store does not use it.** Its preamble still reads "Status is the four-state
+vocabulary — DONE / BLOCKED / OWED / UNSTARTED … No fifth state", and all 11 pre-existing
+rows carry a four-state suffix in the heading, including `UNSTARTED` (Q1, Q5, Q6, Q9, Q10)
+and `BLOCKED` (Q4) — neither of which exists on the new axis. The two rows minted by this
+branch conform to the new canon, so the file is now **mixed**, deliberately and visibly.
+
+**Note what this is not.** `Q9` tracks *struck* vocabulary surviving on unswept surfaces —
+old dialect left behind. This is the opposite direction: a *new* axis arriving by
+propagation into a store that never adopted it. Same seam, opposite sign, which is why it
+is a separate row and not an item appended to `Q9`.
+
+**Undecided, and deliberately not settled by Code:** whether HCA re-labels all 11 rows to
+the new axis (mapping `UNSTARTED`/`BLOCKED` → `OPEN` with a `**Blocked by:**` note where
+one applies, and `Status:` → `State:`), or whether the block's clause is itself wrong for
+this repo and the return trip narrows it. **The mapping is lossy in one direction** — `Q4`'s
+`BLOCKED` names a real barrier that `OPEN` + a note describes but does not assert — so this
+is a judgement about what the store is *for*, not a reformat. Sweeping 11 rows unbidden is
+not Code's call, and #21 already recorded that over-application is a failure mode beside
+under-application.
+
+**Outstanding — owner Luke:** rule the axis, then sweep or narrow in one pass.
+
+
 ### Q11 — health-app's `/closeout` still instructs `parked`; ritual divergence ruled  ·  OWED
 Step 4 of #21 read both definitions. **Structural divergence is intentional and
 legitimate** — see #21 — but **the vocabulary is not aligned**: health-app's

@@ -405,3 +405,120 @@ describes a convention being retired, not a branch status. Consistency is enforc
 whether a surface *re-emits* the vocabulary on each run or merely *stores* it. Generators
 are swept before stores; a store fixed under a stale generator is fixed only until the
 next run.
+
+### #NEXT — Placeholder guard propagated to HCA; verbatim propagation gains a verify-first precondition  ·  active
+
+**Decision:** three things land together, and the third is the one that outlives the
+other two.
+
+1. **The guard is copied, not ported.** `.githooks/pre-push` and
+   `scripts/check_governance_placeholders.py` are byte-for-byte copies of health-app at
+   `44a4d28` (post-Part-A). Installed per clone with `git config core.hooksPath .githooks`.
+   The script is Python and this is a JS/Expo repo — **that cost is real and is being
+   stated, not buried**: HCA now carries a Python dev-tooling dependency it did not have.
+   It is accepted because a Node port means two implementations of one rule drifting
+   apart, which is the exact failure the shared block exists to prevent, rebuilt inside
+   the mechanism meant to prevent it. Same machine, same operator, health-app already
+   pays the toolchain. Revisit only if HCA is cloned somewhere without Python, and the
+   honest fix then is **one** implementation both repos can run — never two.
+
+2. **The shared block is replaced verbatim**, 155 → 215 lines, inside the existing
+   `BEGIN/END SHARED LOOP RULES` markers. Not hand-merged, not improved in transit
+   (#16/#17). The guard's file list was **verified, not assumed**: HCA has both
+   `DECISIONS_LOG.md` and `OPEN_QUESTIONS.md`, so the copied `CHECKS` needs no scoping,
+   and the script's `read()` exits **2** on a missing file rather than skipping it — a
+   check that cannot run is not a check that passed.
+
+3. **`#16`/`#17` acquire a precondition.** Copy-not-hand-merge kills drift and silently
+   assumes the source is the better copy. On 2026-08-04 it was not: HCA's wording of the
+   session-open rule was *generic and correct* — "matching the file's actual `###` heading
+   format" — where health-app's was pinned to health-app's own grammar and returned **0**
+   against HCA's file. A verbatim copy in the direction the rule mandates would have
+   **replaced correct wording with the defect, at full fidelity.** The clause now in the
+   block's preamble: *verify the source's rule against the destination's actual shape
+   before any copy; if the source is wrong, fix it at the source and copy after — never
+   fix it in the copy, never hand-merge.* Its first application was its own propagation.
+
+**What the guard actually fixes here, and it is not what the v1 brief claimed.** v1 said
+the guard anchors on `^### [0-9]+`. It does not — it matches the literal placeholder token
+and computes no max. Three real defects, all cross-repo grammar assumptions:
+
+- **The session-open sweep counted zero in HCA.** `^### [0-9]+` sat in the *session-open
+  ritual* bullet, not the guard. HCA heads a decision `### #21 — …`; the sigil defeats the
+  pattern. A canon-establishing sweep reporting an empty file as fact. Now `^### #?[0-9]+`.
+- **The guard's question arm could never fire in HCA.** `CHECKS` pinned `^## Q#NEXT`;
+  health-app heads a question `## Q77.`, HCA heads it `### Q8 — …`. The decision arm was
+  already safe in both repos, so **exactly one of two arms was broken** — the shape most
+  likely to survive review. Now `^#{2,3} #NEXT` / `^#{2,3} Q#NEXT`: level tolerated, form
+  still pinned.
+- **The sweep had no question arm at all.** Not a wrong regex — a silence. Anyone
+  reporting a Q-max filled the gap *by analogy to the arm that was there*, reaching for a
+  health-app-shaped `^## Q`, which counts 0 in HCA. **A missing arm beside a present
+  sibling is not neutral; it is a template, and the next reader completes it wrongly.**
+
+**Why:** number-at-merge was enforced by nothing on this side. HCA has never actually
+suffered the failure — `git log -S'#NEXT' -- DECISIONS_LOG.md OPEN_QUESTIONS.md` returns
+exactly one commit (`46597cb`), and it is prose inside `#17`'s entry, which the guard
+correctly does not flag. That makes this prophylactic, and it is worth saying plainly:
+health-app earned this guard with a permanent hole at its `#162`; HCA is inheriting the
+lesson without having paid for it. Two repos with the same rule and one enforcement is
+how the next hole gets dug on the unguarded side.
+
+**How you know:**
+- `diff` of `.githooks/pre-push` and `scripts/check_governance_placeholders.py` against
+  health-app `44a4d28`: **both empty**.
+- `diff` of the two shared blocks post-copy (HCA `CLAUDE.md:8-222` vs health-app
+  `CLAUDE.md:20-234`): **empty**. All three `#169` regions present and located: preamble
+  clause at `17`, guard bullet at `112`, session-open sweep at `133`.
+- **Defect 1 regression control — real, not synthetic, supplied by HCA's own tree:**
+  `grep -cE '^### [0-9]+' DECISIONS_LOG.md` → **0**; `grep -cE '^### #?[0-9]+'` → **21**.
+  The old rule reported this repo's canonical store as empty.
+- **Defect 3 regression control, likewise real:** `^## Q[0-9]+` → **0**;
+  `^#{2,3} Q[0-9]+` → **11**.
+- **Defect 2 regression control:** against the control commit, `^## Q#NEXT` → **0**,
+  `^#{2,3} Q#NEXT` → **1**. The question arm was dead in this repo and is now live.
+- **Positive control is SYNTHETIC and the entry says so.** No placeholder has ever reached
+  HCA master, so no real case exists to replay. Constructed on a throwaway branch
+  (`scratch/guard-control`, `2a3426d`, deleted) carrying both arms in HCA's own grammars —
+  `### #NEXT` and `### Q#NEXT`. Pushed to a local bare remote as `master`: **REFUSED**,
+  exit 1, with *both* offences named by file and line. A guard verified only against a
+  constructed case is weaker evidence and this entry must not read as though it were not.
+- **The hook fires — proven by the refusal, not by the passes.** A clean push is
+  indistinguishable from an uninstalled hook; that is a false green by a quieter route,
+  so the refusal is the load-bearing observation.
+- Negative controls, all **exit 0 / ALLOWED**: clean working tree; `--ref master`; clean
+  `master` → remote `master`; the placeholder-carrying ref pushed to a *branch*; zero-sha
+  branch deletion.
+
+**What arrived with the block that the brief did not name — read this before assuming the
+copy was inert.** The block was 60 lines behind, not 3 regions behind, and verbatim copy
+brought all of it:
+- **A question-state axis** (`OPEN` / `OWED` / `DONE → #N`, under the sole label
+  `**State:**`) that displaces the four work-states for `OPEN_QUESTIONS.md`. HCA's
+  `OPEN_QUESTIONS.md` preamble and all 11 existing rows still use the four-state
+  vocabulary, including `UNSTARTED`, which the new axis does not have. **This copy created
+  that divergence.** Logged as its own question below rather than swept here — reformatting
+  the store is outside this brief's fence, and #20/#21 established vocabulary sweeps are
+  their own concern.
+- **The never-render-a-secret rule** (health-app `#111`), which was absent from HCA's block
+  entirely. It binds here now.
+- The `git config core.hooksPath .githooks` install line beside the `stale`/`land` aliases.
+
+**One inaccuracy carried across deliberately.** The guard script's docstring says "the
+alias calls the same script". The installed global `land` alias does **not** — it is
+`checkout && merge --ff-only && push && branch -d && push --delete`, with no call to the
+guard. The hook is the sole enforcement, and it does cover `land` because `land` pushes.
+The claim was not corrected because correcting it here would be fixing the copy in transit,
+which #16/#17 forbid and clause 3 above re-forbids. It belongs in a health-app-rooted
+session.
+
+**Q resolution order at the ff:** two `Q#NEXT` tokens are introduced by this branch. They
+resolve **in file order, top to bottom, to the next two integers ascending** — the CI-gap
+row first, the question-state-axis row second. Stated here so the resolver is not guessing
+against a store whose tail happens to run descending.
+
+**Do not revisit unless:** a third repo joins the project, or a surface pushes to master
+without running the hook. The first makes "one implementation both repos can run" a real
+question rather than a hypothetical; the second is already tracked below and is the known,
+named limit of this work — `core.hooksPath` is per-clone and client-side and cannot bind a
+runner, so the `@claude` Action's pushes stay unguarded in HCA exactly as in health-app.

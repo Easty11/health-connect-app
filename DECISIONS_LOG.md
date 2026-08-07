@@ -608,7 +608,7 @@ as *pending*, not *failed*. Renaming the job would silently unbind a future rule
 
 **Line endings were a real destination check, not a formality.** Both repos set
 `core.autocrlf=true`, so the workflow's blob is LF (`122` LF, `0` CRLF) despite being CRLF
-on disk. Had HCA differed, every `run:` block would have carried `` into bash on a Linux
+on disk. Had HCA differed, every `run:` block would have carried a bare CR into bash on a Linux
 runner. Verified on the blob after commit, not on the working copy.
 
 **How you know — four real runs on this repo, and the output quoted is the failing one:**
@@ -648,3 +648,53 @@ per clone, the ruleset per repo, this file. Two of the three are absent in HCA t
 "NOT set" paragraph becomes false and must be corrected — it is dated for exactly that
 reason); the job name changes; or health-app's executable body changes, in which case the
 body is re-copied verbatim and the header is re-checked against this repo, not carried.
+
+### #25 — A bare CR in `#24`'s prose silently flipped the whole store to CRLF  ·  active  ·  repair to #24
+
+**Decision:** `DECISIONS_LOG.md` is renormalised to an LF blob, and the one byte that caused
+the flip — a bare carriage return inside `#24`'s prose, where the words "a bare CR" were
+intended — is replaced by those words. Nothing else in `#24` changes.
+
+**Mechanism, which is the reason this is a numbered entry.** `core.autocrlf=true` normalises
+CRLF to LF on `git add` **only for content git classifies as text**, and git's auto
+detection treats a carriage return **not followed by a line feed** as a binary marker. One
+stray byte therefore switched the whole file to "binary", normalisation was skipped, and
+`6a86376` committed all 650 lines as CRLF where every previous commit had stored LF. The
+visible symptom was a **three-line edit appearing as a 1217-line diff** — and it would have
+recurred on every subsequent commit, permanently, because the CRLF blob is now the baseline
+the next diff is taken against.
+
+**Every guard in this repo was green throughout.** The placeholder guard reads decoded text
+and is indifferent to line endings; CI's 2a/2b/2c passed; the pre-push hook passed. The
+defect is one layer below everything built to watch this store. **`#23` said verbatim means
+every attribute git tracks, not merely the bytes — this is the converse: the bytes can be
+right in meaning and wrong in encoding, and nothing here was looking at encoding at all.**
+It was caught only because the `git merge --ff-only` diffstat was read rather than skimmed.
+
+**Why this is a repair and not an edit to a locked entry.** The append-only rule protects the
+*record* — what was decided and why. What changed in `#24` is a control character that was
+never intended to be there and that no reader could see, plus the file's line-ending
+encoding, which is not part of the record. The change is named here byte-for-byte precisely
+so the history still shows it: `#24` is otherwise untouched, and its claims are unaltered.
+
+**How you know:**
+- Before `6a86376`, at `18841b7`: `git show 18841b7:DECISIONS_LOG.md` → **CRLF 0, LF 569**.
+  After: **CRLF 650, LF 650**.
+- Scope was checked, not assumed: of the seven tracked governance and CI files, only
+  `DECISIONS_LOG.md` flipped — `OPEN_QUESTIONS.md`, `BRANCHES.md`, `CLAUDE.md`, `ROADMAP.md`,
+  `FEEDBACK.md` and `.github/workflows/governance-guard.yml` were all LF and stayed LF.
+- Cause located at byte `43578`, a single carriage return with no line feed after it;
+  `b.replace(CRLF, b'').count(CR)` → **1** before, **0** after.
+- With that byte gone the staged blob normalises again with no config change: **CRLF 0,
+  LF 650**. The repair is the removal, not a setting.
+
+**The deterministic fix is a `.gitattributes`, and it is deliberately not in this commit.**
+`* text=auto` or `*.md text eol=lf` would make normalisation a declared property of the repo
+rather than a heuristic that one byte can flip. That touches every file in an Expo repo and
+belongs in its own change with its own controls, not smuggled into a repair.
+
+**Number claimed at merge:** `origin/master`'s max re-read at the fast-forward instant with `^### #?[0-9]+` gives **`### #24`**; this entry takes **#25**.
+
+**Do not revisit unless:** a `.gitattributes` lands, which makes this class impossible rather
+than merely fixed; or a store flips again, in which case check for a bare CR **first** — the
+diffstat is the tell, and it is visible in the `--ff-only` output of every merge.

@@ -567,3 +567,82 @@ by `diff` is checked on one axis. For anything git executes, check `ls-files -s`
 
 **Do not revisit unless:** another executable is propagated between repos, in which case
 the mode check is part of the copy and not a follow-up to it.
+
+### #NEXT — `#170`'s CI guard propagated to HCA; the copy's header is repo-specific evidence and cannot be verbatim  ·  active
+
+**Decision:** `.github/workflows/governance-guard.yml` runs the placeholder guard on
+`ubuntu-latest`, on `pull_request` targeting master and `push` to master, asserting in order
+**(2a)** `.githooks/pre-push` tracked mode `100755`, **(2b)** the hook *executed* as git
+executes it against a known-clean ref, **(2c)** the guard against the ref that would land.
+Propagated from health-app `#170` — **not authored here**, per the `#169` preamble clause;
+parallel authorship would mint the second implementation that clause exists to prevent.
+This is HCA's first `.github` directory.
+
+**The executable body is byte-identical. The header is not, and that is the finding.**
+Everything from `name: governance-guard` down is a verbatim copy — `diff` against
+health-app's copy is **empty**, verified before commit. The header is not, because
+health-app's header states **evidence about its own repo**, and four of its claims are false
+here:
+
+| health-app's claim | HCA's verified fact |
+|---|---|
+| "this repo's history has five of them: `e62f89f`, `0aa0200`, `f4b538f`, `cb1b58f`, `9f9437c`" | **one**: `a7cc309`, `Merge pull request #4 from Easty11/chore/governance-held-writes`. Those five SHAs do not exist here. |
+| "`Q79` originally attributed this gap to the `@claude` Action" | it was `Q12` here, corrected `18841b7` |
+| "branch protection … **IS** set as of 2026-08-05: ruleset `master-pr-gated` (id `20414758`)" | `gh api repos/Easty11/health-connect-app/rules/branches/master` → **`[]`**. No ruleset. |
+| `gh api repos/Easty11/health-app/rules/…` | wrong repo path |
+
+The third is the one that matters. **A verbatim copy would have told every future reader
+that branch protection is in place here when it is not** — a green check sitting on top of a
+false claim of enforcement, which is the exact defect class `#167` → `#169` → `#22` → `#23`
+→ `#170` have been chasing, arriving this time inside the propagation of the fix. Adapting
+it is **not** improving the copy in transit (`#16`/`#17`); it is `#22` clause 3 applied —
+*verify the source against the destination's actual shape before copying, or replicate the
+defect at full fidelity.* **The rule is the job; the header is the evidence for it, and
+evidence does not propagate.** That distinction is the reusable part: `#16`/`#17` said "copy
+verbatim" without ever saying *what a copy is of*, and a file can be simultaneously one
+implementation and two repos' evidence.
+
+**`jobs.guard.name` is `placeholder guard (POSIX)` and must stay that string byte-for-byte** —
+it is the context a ruleset binds by name, and a required context that never reports reads
+as *pending*, not *failed*. Renaming the job would silently unbind a future ruleset.
+
+**Line endings were a real destination check, not a formality.** Both repos set
+`core.autocrlf=true`, so the workflow's blob is LF (`122` LF, `0` CRLF) despite being CRLF
+on disk. Had HCA differed, every `run:` block would have carried `` into bash on a Linux
+runner. Verified on the blob after commit, not on the working copy.
+
+**How you know — four real runs on this repo, and the output quoted is the failing one:**
+
+- **Negative control** — PR `#11`, clean branch, run `31172574034`: **success**, all three arms.
+- **Positive, placeholder arm** — PR `#12`, run `31172614745`: **failure at 2c** against the
+  merge commit, naming both offences in HCA's own grammars —
+  `REFUSED: unresolved governance placeholder in HEAD.` /
+  `DECISIONS_LOG.md:571  ### #NEXT — CONTROL ONLY …` /
+  `OPEN_QUESTIONS.md:244  ### Q#NEXT — CONTROL ONLY …`
+- **Positive, mode arm** — PR `#13`, hook at `100644`, run `31172624557`: **failure at 2a** —
+  `tracked mode: 100644  (100644 8cd1001… .githooks/pre-push)`, with the `#23` remediation in
+  the error. `#23` reproduced deliberately on a surface that can see it.
+- **Positive, execution arm** — PR `#14`, run `31172640907`. Minted for `#170`'s reason and it
+  held here too: **2a fires first and short-circuits, so the mode control never runs 2b.**
+  With 2a stripped and the hook still `100644`, 2b failed on its own —
+  `./.githooks/pre-push: Permission denied`, **exit 126**. Without this the execution arm
+  would be argued, not shown.
+- All three control PRs closed and their branches deleted, local and remote; `git branch` and
+  `git ls-remote --heads origin` both clean at close.
+
+**What this does NOT close, stated because the brief's phrasing was "closes `Q12`".** It does
+not. `push: [master]` fires **after** the ref has moved — against the merge button that is
+**detection, not prevention**. Prevention needs the `pull_request` arm *plus* a ruleset
+requiring the check, and **HCA has no ruleset**: `rules/branches/master` is `[]`. That is
+GitHub-side repo config, not committable, **owner Luke**. So `Q12` moves to **OWED** — the
+fork is decided and the versioned half is landed — and not to `DONE`, which would assert
+nothing further is required by anyone. Marking it `DONE` here would be `#170`'s own
+prevention-vs-detection warning ignored one repo later.
+
+**The enforcement now spans three layers here and only one is versioned:** `core.hooksPath`
+per clone, the ruleset per repo, this file. Two of the three are absent in HCA today.
+
+**Do not revisit unless:** the ruleset lands (at which point `Q12` closes and the header's
+"NOT set" paragraph becomes false and must be corrected — it is dated for exactly that
+reason); the job name changes; or health-app's executable body changes, in which case the
+body is re-copied verbatim and the header is re-checked against this repo, not carried.

@@ -85,8 +85,24 @@ through the aggregate row, the first-contributor path (`??=`), and the
 projection. Unreviewed and unlanded — owner Luke. A stash is a surface nothing
 points at; this row is what points at it. Recover with `git stash list`.
 
-### Q12 — The guard cannot see server-side ref updates  ·  OPEN
-**State:** OPEN. **Mirrors:** health-app `Q79`. **Related:** `#22` (the guard).
+### Q12 — The guard cannot see server-side ref updates  ·  OWED
+**State:** OWED. **Mirrors:** health-app `Q79` (closed → `#170`). **Related:** `#22` (the
+hook), `#NEXT` (the CI surface).
+
+**The versioned half is LANDED; the fork is decided.** `#NEXT` propagated `#170`'s
+`.github/workflows/governance-guard.yml` here — 2a hook mode, 2b hook executed, 2c guard
+against the ref that would land, on `pull_request` and `push: [master]`, proven by four
+real runs including three red controls. **OWED, not DONE, and the distinction is not
+bookkeeping:** `push: [master]` fires *after* the ref has moved, so against the merge
+button it is **detection, not prevention**. Prevention needs the `pull_request` arm plus a
+ruleset requiring the `placeholder guard (POSIX)` context by that exact string.
+
+**The one outstanding action, and it is not committable:** HCA has no ruleset —
+`gh api repos/Easty11/health-connect-app/rules/branches/master` returns `[]`, verified
+2026-08-07. health-app's counterpart is `master-pr-gated` (id `20414758`). Until HCA has
+an equivalent, the PR arm reports and does not block, and the merge button that dug
+`a7cc309` stays open behind a green check. **Owner Luke, GitHub-side repo settings.**
+Closing this row requires that ruleset and nothing else.
 
 `core.hooksPath` is a **per-clone, client-side** setting; it cannot bind a runner *or a
 merge button*. Some ref update reaches HCA master without ever running the hook, so the
@@ -134,9 +150,9 @@ Enforcement then spans three layers of which only the workflow file has a diff.
 **Open fork, untested here:** whether an HCA runner image ships a Python the script can use.
 The local install does not test it — this machine has 3.14.5 and a runner image need not.
 
-**Outstanding — owner Luke.** health-app's half is **closed** (`Q79` → `#170`); HCA's is not, so
-the asymmetry this row warned about is now live and pointed the other way. Propagate `#170`'s
-workflow in an HCA-rooted session, then set branch protection in **both** repos.
+**Outstanding — owner Luke.** The propagation is done (`#NEXT`, 2026-08-07); the asymmetry
+that remains is narrower and now symmetrical in kind: **health-app has its ruleset, HCA does
+not.** One `gh api` call or one settings page closes this row.
 
 ### Q13 — The imported block's question-state axis is not the axis this store uses  ·  OPEN
 **State:** OPEN. **Created by:** the verbatim shared-block copy in `#22`.

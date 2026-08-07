@@ -24,10 +24,23 @@ shape** — run the regex, count the store, check the paths exist. If the source
 fix it here first and copy after; never fix it in the copy, and never hand-merge the two.
 The verification is a precondition of propagation, not a review of it.*
 
+***What belongs in this block at all — the boundary criterion.*** *A rule belongs here only
+if its correctness is independent of any surface outside the tree. Invariants qualify:
+number-at-merge, terminal-state disposition, patch-id over ancestry, concern-named branches,
+single-writer. **Mechanics that depend on unversioned config do not** — they go below
+`END SHARED LOOP RULES`, in the repo whose config they describe. The rejected alternative was
+a shared rule conditioned on whether the repo has a required status check; that fails on its
+own terms, because the check's existence is invisible from the tree, so a reader could not
+tell which branch of the rule applied to the repo in front of them. A rule that reads
+differently in each repo is a divergent rule wearing a shared rule's clothes — worse than an
+honest split, because the empty-diff check still passes. Earned 2026-08-05, when `health-app`
+adopted a PR-gated merge path and `health-connect-app` had no CI workflow at all to gate one
+with (`#171`, `#172`).*
+
 ### The loop (source-of-truth model)
 
 - The **repo is the single source of truth** for all volatile state.
-- **Code — and the `@claude` GitHub Action — is the only writer.**
+- **Code is the only writer.**
 - **Chat proposes; chat never commits.** The claude.ai GitHub connector grants chat
   read/attach only. Any instruction that has "chat commits", "chat writes a spec to the
   repo", or "chat files an issue" is wrong on this surface — chat emits text, a human or
@@ -106,9 +119,18 @@ Preserve the existing entry format:
   verified search result, or official documentation. "The API has a field for it" is
   insufficient. Founding rule, earned from the HRV pipeline failure.
 - **Number-at-merge.** On a branch, a new entry is headed `### #NEXT`. The integer is
-  claimed only when the governance commit fast-forwards to master (next sequential at that
+  claimed only when the governance commit lands on master (next sequential at that
   instant). Eliminates the two-branches-both-claim-#N collision and the
-  renumber-on-`--ff` dance.
+  renumber-on-`--ff` dance. Stated against *landing*, not against any one merge motion —
+  the motion is repo-local and differs between repos; this rule does not.
+- **Number-at-merge names its window.** Resolving `#NEXT` and landing it are two acts, and
+  master can advance between them. So resolve **immediately before** merging, having re-read
+  master's max at that moment — not at session open, not from a prior report — and if master
+  advances in the interval, **re-resolve before merging**. The window is small, never zero,
+  and an unnamed race is how `#162`'s hole rode four sessions. A repo may have a mechanism
+  that forces a pause when master advances; a forced pause is not an adjudicated number, and
+  the re-read is owed either way. The guard refuses an unresolved *placeholder* reaching
+  master — it has no opinion on whether the integer you resolved to was still free.
 - **Number-at-merge is ENFORCED, not trusted.** `scripts/check_governance_placeholders.py`
   refuses any push to master whose `DECISIONS_LOG.md` still carries `^#{2,3} #NEXT` or whose
   `OPEN_QUESTIONS.md` still carries `^#{2,3} Q#NEXT`. It guards the **ref**, not one command:
@@ -179,6 +201,18 @@ must match it.
 
 - **Windows / PowerShell only.** No Linux syntax — no `head`, no backslash line
   continuation. Single-line, or PowerShell backtick continuation.
+  **PowerShell-safe is not the same as Linux-syntax-free, and the difference is a quoting
+  bug, not a style one.** PowerShell re-quotes arguments when it hands them to a native
+  executable, and **embedded double quotes do not survive** — a single-quoted PowerShell
+  string containing `"` reaches `git`/`gh` split across several arguments. It fails with
+  whatever that program says about wrong argument counts, never with anything naming quoting:
+  `git config --local alias.land '…"$(git branch --show-current)"…'` returns
+  `error: no action specified`, which reads like a missing flag. **So a command written for
+  this project must avoid embedded double quotes in its argument, not merely avoid `head`**,
+  and a command Code emits for Luke to run must be exercised in **PowerShell** — Code's own
+  Bash tool passes these strings cleanly and will never reproduce the failure. Earned
+  2026-08-05: the `land` body documented at `#171` was Bash-verified, committed, and then
+  refused on first use.
 - **Verify before design.** Verify data paths end-to-end before designing against them.
   Standing rule after the HRV pipeline failure.
 - **Empirical specificity.** A recorded test result must state the exact pathway
@@ -209,8 +243,18 @@ must match it.
   Install once (git `!` aliases run in git's own sh; the invocation is single-line
   PowerShell-safe):
   `git config --global alias.stale '!f() { git fetch origin -q; git cherry origin/master "${1:-HEAD}"; }; f'`
-  `git config --global alias.land '!f() { b="${1:-$(git branch --show-current)}"; git checkout master && git merge --ff-only "$b" && git push origin master && git branch -d "$b" && git push origin --delete "$b"; }; f'`
   `git config core.hooksPath .githooks`  (per clone, not global — the hook is repo-versioned)
+  **`stale` is global because disposition is an invariant — every repo decides it the same
+  way. The merging alias is not here, and is no longer global.** How a branch *reaches*
+  master depends on enforcement config that exists in one repo and not another, so it is
+  repo-local by the boundary criterion above, and a `--global` alias cannot hold two bodies.
+  Each repo defines its own `land` with `git config --local` and documents it below its own
+  `END SHARED LOOP RULES`. **Repo-local config is NOT cloned**, so that alias joins
+  `core.hooksPath` as per-clone setup a fresh checkout silently lacks — two unversioned things,
+  both absent by default, neither of which announces itself. Every repo lists its full
+  fresh-clone setup below its own `END SHARED LOOP RULES`; do not assume a clone is configured
+  because the repo is. Disposition, the ledger, and the terminal-state gate are unchanged by
+  this and remain shared.
 - **Branch naming & reuse.** One branch per concern, concern-named
   (`fix/validatenight-dedup`), reused across sessions until merged. Claude Code
   `claude/<session-hash>` auto-names are banned for in-flight work — they spawn duplicates.

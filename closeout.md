@@ -1,163 +1,130 @@
 # closeout — health-connect-app
 
-**Session:** 2026-07-20 · ritual vocabulary (final leg of the two-repo sweep)
-**Branch:** `master` · landed `347af28` · `master == origin/master`
+**Session:** 2026-08-04 → 2026-08-08 · governance (guard propagation → CI surface → block
+re-mirror). Span taken from the repo's dated record, not asserted: 5 / 1 / 5 / 7 commits
+across 08-04, 08-05, 08-07, 08-08. The first draft of this file stamped a single date from
+memory and the `git log` block below contradicted it — which is the reason the contract
+requires that block.
+**Branch:** `master` · landed `9b5663b` · `master == origin/master`
+**Session-open ref:** `36a8444`
 
 ## Commits this session
 
 ```
-347af28 gov: HANDOFF CODE->CHAT entry for the ritual vocabulary session
-c6cfeae gov: FEEDBACK — sweep generators before stores; assert non-empty input. OPEN_QUESTIONS Q10/Q11, Q9 item 2 discharged
-61c4f95 gov: DECISIONS_LOG #21 — /closeout ritual swept; ritual divergence ruled
-b686801 gov: /closeout referenced a ROADMAP heading that does not exist
-273a429 gov: strike superseded column vocabulary from the /closeout ritual
-616b801 gov: HANDOFF receipt — ritual vocabulary brief received
+9b5663b gov: BRANCHES terminal state for gov/block-remirror (DONE 3bd196d)
+3bd196d gov: BRANCHES row for gov/block-remirror
+eeae58b gov: resolve #NEXT -> #26/#27, Q#NEXT -> Q14 (on-branch, pre-ff)
+c0afce3 gov: DECISIONS_LOG #NEXT x2 — block re-mirror and land-is-repo-local
+2a91aeb gov: repair four stale rows, mirror health-app Q33, re-row G1
+9efdb89 gov: HCA land is repo-local; document fresh-clone setup and merge path
+fffd314 gov: re-mirror the shared block from health-app (G1 breach, health-app ahead)
+3add6b1 gov: BRANCHES terminal state for ci/placeholder-guard-hca (DONE 6483d19)
+e3324ba gov: #25 repair the CRLF flip a bare CR caused in #24
+6483d19 gov: resolve #NEXT -> #24 (on-branch, pre-ff)
+6a86376 gov: #NEXT CI guard propagated to HCA; Q12 -> OWED pending the ruleset
+983217c ci(gov): propagate #170's placeholder guard workflow to HCA
+18841b7 gov: Q12 correct the agent — server-side ref updates, not the @claude Action
+82a07da gov: BRANCHES row terminal state for gov/placeholder-guard-hca (DONE 78f460e)
+b7e3bf5 gov: #23 track .githooks/pre-push 100755 — mode is part of a verbatim copy
+78f460e gov: resolve #NEXT -> #22, Q#NEXT -> Q12/Q13 (on-branch, pre-ff)
+db20852 gov: #NEXT placeholder guard in HCA; Q#NEXT CI gap, Q#NEXT question-state axis
+f2fb3ef gov: propagate placeholder guard + post-Part-A shared block to HCA
 ```
 
-Governance and `.claude/` only — 5 files, no `app/`, no `src/`, no scraper source, no
-build config. `CLAUDE.md` absent from the diff, so the shared block is untouched by
-construction rather than by inspection.
+Repo's own dated record (`git log --format="%ad %s" --date=short -10`):
+
+```
+2026-08-08 gov: BRANCHES terminal state for gov/block-remirror (DONE 3bd196d)
+2026-08-08 gov: BRANCHES row for gov/block-remirror
+2026-08-08 gov: resolve #NEXT -> #26/#27, Q#NEXT -> Q14 (on-branch, pre-ff)
+2026-08-08 gov: DECISIONS_LOG #NEXT x2 — block re-mirror and land-is-repo-local
+2026-08-08 gov: repair four stale rows, mirror health-app Q33, re-row G1
+2026-08-08 gov: HCA land is repo-local; document fresh-clone setup and merge path
+2026-08-08 gov: re-mirror the shared block from health-app (G1 breach, health-app ahead)
+2026-08-07 gov: BRANCHES terminal state for ci/placeholder-guard-hca (DONE 6483d19)
+2026-08-07 gov: #25 repair the CRLF flip a bare CR caused in #24
+2026-08-07 gov: resolve #NEXT -> #24 (on-branch, pre-ff)
+```
 
 ## PENDING reconciliation
 
-No `;cc` PENDING queue was carried in; the brief's STEPS were the payload.
+No `;cc` pending-commit queue was carried into this session — work arrived as three
+chat→Code briefs, each adjudicated against the tree rather than applied. Reconciled
+item-by-item against what each brief asked for:
 
-| Brief step | Outcome |
-|---|---|
-| 0 — HANDOFF receipt, committed alone | **LANDED** `616b801` |
-| 1 — locate offending text (premise gate) | **CONFIRMED** — lines 67 / 72 / 74 |
-| 2 — replace column set with the four-state frame | **LANDED** `273a429` |
-| 3 — leave `PENDING` untouched | **VERIFIED** — byte-identical, evidence below |
-| 4 — rule the 77-vs-132 divergence | **RULED + RECORDED** — #21, Q11 |
-| 5 — concern-split, ff-only, push, delete, close-out | **LANDED** `347af28` |
-| LOG — `DECISIONS_LOG` #21 | **LANDED** `61c4f95` |
-| LOG — `FEEDBACK` entry | **LANDED** `c6cfeae` (2 entries) |
-| Ruling — defect 1 as its own commit | **LANDED** `b686801` |
-| Ruling — defect 2 logged, not fixed | **LANDED** as Q10 |
+**Brief 1 (HCA propagation, Parts B & C) — LANDED.**
+- Guard files copied byte-for-byte — `f2fb3ef`. Blob SHAs identical to health-app, which
+  is stronger than the `diff` the brief asked for.
+- Shared block copied verbatim, 155 → 215 — `f2fb3ef`.
+- `core.hooksPath .githooks` installed; hook proven to fire by a synthetic both-arms
+  refusal, not by its passes.
+- `#22`, `Q12`, `Q13` — `db20852`, resolved `78f460e`.
+- **Not in the brief, found by Code:** the hook landed mode 100644 — `#23`, `b7e3bf5`.
 
-**Gate 1 — the premise held, and the brief's own doubt was justified.** The column set is
-written **hyphenated** (`why-parked`), so the earlier `why parked` search missed it
-silently. Two further sites carried a form the brief did not anticipate: `parked` as a
-*status verb* at lines 72 and 74. All three struck; post-edit residual grep for
-`why[- ]parked|\bparked\b|unblocks-on|\bretired\b|\bverifying\b` → **zero**.
+**Brief 2 (health-app CI) — NOT DONE HERE, and correctly so.**
+Its ANCHOR requires a health-app root on `ci/placeholder-guard-action`; this session is
+HCA-rooted on `master`. HALTED without writing. Independently, the work was already on
+health-app master as `#170` (`0a6acf0` → `a9d52d3`), so building it would have minted a
+second implementation. **Step 1's finding, reported not guessed:** there is no `@claude`
+Action in either repo — `.github` appears in exactly one commit in health-app's history,
+the CI commit itself. The real uncovered path is the web-UI merge button.
 
-**Gate 3 — `PENDING` untouched, with the input asserted before the comparison.** Lines
-55–61: 313 bytes before, 313 bytes after, both asserted non-empty, then `cmp` → identical.
-Diff confined to three hunks (`@@ -67 +67,3`, `@@ -72 +74`, `@@ -74 +76`). The output
-template's `## PENDING reconciliation` shifted 98→100 from the two inserted lines above
-it; content byte-identical and outside every hunk.
+**Brief 3 (Brief B: block re-mirror, `land`, stale rows) — LANDED.**
+- Precondition checked first: Brief A on health-app master (`#182` at `fb16336`).
+- Block re-mirrored, `cmp` silent — `fffd314`.
+- `land` set `--local`, verified with the discriminating form — `9efdb89`.
+- Four stale rows repaired, `Q14` minted, G1 re-rowed — `2a91aeb`.
+- `#26`, `#27` — `c0afce3`, resolved `eeae58b`.
 
-**Three departures from the brief, none taken silently:**
+**Amendments, all three answered:**
+1. HCA-only content — **exactly the four lines predicted**, all deliberately replaced
+   upstream. Nothing lost.
+2. Vocabulary-neutral — **confirmed**; `parked` identical text on both sides. Not struck;
+   rowed as `Q14`, the mirror of health-app `Q33`.
+3. §14 occurrence 5 — **clears.** `08cc0b4` is 80 lines / 5205 B, matching `#21`'s record
+   byte-for-byte; the 77 belongs to `35b4110`. Not a miscount, no return trip owed. The
+   amendment aimed the check at HCA's closeout.md, which has never been 80.
 
-1. **health-app's ritual is NOT "already struck."** The brief placed it out of scope as
-   done. Read read-only from `raw.githubusercontent.com`: its
-   `.claude/commands/closeout.md:34` still reads "must be pushed, **parked** in
-   `BRANCHES.md`". Logged Q11.
-2. **The brief's "77 lines" for that file is actually 80** (5205 bytes) — the third count
-   discrepancy of the same family, now in FEEDBACK alongside the other two.
-3. **A second frame residue found at the exit gate:** health-app `BRANCHES.md:3` still
-   heads its columns `| Why parked | Unblocks on |`, though all 22 of its Status values
-   are clean. Folded into Q11.
+**Deviation from a brief's wording, deliberate:** Brief 2's follow-up said the CI work
+"closes Q12". It does not. `push: [master]` fires after the ref has moved — against the
+merge button that is detection, not prevention. `Q12` is **OWED**.
 
 ## Cold-resume handoff
 
-### Step 4 verdict — recorded either way, as the brief required
+**Sprint state.** Six decisions minted (`#22`–`#27`), three questions minted (`Q12`–`Q14`),
+two closed (`Q8`, `Q11` → `#26`). Enforcement in this repo now spans three layers and
+**two of three are present**: the pre-push hook (per clone, set here) and
+`.github/workflows/governance-guard.yml` (both arms, four real runs). The third — a
+ruleset requiring the `placeholder guard (POSIX)` context — does not exist.
 
-**Structure: INTENTIONAL.** The two rituals differ because the repos do — health-app
-carries a "Recent landings" block (its step 6) and the #38/#39 copy-back retirement (step
-9); HCA carries the ANCHOR wrong-repo self-check earned by #10/#11 and the
-write-a-Python-script DB-query rule earned by this environment. `CLAUDE.md` permits
-repo-specific content below the shared block, and none of that content is vocabulary.
+**The through-line.** Four of the six entries are one defect: a statement true at one
+instant, carried forward as a fact about now. `Q12`'s misattributed agent, `#24`'s
+inherited header, `#25`'s encoding, G1's "still discharged". `#26` writes down the general
+form: record *"discharged at `<md5>`"*, never *"discharged"*.
 
-**Vocabulary: NOT ALIGNED.** health-app retains `parked` at its line 34. Paired
-obligation, mirror-first in the next health-app session. **HCA is authoritative for the
-ritual's vocabulary and for the `BRANCHES.md` header frame in the interim.**
+**Open questions.**
+- `Q12` **OWED** — no ruleset; `rules/branches/master` returns `[]`. The alias
+  prerequisite is discharged (`#27`); the ruleset is the only remaining item.
+- `Q13` **OPEN** — imported question-state axis vs the four work-states this store uses.
+  Lossy mapping, so a judgement, not a reformat.
+- `Q14` **OPEN** — the shared block is the last surviving site of `parked` in either repo.
+  Paired with health-app `Q33`; needs its own brief, mirror-first, G1 re-fingerprint.
+- `Q4` BLOCKED (day-lag), `Q7` OWED, `Q9` item 1, `Q10` — carried, untouched.
 
-### Exit condition — met on values; one residue in the frame
+**Branch gate.** All five session branches merged+deleted; three control refs closed and
+deleted. `feat/hrv-node-dump` (BLOCKED) and `fix/hrv-capture-regression` (UNSTARTED) rowed,
+neither touched. No branch in limbo. `feat/cbti-eval-trigger` is **health-app's**, not
+this repo's — checked read-only: two `+` commits, pushed, and already rowed there, so it
+does not halt that repo's ritual either.
 
-Counted by **field**, not by word, with every extraction asserted non-empty first:
-
-| Store | DONE | BLOCKED | OWED | UNSTARTED | fields / rows |
-|---|---|---|---|---|---|
-| HCA `BRANCHES.md` | 3 | 1 | 0 | 1 | 5 / 5 |
-| HCA `OPEN_QUESTIONS.md` | 1 | 1 | 4 | 5 | 11 / 11 |
-| health-app `BRANCHES.md` | 12 | 0 | 9 | 1 | 22 / 22 |
-| health-app `OPEN_QUESTIONS.md` | 11 | 2 | 5 | 14 | 32 / 32 |
-
-70 status fields against 70 rows. **Zero outside the four states in all four files.**
-(HCA `BRANCHES.md` re-counted after the post-close-out row flip below — the OWED row
-became DONE, so 2→3 DONE and 1→0 OWED.)
-The grep, run per store after extracting the Status *field* (column 3 of a `BRANCHES.md`
-row; the `·`-suffix of an HCA `### Qn` heading; the `**Status:**` lead in health-app):
-
-```powershell
-# per store, on the extracted field list — not on the file text
-$fields | Where-Object { $_ -notmatch '^(DONE|BLOCKED|OWED|UNSTARTED)$' }
-```
-
-→ empty in all four. Residue is in the **frame**: health-app `BRANCHES.md:3` column
-headers. A header tells the next writer what to put there, so it is vocabulary.
-
-### G1 — verified, still discharged
-
-Both blocks extracted independently and compared, each asserted non-empty **and ≥100
-lines** before `cmp` was allowed to mean anything:
-
-```
-HCA          155 lines / 10232 bytes / 4243c91ce78e0331ddfa5178aa3006b8
-health-app   155 lines / 10232 bytes / 4243c91ce78e0331ddfa5178aa3006b8   → cmp identical
-```
-
-This session did not touch `CLAUDE.md`; G1 was not re-breached.
-
-### THE RETURN TRIP — health-app-rooted session, now 6 items
-
-Items 1–4 carried from #20 (Q8); 5–6 added by #21 (Q11).
-
-1. ~~Re-mirror the shared block~~ — **DONE**, verified above. G1 discharged.
-2. **health-app `Q25` → `DONE → #91`** — resolves on sight, no investigation needed. Q25's
-   entire content was that `claude/hevy-api-workout-query-teulc2` had no row here. It got
-   one (`f15b545`), and **the operator deleted the branch from origin on 2026-07-20** —
-   verified from here, `git ls-remote --heads origin` empty for that ref. The omission and
-   the branch are both gone.
-3. ~~health-app `Q6` tie-break clause~~ — arrived inside the block. **DONE.**
-4. **health-app `FEEDBACK` §14** — append the count-the-field recurrence; §14 exists only
-   there, and it now has a third instance (the "77" above).
-5. **health-app `.claude/commands/closeout.md:34`** — strike `parked`.
-6. **health-app `BRANCHES.md:3`** — rename the `Why parked` / `Unblocks on` headers.
-
-### Open questions — 11 rows
-
-| | State | |
-|---|---|---|
-| Q1 | UNSTARTED | SH-relayout cadence vs SDK-migration trigger |
-| Q2 | OWED | native HRV scrape end-to-end to DB — one Postgres check |
-| Q3 | DONE → `db6f50e` | stale-APK-masked Compose-break defect |
-| Q4 | **BLOCKED** | day-lag / read-freshness — the only BLOCKED row |
-| Q5 | UNSTARTED | historical stale-row reconciliation |
-| Q6 | UNSTARTED | does `BRANCHES.md` retain DONE rows or drop them? |
-| Q7 | OWED | #18's flat-`sourcePackage` unfulfilled in `aggregateSteps` |
-| Q8 | OWED | return trip items 2 and 4; **G1 limb discharged** |
-| Q9 | UNSTARTED | item 2 discharged by #21; item 1 (ROADMAP queue) open |
-| Q10 | UNSTARTED | the ritual's own ANCHOR still declarative-mood |
-| Q11 | OWED | health-app ritual `parked` + header frame; divergence ruled |
-
-**Q7 remains the one with production consequence.** `aggregateSteps` in
-`src/healthConnect.js` drops `sourcePackage`, so **#18 is overstated on master.** The fix
-is at `stash@{0}` (`pre-gov-parity: healthConnect.js WIP, unreviewed`, +4/−3),
-unreviewed and unlanded. `git stash list` to recover. Everything else open here is
-governance.
-
-**Untracked, preserved, not staged:** `checkin_build_brief.md`, `hevy_routine.json`,
-`nodedump.txt` — the last is #19's consumed evidence, not a fresh dump.
+**Owed to health-app, not actionable from here:** the shared block's `parked` (paired with
+`Q33`); FEEDBACK §14's next occurrence — a brief gave health-app's block as `259 / 18757`
+where the tree gives `259 / 18717`; and health-app's repo-specific section still says HCA
+has "no `.github/workflows` directory at all", true when written, false since `6483d19`.
 
 ### Single clearest next action
 
-Watch ONE real overnight/~5am sync land today's HRV value in Railway (Postgres query, not
-on-device UI) on the standalone release build. It resolves Q4 — the only BLOCKED row in
-either repo's HCA-side stores — and unblocks `feat/hrv-node-dump`'s disposition.
-
-Also OWED on Luke, ungated by this session: the `probe_resolver.py` container run, the
-`hrv-sleep-integrity` Railway sweep, `connector-error-policy` See-all E2E,
-`hevy-resolver-activation` limb 2, and rotating the Hevy API key (exposed in a chat
-transcript 2026-07-11).
+Set the ruleset on `Easty11/health-connect-app` requiring the `placeholder guard (POSIX)`
+status check by that exact string, mirroring health-app's `master-pr-gated` (`20414758`).
+That closes `Q12` and makes `#27`'s PR-shaped `land` load-bearing rather than
+anticipatory. **GitHub-side repo config, not committable — owner Luke.**

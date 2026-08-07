@@ -68,60 +68,60 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
-**Branch:** `master` (trunk)  
-**Closed:** 2026-07-20 (ritual vocabulary — the last self-regenerating surface closed)
+**Branch:** `master` (trunk)
+**Closed:** 2026-08-08 (governance: guard propagation → CI surface → block re-mirror)
+**Span:** 2026-08-04 → 2026-08-08 per the repo's own dated record — 5 / 1 / 5 / 7 commits
+across 08-04, 08-05, 08-07, 08-08. Not a self-reported stamp: the session crossed three
+date boundaries and the first write of this block asserted a single date from memory.
 
-### This session — landed on master (`347af28`)
-Governance and `.claude/` only. Five files; no `app/`, no `src/`, no scraper source, no
-build config. `CLAUDE.md` absent from the diff, so the shared block is untouched by
-construction.
-- `616b801` — HANDOFF receipt, committed alone before any work.
-- `273a429` — **`/closeout` column vocabulary struck.** Line 67's
-  `purpose / why-parked / unblocks-on` now points at `CLAUDE.md`'s State-vocabulary
-  section without restating it; lines 72/74's `parked`-as-status-verb → `rowed`.
-  The `PENDING` section deliberately untouched.
-- `b686801` — **stale-reference fix:** step 5 named `## Current Sprint`, a heading that
-  does not exist. Real one is `## Sprint block`.
-- `61c4f95` — **DECISIONS_LOG #21**, carrying the divergence ruling.
-- `c6cfeae` — FEEDBACK ×2; Q10/Q11 added; Q9 item 2 discharged.
-- `347af28` — HANDOFF CODE→CHAT entry.
+### This session — landed on master (`9b5663b`, 18 commits from `36a8444`)
+Governance, `.githooks/`, `scripts/`, `.github/` only. No `app/`, no `src/`, no scraper
+source, no build config. Three arcs, each landed and rowed before the next began.
 
-### Why this brief existed at all
-#20 swept the stores; the ritual that *writes* them kept the old dialect, so every
-close-out would have re-emitted it. Inert debt is carried — a generator regenerates.
-This was the only remaining surface of the second kind. Confirmed live: the re-invoked
-ritual read back its own swept text this session.
+**A · Placeholder guard propagated (`#22`, `#23`)** — `.githooks/pre-push` and
+`scripts/check_governance_placeholders.py` copied byte-for-byte from health-app
+post-Part-A; shared block taken 155 → 215 lines. `#23` then caught the copy landing
+**mode 100644**: the blob was byte-exact, the mode was not, and a POSIX clone silently
+skips a non-executable hook. `diff` checks content; executability is mode.
 
-### The 77-vs-132 divergence — ruled
-**Structure: intentional.** The rituals legitimately differ because the repos do —
-health-app carries a "Recent landings" block and the #38/#39 copy-back retirement; HCA
-carries the ANCHOR wrong-repo self-check (#10/#11) and the write-a-Python-script DB rule.
-`CLAUDE.md` permits repo-specific content, and none of it is vocabulary.
-**Vocabulary: NOT aligned.** health-app's `.claude/commands/closeout.md:34` still reads
-"pushed, **parked** in `BRANCHES.md`" — the brief's "already struck" was false. Logged
-Q11; **HCA is authoritative for the ritual's vocabulary in the interim.**
+**B · CI guard (`#24`), and the defect it caused (`#25`)** — `#170`'s
+`governance-guard.yml` propagated: 2a hook mode, 2b hook executed as git executes it,
+2c guard against the ref that would land. Executable body byte-identical; **header
+adapted at four sites** where health-app's asserts evidence about its own repo,
+including that branch protection is set — false here. Four real Actions runs, three of
+them red controls. `#25` then repaired a **bare CR** in `#24`'s own prose: git reads a
+CR with no LF as a binary marker, so `core.autocrlf` skipped normalisation and stored
+all 650 lines of `DECISIONS_LOG.md` as CRLF. A three-line edit diffed as 1217.
 
-### Exit condition — met on values, one residue in the frame
-Status **fields**, counted by field across four files in both repos, totals reconciling
-against row populations:
+**C · Shared block re-mirrored (`#26`), `land` made repo-local (`#27`)** — G1 breached
+the *other* way: health-app amended the block five times on 2026-08-05 with no return
+trip, leaving it ahead 259/215. Re-mirrored whole; exactly four HCA-only lines deleted,
+all deliberately replaced upstream; diff 48/4, proportional. `land` set `--local` to
+`!gh pr merge --merge --delete-branch`, because the old `--global --ff-only` body is a
+direct-push motion the coming ruleset would refuse — **the alias had to change before
+the ruleset, and nothing recorded that they were ordered.**
 
-| Store | DONE | BLOCKED | OWED | UNSTARTED | fields / rows |
-|---|---|---|---|---|---|
-| HCA `BRANCHES.md` | 2 | 1 | 1 | 1 | 5 / 5 |
-| HCA `OPEN_QUESTIONS.md` | 1 | 1 | 4 | 5 | 11 / 11 |
-| health-app `BRANCHES.md` | 12 | 0 | 9 | 1 | 22 / 22 |
-| health-app `OPEN_QUESTIONS.md` | 11 | 2 | 5 | 14 | 32 / 32 |
+### The through-line worth carrying
+Four of this session's six entries are the same defect: **a statement true at one
+instant, carried forward as a fact about now.** `Q12`'s misattributed agent, `#24`'s
+inherited header, `#25`'s encoding, and G1's "still discharged". The rule `#26` writes
+down — *record "discharged at `<md5>`", never "discharged"* — is the general form.
 
-**Zero status fields outside the four states, all four files.** Residue is in the *frame*,
-not the values: health-app `BRANCHES.md:3` still heads its columns
-`| Why parked | Unblocks on |`. HCA swept its headers under #20. Folded into Q11 — a
-column header tells the next writer what to put there.
+### Controls, because a green suite with no red control proves nothing
+| Control | Run | Result |
+|---|---|---|
+| clean branch (negative) | `31172574034` | green, all three arms |
+| placeholder arm | `31172614745` | **red at 2c**, both offences named |
+| mode arm | `31172624557` | **red at 2a**, `tracked mode: 100644` |
+| execution arm (2a stripped) | `31172640907` | **red at 2b**, `Permission denied`, exit 126 |
+| push arm on master | `31172871257`, `31173087744`, `31218847172` | green |
 
-### G1 — breached 2026-08-05, re-discharged 2026-08-07
-**“Still discharged” was the defect, not a summary of one.** The line below stood unchanged
-while it stopped being true, because a parity discharge was recorded as a **standing state**
-rather than as a measurement with a date and a hash. Nothing detected the breach; nothing
-could, because no surface held the hash the claim was taken at.
+All three control PRs closed, branches deleted local and remote.
+
+### G1 — breached 2026-08-05, re-discharged 2026-08-08 (`fffd314`)
+**"Still discharged" was the defect, not a summary of one.** A parity discharge recorded
+as a standing state rather than a measurement with a date and a hash cannot be
+contradicted, because no surface holds the fingerprint the claim was taken at.
 
 | | lines | bytes (LF) | md5 (LF) |
 |---|---|---|---|
@@ -130,36 +130,59 @@ could, because no surface held the hash the claim was taken at.
 | health-app at `73d5cb8` | 259 | 18717 | `552728ade81e90edcbc8f12bbbc02a80` |
 | **HCA after re-mirror** | **259** | **18717** | **`552728ade81e90edcbc8f12bbbc02a80`** |
 
-Both blocks independently extracted, each asserted non-empty and ≥100 lines before `cmp` was
-allowed to mean anything; `cmp` silent, `diff` empty. health-app amended the block five times
-on 2026-08-05 with no return trip, leaving health-app ahead — parity inverted from `#21`'s
-direction. **The rule this earns: write “discharged at `<md5>`”, never “discharged.”**
+Both blocks independently extracted, each asserted non-empty and >=100 lines before `cmp`
+was allowed to mean anything; `cmp` silent, `diff` empty.
 
 ### Branch dispositions (terminal state)
-- `gov/ritual-vocabulary` — **merged+deleted** (ff-only at `347af28`, pushed; local
-  deleted). Terminal, so no row.
+- `gov/placeholder-guard-hca` — **merged+deleted** (`78f460e`), rowed `DONE`.
+- `gov/hook-exec-bit` — **merged+deleted** (`b7e3bf5`), covered in the same row.
+- `ci/placeholder-guard-hca` — **merged+deleted** (`6483d19`); PR #11 shows MERGED,
+  remote ref auto-deleted. Rowed `DONE`.
+- `gov/decisions-log-crlf-repair` — **merged+deleted** (`e3324ba`), covered in that row.
+- `gov/block-remirror` — **merged+deleted** (`3bd196d`), never pushed to origin. Rowed
+  `DONE`.
+- `scratch/gov-control-{placeholder,mode,exec}` — control refs, PRs #12/#13/#14 closed,
+  branches deleted local and remote. Terminal, so no rows.
 - `feat/hrv-node-dump` BLOCKED · `fix/hrv-capture-regression` UNSTARTED — rowed, neither
   touched this session.
-- `claude/hevy-api-workout-query-teulc2` — **DONE → discarded 2026-07-20.** Deleted from
-  origin by the operator after the close-out was written; row flipped from OWED, with the
-  deletion verified from here (`git ls-remote --heads origin` empty for that ref) rather
-  than taken on report. **Discarded, not merged** — `4dfccbe` was `git cherry` `+` to the
-  end and nothing was salvaged.
 
 ### Decisions
-**#21** minted (max was #20). Number claimed at merge.
+**#22, #23, #24, #25, #26, #27** minted (max was #21 at session open). Every number
+claimed at merge with `origin/master`'s max re-read at that instant and quoted in the
+entry. **Q12, Q13, Q14** minted; **Q8** and **Q11** closed → `#26`.
 
 ### Open (carried forward)
+- **Q12 · OWED** — HCA has no ruleset; `rules/branches/master` returns `[]`, so the PR
+  arm reports and does not block and `git push origin master` still succeeds. **The
+  alias prerequisite is now discharged (`#27`); the ruleset is the only thing left.**
+  GitHub-side, not committable, owner Luke.
+- **Q13 · OPEN** — the imported question-state axis is not the axis this store uses; 11
+  pre-existing rows still carry `UNSTARTED`/`BLOCKED`, which the new axis lacks. The
+  mapping is lossy, so it is a judgement, not a reformat.
+- **Q14 · OPEN** — the shared block is the **last surviving site of `parked`** in either
+  repo. Mirror of health-app `Q33`; needs its own brief, mirror-first, with a G1
+  re-fingerprint on both sides.
 - **Q4** — day-lag / read-freshness. Still the only BLOCKED row in the repo.
-- **Q7** — #18's flat-`sourcePackage` unfulfilled in `aggregateSteps`; fix at `stash@{0}`,
-  unreviewed and unlanded, so #18 is overstated on master.
-- **Q8, Q11** — the health-app return trip, now **six items** across both.
-- **Q9 item 1** — `ROADMAP.md`'s own work queue above still carries `RESOLVED` / `parked`
-  / `Blocked on`. Inert debt, not a generator.
+- **Q7** — `#18`'s flat-`sourcePackage` unfulfilled in `aggregateSteps`.
+- **Q9 item 1** — `ROADMAP.md`'s work queue above still carries `RESOLVED` / `parked` /
+  `Blocked on`. Inert debt, not a generator.
 - **Q10** — the ritual's own ANCHOR still states required state in the declarative.
 
+### Owed to health-app (not actionable from here)
+- The shared block's `parked` — paired with `Q33`, mirror-first.
+- `#26` logged a brief figure that did not survive the tree: health-app's block given as
+  `259 / 18757`, measured `259 / 18717`. Belongs in FEEDBACK §14's recurrence log.
+- health-app's repo-specific section still says HCA has "no `.github/workflows`
+  directory at all" — true when written, false since `6483d19`.
+- **Cleared, no return trip owed:** §14 occurrence 5's "80" was verified correct from
+  here — `08cc0b4` is 80 lines / 5205 B, matching `#21`'s record byte-for-byte.
+
 ### Next action
-Watch ONE real overnight/~5am sync land today's HRV value in Railway (Postgres query, not
-on-device UI) on the standalone release build — resolves Q4 and unblocks
-`feat/hrv-node-dump`. Housekeeping still owed: rotate the Hevy API key (exposed in a chat
+Set the ruleset on `Easty11/health-connect-app` requiring the `placeholder guard
+(POSIX)` context by that exact string — closes **Q12** and makes `#27`'s alias
+load-bearing rather than anticipatory. GitHub-side, owner Luke.
+
+Still owed from before: watch ONE real overnight/~5am sync land today's HRV value in
+Railway (Postgres query, not on-device UI) on the standalone release build — resolves
+Q4 and unblocks `feat/hrv-node-dump`. Rotate the Hevy API key (exposed in a chat
 transcript 2026-07-11).

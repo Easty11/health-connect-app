@@ -698,3 +698,122 @@ belongs in its own change with its own controls, not smuggled into a repair.
 **Do not revisit unless:** a `.gitattributes` lands, which makes this class impossible rather
 than merely fixed; or a store flips again, in which case check for a bare CR **first** — the
 diffstat is the tell, and it is visible in the `--ff-only` output of every merge.
+
+### #NEXT — Shared block re-mirrored; G1 was breached the other way and every store said otherwise  ·  active
+
+**Decision:** HCA's shared loop-rules block is replaced whole with health-app's at `73d5cb8`.
+`215 / 15132 / 592d95c82b48361c73ad3b65677de529` → `259 / 18717 /
+552728ade81e90edcbc8f12bbbc02a80` (LF form, both sides), `cmp` silent and `diff` empty after.
+Both extractions were asserted non-empty and >100 lines **before** either comparison was
+allowed to mean anything.
+
+**What was breached, and in which direction.** `#21` discharged G1 at
+`4243c91ce78e0331ddfa5178aa3006b8` / 155 lines / 10232 B, with HCA *ahead*. `#22` then took
+HCA to 215 by copying health-app. health-app's 2026-08-05 session amended the block five
+times with no return trip, putting **health-app** ahead at 259 against HCA's 215 — parity
+inverted from the direction the last two entries were written to guard.
+
+**Nothing detected it, and the reason is the entry.** `ROADMAP.md:120` and `closeout.md:101`
+both continued to read *"G1 — verified, still discharged."* That sentence was **true when
+written and became false without changing**, because a parity discharge was recorded as a
+**standing state** rather than as a measurement carrying a date and a hash. There was no
+surface holding the fingerprint the claim was taken at, so no surface could contradict it.
+
+> **The rule this earns: a store may record "discharged at `<md5>`" and never "discharged."**
+
+Same defect family as `#24`'s header — a true statement about one instant, carried forward as
+a fact about now — and the same family as `Q12`'s original misattribution. Third appearance in
+four entries, which is the argument for writing it as a rule rather than a lesson.
+
+**Five amendments land in one edit:** the boundary criterion, number-at-merge's window, the
+PowerShell-quoting rule, the `land`-is-no-longer-global ruling, and `#182`'s corrected writer
+claim.
+
+**Nothing HCA-only was lost, and that was checked rather than assumed** — the check is the
+point, because a whole-block mirror is a silent deletion of anything the source lacks.
+Exactly four lines were HCA-only, all four deliberately replaced upstream: the writer claim
+(replaced by `#182`), two number-at-merge lines (replaced by the motion-neutral restatement),
+and the `--global alias.land` `--ff-only` body (replaced by the `land` ruling — which is why
+that ruling is the next entry and the same session).
+
+The staged diff was **48 insertions / 4 deletions**: proportional, and the four deletions are
+exactly the four predicted. A whole-file diffstat here would have meant `#25` recurring.
+
+**The mirror is vocabulary-neutral, verified not assumed.** `Q11` gave HCA interim authority
+over the struck vocabulary, so a mirror could in principle have re-imported `parked`. It
+could not: the word sits at block-relative line 157 in HCA and 179 in health-app, **identical
+text**, and no other struck term (`why parked`, `unblocks-on`, `RESOLVED`, `verifying`)
+appears anywhere in the incoming block. The mirror neither imports nor removes it. It is now
+the **last surviving site of the struck word in either repo** — rowed as the mirror of
+health-app `Q33`, and deliberately **not** struck here: editing the block re-breaches the
+obligation this entry just discharged, and it needs its own brief with a mirror-first plan and
+a G1 re-fingerprint on both sides. Same reasoning that kept `.gitattributes` out of `#25`.
+
+**Four stale rows repaired, none closed on the brief's authority.** Each was read from
+health-app `origin/master` from here first: `Q8` item 1 (`Q25` reads `**State:** DONE → #91`,
+with a `#93` addendum closing both limbs), `Q8` item 2 (FEEDBACK §14's fifth occurrence
+appended at `c7cffa5`), `Q11` items 1 and 2 (`parked` grep over
+`.claude/commands/closeout.md` returns **empty**; `BRANCHES.md`'s header now reads the
+four-state form at line 8, not the line 3 the row recorded). `Q8` and `Q11` both close.
+
+**A count in the brief did not survive the tree, and it is logged rather than smoothed over.**
+The brief gave health-app's block as `259 / 18757`. The tree gives `259 / 18717` — line count
+right, byte count 40 out — measured from the blob at `origin/master` with the worktree
+verified identical to it. HCA's triple in the same brief matched exactly. This is health-app
+FEEDBACK §14's family (a number asserted rather than measured) and belongs in §14's recurrence
+log on the return trip; it is recorded here because this is the session that measured it.
+
+**Also checked, and it clears.** §14 occurrence 5 rests on health-app's
+`.claude/commands/closeout.md` being **80 lines** where a brief said 77. From this HCA-rooted
+session the file's whole history was counted: `08cc0b4` (2026-07-20) is **80 lines / 5205 B**,
+matching `#21`'s recorded 5205 byte-for-byte, and the 77 belongs to `35b4110` (2026-07-04).
+**Occurrence 5 is not itself a miscount** — 77 was stale, 80 was current. No return trip is
+owed on that account. The amendment requesting this check aimed it at *HCA's* closeout.md,
+which has never been 80: it was 132 at `#21` and is 134 now. The 80 was always health-app's.
+
+**Do not revisit unless:** either repo amends the block, at which point the other has a return
+trip and the fingerprint in `ROADMAP.md` is the thing to compare against — not the word
+"discharged".
+
+### #NEXT — `land` is repo-local here too; the global ff-only body was a prerequisite of the ruleset, not a detail  ·  active
+
+**Decision:** HCA sets `git config --local alias.land '!gh pr merge --merge --delete-branch'`.
+The machine-global `alias.land` stays absent; `stale` stays global and unchanged. HCA's
+fresh-clone setup — `core.hooksPath .githooks` plus the local alias, two commands, neither
+cloned with the repo — is documented below `END SHARED LOOP RULES`, matching health-app's.
+
+**The ordering is the finding.** Until now HCA's shared block instructed
+`git config --global alias.land` with an `--ff-only … git push origin master` body: a
+**direct-push** motion, on an alias shared machine-wide with health-app. The ruleset Brief C
+sets refuses exactly that push. Setting the ruleset first would therefore have **broken the
+landing motion this repo documents, in both repos, at the instant it was set** — and the
+break would have presented as a permission error on an unrelated branch, not as a governance
+decision. The two were sitting on an outstanding list as independent items. They are ordered,
+and nothing recorded that they were. `Q12`'s *"requires that ruleset and nothing else"* is
+amended accordingly: it named one prerequisite and missed the one that had to come first.
+
+**Verified with the discriminating form, because the bare form is not a control (`#103`).**
+`git config --local --get alias.land` returns the new body; `git config --global --get
+alias.land` exits 1 (absent); the bare `git config --get` returns the same value but cannot
+distinguish a local value from a stale global one, so it is reported alongside and never
+relied on. health-app's own local alias was re-verified intact and identical.
+
+**The global was already unset.** Brief A had done it, so this session's `--global --unset`
+would have been a no-op that errors — checked before running rather than run and rationalised.
+Had health-app lacked a local override at that moment, unsetting the global would have left it
+with no `land` at all.
+
+**The body carries no embedded double quotes**, per the PowerShell-quoting rule this same
+session's mirror imported. `--merge`, never `--squash` or `--rebase` (both rewrite the commits
+`BRANCHES.md` rows record as landing SHAs); never `--auto` (queues a merge instant you do not
+hold, which cannot satisfy number-at-merge); never `--admin`.
+
+**What this does not do:** it does not gate anything. HCA still has no ruleset —
+`gh api repos/Easty11/health-connect-app/rules/branches/master` returns `[]` — so
+`git push origin master` still succeeds and the PR arm still reports rather than blocks. The
+alias is now *shaped* for a gate that does not exist yet. `Q12` stays **OWED**.
+
+**Do not revisit unless:** the ruleset lands, which closes `Q12` and makes the alias
+load-bearing rather than anticipatory; or a third repo joins, at which point "one global body
+cannot hold two repos' motions" becomes three and the per-clone setup block is the thing to
+copy.

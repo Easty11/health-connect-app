@@ -267,6 +267,46 @@ must match it.
 
 ---
 
+## Fresh-clone setup — health-connect-app
+
+**Two commands, both per-clone, neither cloned with the repo.** A fresh clone has the guard
+files in the tree and no enforcement wired to them until these run:
+
+```powershell
+git config core.hooksPath .githooks
+git config --local alias.land '!gh pr merge --merge --delete-branch'
+```
+
+`stale` stays global and unchanged. `land` is **repo-local** because one global body cannot
+hold both repos' motions — see the `land` decision below and health-app `#171`. Verify with
+`git config --local --get alias.land`; the bare `git config --get` cannot tell a local value
+from a stale global one and is not a control (health-app `#103`).
+
+### Merge path — CI-guarded, not yet CI-gated
+
+Enforcement here spans three layers and **two of them are absent**:
+
+| Layer | State |
+|-------|-------|
+| `core.hooksPath .githooks` (pre-push hook) | per-clone, set in this clone |
+| `.github/workflows/governance-guard.yml` | in the tree since `#24`; both arms run |
+| ruleset requiring `placeholder guard (POSIX)` | **absent** — `gh api repos/Easty11/health-connect-app/rules/branches/master` returns `[]` |
+
+So the PR arm **reports and does not block**, `push: [master]` is detection after the fact,
+and `git push origin master` still succeeds. That is why `Q12` is OWED rather than DONE. The
+`land` body above is nonetheless already the PR motion, **because the ordering is not
+optional**: setting the ruleset first would refuse the direct-push motion this file used to
+document, on an alias then shared machine-globally with health-app. Alias first, ruleset
+second.
+
+**`--merge`, never `--squash` or `--rebase`, and never `--auto` or `--admin`** — same
+reasoning as health-app `#171`: `BRANCHES.md` rows record landing SHAs, and squash or rebase
+rewrites them into objects unreachable from master; `--auto` queues a merge instant you do
+not hold, which cannot satisfy number-at-merge.
+
+---
+
+
 ## What this repo is
 
 The **Expo React Native (Android-first) companion app** for the health

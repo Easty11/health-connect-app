@@ -568,7 +568,7 @@ by `diff` is checked on one axis. For anything git executes, check `ls-files -s`
 **Do not revisit unless:** another executable is propagated between repos, in which case
 the mode check is part of the copy and not a follow-up to it.
 
-### #NEXT — `#170`'s CI guard propagated to HCA; the copy's header is repo-specific evidence and cannot be verbatim  ·  active
+### #24 — `#170`'s CI guard propagated to HCA; the copy's header is repo-specific evidence and cannot be verbatim  ·  active
 
 **Decision:** `.github/workflows/governance-guard.yml` runs the placeholder guard on
 `ubuntu-latest`, on `pull_request` targeting master and `push` to master, asserting in order
@@ -641,6 +641,8 @@ prevention-vs-detection warning ignored one repo later.
 
 **The enforcement now spans three layers here and only one is versioned:** `core.hooksPath`
 per clone, the ruleset per repo, this file. Two of the three are absent in HCA today.
+
+**Number claimed at merge:** `origin/master`'s maxima re-read at the fast-forward instant — `^### #?[0-9]+` gives **`### #23`**, `^#{2,3} Q[0-9]+` gives **`### Q13`**. This entry takes **#24**; no new question is minted, `Q12` is reused.
 
 **Do not revisit unless:** the ruleset lands (at which point `Q12` closes and the header's
 "NOT set" paragraph becomes false and must be corrected — it is dated for exactly that

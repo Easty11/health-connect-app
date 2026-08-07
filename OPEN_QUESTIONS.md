@@ -87,9 +87,9 @@ points at; this row is what points at it. Recover with `git stash list`.
 
 ### Q12 — The guard cannot see server-side ref updates  ·  OWED
 **State:** OWED. **Mirrors:** health-app `Q79` (closed → `#170`). **Related:** `#22` (the
-hook), `#NEXT` (the CI surface).
+hook), `#24` (the CI surface).
 
-**The versioned half is LANDED; the fork is decided.** `#NEXT` propagated `#170`'s
+**The versioned half is LANDED; the fork is decided.** `#24` propagated `#170`'s
 `.github/workflows/governance-guard.yml` here — 2a hook mode, 2b hook executed, 2c guard
 against the ref that would land, on `pull_request` and `push: [master]`, proven by four
 real runs including three red controls. **OWED, not DONE, and the distinction is not
@@ -150,7 +150,7 @@ Enforcement then spans three layers of which only the workflow file has a diff.
 **Open fork, untested here:** whether an HCA runner image ships a Python the script can use.
 The local install does not test it — this machine has 3.14.5 and a runner image need not.
 
-**Outstanding — owner Luke.** The propagation is done (`#NEXT`, 2026-08-07); the asymmetry
+**Outstanding — owner Luke.** The propagation is done (`#24`, 2026-08-07); the asymmetry
 that remains is narrower and now symmetrical in kind: **health-app has its ruleset, HCA does
 not.** One `gh api` call or one settings page closes this row.
 

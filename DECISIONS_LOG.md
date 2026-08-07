@@ -699,7 +699,7 @@ belongs in its own change with its own controls, not smuggled into a repair.
 than merely fixed; or a store flips again, in which case check for a bare CR **first** — the
 diffstat is the tell, and it is visible in the `--ff-only` output of every merge.
 
-### #NEXT — Shared block re-mirrored; G1 was breached the other way and every store said otherwise  ·  active
+### #26 — Shared block re-mirrored; G1 was breached the other way and every store said otherwise  ·  active
 
 **Decision:** HCA's shared loop-rules block is replaced whole with health-app's at `73d5cb8`.
 `215 / 15132 / 592d95c82b48361c73ad3b65677de529` → `259 / 18717 /
@@ -771,11 +771,13 @@ matching `#21`'s recorded 5205 byte-for-byte, and the 77 belongs to `35b4110` (2
 owed on that account. The amendment requesting this check aimed it at *HCA's* closeout.md,
 which has never been 80: it was 132 at `#21` and is 134 now. The 80 was always health-app's.
 
+**Numbers claimed at merge:** `origin/master`’s maxima re-read at the fast-forward instant — `^### #?[0-9]+` gives **`### #25`**, `^#{2,3} Q[0-9]+` gives **`### Q13`**, branch 0 behind. This branch takes **#26** and **#27** in file order, and **Q14**.
+
 **Do not revisit unless:** either repo amends the block, at which point the other has a return
 trip and the fingerprint in `ROADMAP.md` is the thing to compare against — not the word
 "discharged".
 
-### #NEXT — `land` is repo-local here too; the global ff-only body was a prerequisite of the ruleset, not a detail  ·  active
+### #27 — `land` is repo-local here too; the global ff-only body was a prerequisite of the ruleset, not a detail  ·  active
 
 **Decision:** HCA sets `git config --local alias.land '!gh pr merge --merge --delete-branch'`.
 The machine-global `alias.land` stays absent; `stale` stays global and unchanged. HCA's

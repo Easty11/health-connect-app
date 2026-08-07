@@ -85,7 +85,7 @@ through the aggregate row, the first-contributor path (`??=`), and the
 projection. Unreviewed and unlanded — owner Luke. A stash is a surface nothing
 points at; this row is what points at it. Recover with `git stash list`.
 
-### Q#NEXT — The shared block still says `parked`; mirror of health-app `Q33`  ·  OPEN
+### Q14 — The shared block still says `parked`; mirror of health-app `Q33`  ·  OPEN
 **State:** OPEN. **Mirrors:** health-app `Q33` (OPEN). **Related:** `#20` (four states), `#21`,
 `#93` (health-app's sweep), `Q9`, `Q11` (both now closed against it).
 
@@ -109,13 +109,13 @@ tracked in only one store is how the unpaired half rides another four sessions. 
 was minted to prevent.
 
 **Deliberately NOT struck in this session, for the reason `Q33` gives and one more.** Editing the
-block from either side re-breaches G1 — the obligation `#NEXT` has just discharged, at
+block from either side re-breaches G1 — the obligation `#26` has just discharged, at
 `552728ade81e90edcbc8f12bbbc02a80` / 259 lines / 18717 B. It needs its own brief with a mirror-first
 plan and a G1 re-fingerprint on both sides. Same reasoning that kept `.gitattributes` out of `#25`:
 a change deserving its own controls does not ride in on an unrelated one.
 
 **Note for the return trip:** `Q33`'s own text quotes stale coordinates — `CLAUDE.md:128` / `:116`
-and fingerprint `4243c91c…` / 155 lines / 10232 B, all superseded by `#22` and `#NEXT`. Correct them
+and fingerprint `4243c91c…` / 155 lines / 10232 B, all superseded by `#22` and `#26`. Correct them
 there; do not carry them from `Q33` into a plan.
 
 **Outstanding — owner Luke:** one shared-block brief, mirror-first, both repos, one G1
@@ -142,7 +142,7 @@ an equivalent, the PR arm reports and does not block, and the merge button that 
 missed a second that had to come *first*: HCA's `land` was the shared block's `--global` `--ff-only`
 body, a **direct-push** motion, on an alias shared machine-wide with health-app. A ruleset refusing
 direct pushes to master would have broken the landing motion this repo documented, in both repos, at
-the moment it was set. The alias is now repo-local and PR-shaped (`#NEXT`), so the prerequisite is
+the moment it was set. The alias is now repo-local and PR-shaped (`#27`), so the prerequisite is
 discharged and the ordering is recorded rather than rediscovered. **Closing this row now requires
 the ruleset and nothing else** — which is what the original sentence asserted one step too early.
 
@@ -229,7 +229,7 @@ under-application.
 **Outstanding — owner Luke:** rule the axis, then sweep or narrow in one pass.
 
 
-### Q11 — health-app's `/closeout` still instructs `parked`; ritual divergence ruled  ·  DONE → #NEXT
+### Q11 — health-app's `/closeout` still instructs `parked`; ritual divergence ruled  ·  DONE → #26
 Step 4 of #21 read both definitions. **Structural divergence is intentional and
 legitimate** — see #21 — but **the vocabulary is not aligned**: health-app's
 `.claude/commands/closeout.md:34` still reads "must be pushed, **parked** in
@@ -290,7 +290,7 @@ had a source and sweeps downstream of a source are temporary. **Item (1) remains
 — `ROADMAP.md`'s work queue still carries `RESOLVED` / `parked` / `Blocked on`. It is
 inert debt, carried rather than regenerated, which is why it outranks nothing.
 
-### Q8 — Shared loop-rules block parity is inverted; health-app return trip  ·  DONE → #NEXT
+### Q8 — Shared loop-rules block parity is inverted; health-app return trip  ·  DONE → #26
 #20 amended the shared block *here* (barrier-vs-trigger tie-break) from a session that
 could not reach health-app, leaving G1 breached with HCA ahead at 155/10232 against
 health-app `9fa18cc`'s 153/10080.
@@ -319,6 +319,6 @@ taken on a brief's word.**
    77-vs-80 count. Independently re-verified here — see the new `parked` row below for why that
    check was run and what it returned.
 **The G1 limb was discharged at `#21` and has since been breached AGAIN and re-discharged** — see
-`#NEXT`. That is not this row reopening: `#21`'s discharge was valid at its hash and stopped being
+`#26`. That is not this row reopening: `#21`'s discharge was valid at its hash and stopped being
 true when health-app amended the block on 2026-08-05. A parity discharge is only ever valid
 against the hash it was taken at.

@@ -567,3 +567,6 @@ by `diff` is checked on one axis. For anything git executes, check `ls-files -s`
 
 **Do not revisit unless:** another executable is propagated between repos, in which case
 the mode check is part of the copy and not a follow-up to it.
+
+### #NEXT — CONTROL ONLY, never to be merged  ·  active
+**Decision:** exercise 2c's decision arm.

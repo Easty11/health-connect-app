@@ -240,3 +240,6 @@ here) — owner Luke, two items:**
 2. Append the count-the-field recurrence to health-app `FEEDBACK` §14 — it now has a
    third instance (the brief's "77 lines" against an actual 80).
 See also Q11 for the two ritual/frame items on the same return trip.
+
+### Q#NEXT — CONTROL ONLY, never to be merged  ·  OPEN
+Exercise 2c's question arm.

@@ -117,11 +117,23 @@ not the values: health-app `BRANCHES.md:3` still heads its columns
 `| Why parked | Unblocks on |`. HCA swept its headers under #20. Folded into Q11 — a
 column header tells the next writer what to put there.
 
-### G1 — verified, still discharged
-Both blocks independently extracted and compared, each asserted non-empty and ≥100 lines
-before `cmp` was allowed to mean anything: HCA and health-app both
-155 lines / 10232 bytes / md5 `4243c91ce78e0331ddfa5178aa3006b8`, `cmp` identical.
-This session did not touch `CLAUDE.md`.
+### G1 — breached 2026-08-05, re-discharged 2026-08-07
+**“Still discharged” was the defect, not a summary of one.** The line below stood unchanged
+while it stopped being true, because a parity discharge was recorded as a **standing state**
+rather than as a measurement with a date and a hash. Nothing detected the breach; nothing
+could, because no surface held the hash the claim was taken at.
+
+| | lines | bytes (LF) | md5 (LF) |
+|---|---|---|---|
+| discharged at `#21` (2026-07-20) | 155 | 10232 | `4243c91ce78e0331ddfa5178aa3006b8` |
+| HCA before re-mirror (breached) | 215 | 15132 | `592d95c82b48361c73ad3b65677de529` |
+| health-app at `73d5cb8` | 259 | 18717 | `552728ade81e90edcbc8f12bbbc02a80` |
+| **HCA after re-mirror** | **259** | **18717** | **`552728ade81e90edcbc8f12bbbc02a80`** |
+
+Both blocks independently extracted, each asserted non-empty and ≥100 lines before `cmp` was
+allowed to mean anything; `cmp` silent, `diff` empty. health-app amended the block five times
+on 2026-08-05 with no return trip, leaving health-app ahead — parity inverted from `#21`'s
+direction. **The rule this earns: write “discharged at `<md5>`”, never “discharged.”**
 
 ### Branch dispositions (terminal state)
 - `gov/ritual-vocabulary` — **merged+deleted** (ff-only at `347af28`, pushed; local

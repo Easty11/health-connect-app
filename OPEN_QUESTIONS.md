@@ -85,6 +85,42 @@ through the aggregate row, the first-contributor path (`??=`), and the
 projection. Unreviewed and unlanded — owner Luke. A stash is a surface nothing
 points at; this row is what points at it. Recover with `git stash list`.
 
+### Q#NEXT — The shared block still says `parked`; mirror of health-app `Q33`  ·  OPEN
+**State:** OPEN. **Mirrors:** health-app `Q33` (OPEN). **Related:** `#20` (four states), `#21`,
+`#93` (health-app's sweep), `Q9`, `Q11` (both now closed against it).
+
+`CLAUDE.md:186` here and `CLAUDE.md:198` in health-app carry the same sentence:
+
+> branch with `+` commits vs `origin/master` must be pushed, parked in `BRANCHES.md`,
+
+**It is a generator instruction, not narration** — it tells the next session what to *call* a
+branch, so it re-emits the struck vocabulary every time it is read. It survives the
+frame-vs-narration filter that correctly exempts `retired` (prose about a convention) and the OAuth
+`parks the request` (a different word-sense).
+
+**This is now the LAST surviving site of the struck word in either repo.** `#21` swept HCA's ritual,
+`#93` swept health-app's ritual and its `BRANCHES` frame (both verified from here at `Q11`'s close).
+Both rituals say `rowed`; the document that *defines* the vocabulary still says `parked`.
+
+**Why this row exists here and did not before.** health-app's `Q33` was a health-app-local row while
+HCA held interim authority over the struck vocabulary. `Q11`'s close ends that asymmetry, so under
+`#20`'s mirror-first rule the obligation is now **paired across two repos** — and a paired obligation
+tracked in only one store is how the unpaired half rides another four sessions. Same failure `Q12`
+was minted to prevent.
+
+**Deliberately NOT struck in this session, for the reason `Q33` gives and one more.** Editing the
+block from either side re-breaches G1 — the obligation `#NEXT` has just discharged, at
+`552728ade81e90edcbc8f12bbbc02a80` / 259 lines / 18717 B. It needs its own brief with a mirror-first
+plan and a G1 re-fingerprint on both sides. Same reasoning that kept `.gitattributes` out of `#25`:
+a change deserving its own controls does not ride in on an unrelated one.
+
+**Note for the return trip:** `Q33`'s own text quotes stale coordinates — `CLAUDE.md:128` / `:116`
+and fingerprint `4243c91c…` / 155 lines / 10232 B, all superseded by `#22` and `#NEXT`. Correct them
+there; do not carry them from `Q33` into a plan.
+
+**Outstanding — owner Luke:** one shared-block brief, mirror-first, both repos, one G1
+re-fingerprint.
+
 ### Q12 — The guard cannot see server-side ref updates  ·  OWED
 **State:** OWED. **Mirrors:** health-app `Q79` (closed → `#170`). **Related:** `#22` (the
 hook), `#24` (the CI surface).
@@ -102,7 +138,13 @@ ruleset requiring the `placeholder guard (POSIX)` context by that exact string.
 2026-08-07. health-app's counterpart is `master-pr-gated` (id `20414758`). Until HCA has
 an equivalent, the PR arm reports and does not block, and the merge button that dug
 `a7cc309` stays open behind a green check. **Owner Luke, GitHub-side repo settings.**
-Closing this row requires that ruleset and nothing else.
+**AMENDED — “that ruleset and nothing else” was false when written.** It named one prerequisite and
+missed a second that had to come *first*: HCA's `land` was the shared block's `--global` `--ff-only`
+body, a **direct-push** motion, on an alias shared machine-wide with health-app. A ruleset refusing
+direct pushes to master would have broken the landing motion this repo documented, in both repos, at
+the moment it was set. The alias is now repo-local and PR-shaped (`#NEXT`), so the prerequisite is
+discharged and the ordering is recorded rather than rediscovered. **Closing this row now requires
+the ruleset and nothing else** — which is what the original sentence asserted one step too early.
 
 `core.hooksPath` is a **per-clone, client-side** setting; it cannot bind a runner *or a
 merge button*. Some ref update reaches HCA master without ever running the hook, so the
@@ -187,7 +229,7 @@ under-application.
 **Outstanding — owner Luke:** rule the axis, then sweep or narrow in one pass.
 
 
-### Q11 — health-app's `/closeout` still instructs `parked`; ritual divergence ruled  ·  OWED
+### Q11 — health-app's `/closeout` still instructs `parked`; ritual divergence ruled  ·  DONE → #NEXT
 Step 4 of #21 read both definitions. **Structural divergence is intentional and
 legitimate** — see #21 — but **the vocabulary is not aligned**: health-app's
 `.claude/commands/closeout.md:34` still reads "must be pushed, **parked** in
@@ -204,8 +246,19 @@ struck dialect survives only in the frame. HCA swept its own headers to
 `| … | Status | Detail | Blocker / outstanding (owner) |` under #20; health-app did not.
 A column header encodes vocabulary as surely as a cell value: it tells the next writer
 what to put there.
-**Outstanding, on a health-app-rooted session (single-repo rule forbids it from here)
-— owner Luke, two items:** (1) strike `parked` at `.claude/commands/closeout.md:34`;
+**BOTH ITEMS DISCHARGED at health-app `#93`, verified from here against `origin/master` before
+closing — the brief asserted it, this row did not close on that assertion:**
+1. `.claude/commands/closeout.md` — grep for `parked` over the file at health-app master returns
+   **empty**. The status verb is struck.
+2. `BRANCHES.md` column header now reads `| Branch | Purpose | Status | Detail | Blocker /
+   outstanding (owner) |` (at line 8, not the line 3 this row recorded) — identical to HCA's
+   swept form. The frame no longer teaches the struck word.
+**HCA is no longer authoritative-by-default for the ritual's vocabulary**; the two repos agree.
+The one site where the struck word survives in BOTH is the shared block itself — rowed separately
+below, deliberately not fixed here.
+
+*Superseded, retained for the record —* **Outstanding, on a health-app-rooted session (single-repo
+rule forbids it from here) — owner Luke, two items:** (1) strike `parked` at `.claude/commands/closeout.md:34`;
 (2) rename the `BRANCHES.md:3` header pair. **HCA is authoritative for the ritual's
 vocabulary and for the header frame in the interim.** Paired obligation, mirror-first,
 per #20's standing rule.
@@ -237,7 +290,7 @@ had a source and sweeps downstream of a source are temporary. **Item (1) remains
 — `ROADMAP.md`'s work queue still carries `RESOLVED` / `parked` / `Blocked on`. It is
 inert debt, carried rather than regenerated, which is why it outranks nothing.
 
-### Q8 — Shared loop-rules block parity is inverted; health-app return trip  ·  OWED
+### Q8 — Shared loop-rules block parity is inverted; health-app return trip  ·  DONE → #NEXT
 #20 amended the shared block *here* (barrier-vs-trigger tie-break) from a session that
 could not reach health-app, leaving G1 breached with HCA ahead at 155/10232 against
 health-app `9fa18cc`'s 153/10080.
@@ -256,3 +309,16 @@ here) — owner Luke, two items:**
 2. Append the count-the-field recurrence to health-app `FEEDBACK` §14 — it now has a
    third instance (the brief's "77 lines" against an actual 80).
 See also Q11 for the two ritual/frame items on the same return trip.
+
+**BOTH RETURN-TRIP ITEMS DISCHARGED, verified from here against health-app `origin/master`, not
+taken on a brief's word.**
+1. **Q25 → `DONE → #91`.** health-app's `OPEN_QUESTIONS.md` carries `**State:** DONE → #91`, plus a
+   `#93` addendum closing both limbs: the operator deleted the remote ref, HCA's row reads
+   `DONE → discarded 2026-07-20`, and `git ls-remote --heads origin` returns empty for it.
+2. **FEEDBACK §14 fifth occurrence appended** at health-app `c7cffa5` (2026-08-07), recording the
+   77-vs-80 count. Independently re-verified here — see the new `parked` row below for why that
+   check was run and what it returned.
+**The G1 limb was discharged at `#21` and has since been breached AGAIN and re-discharged** — see
+`#NEXT`. That is not this row reopening: `#21`'s discharge was valid at its hash and stopped being
+true when health-app amended the block on 2026-08-05. A parity discharge is only ever valid
+against the hash it was taken at.

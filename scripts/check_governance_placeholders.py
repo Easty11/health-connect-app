@@ -11,7 +11,33 @@ WHY A REF CHECK AND NOT A `git land` GUARD. The merge that finally healed it was
 hand — `git checkout master && git merge --ff-only && git push` — not through the `land`
 alias. A guard living only in that alias would not have fired for it, which is the whole
 failure mode: the placeholder reaches master by whichever path is convenient that day.
-So the check runs against the ref being pushed, and the alias calls the same script.
+So the check runs against the ref being pushed.
+
+WHICH SURFACES ACTUALLY RUN THIS — health-connect-app's three, and none of them is the
+`land` alias. An earlier version of this docstring claimed "the alias calls the same
+script"; it never did. HCA's `land` is `gh pr merge --merge --delete-branch`, a
+server-side merge that invokes nothing in this file. The real set, each verified from
+this tree or the GitHub API:
+
+  * `.githooks/pre-push` — client-side, per clone (`git config core.hooksPath .githooks`,
+    confirmed set here). Guards `refs/heads/master` and `refs/heads/main` only. Live on
+    Windows — a real push to master was refused with zero transfer lines at
+    `DECISIONS_LOG.md:823` (`#28`) — and on Linux, the `#24` execution arm exiting 126.
+    `git push --no-verify` bypasses it; `gh pr merge` never invokes it.
+  * `.github/workflows/governance-guard.yml` — `#24`, the job `placeholder guard (POSIX)`.
+    Runs on `pull_request` (step 2c is `--ref HEAD`, the merge commit that would land) and
+    on `push` to master. Covers the server-side ref updates a client hook structurally
+    cannot see.
+  * Ruleset `20573455` (`master-pr-gated`) — makes the PR arm binding by requiring the
+    `placeholder guard (POSIX)` context and refusing every non-PR route to master.
+    `bypass_actors` is `[]` and `current_user_can_bypass` is `never`, so it binds the repo
+    owner too; a real push to master was refused `GH013`, naming both rules and the
+    required context by exact string.
+
+A green run is evidence this script passed, never evidence the layers are installed — two
+of the three are unversioned config a `git diff` cannot see (`core.hooksPath` per clone,
+the ruleset per repo). Check them directly:
+`gh api repos/Easty11/health-connect-app/rules/branches/master` must be non-empty.
 
 Exit 0 = clean. Exit 1 = a placeholder would reach master. Exit 2 = the check itself
 could not run (missing file, bad ref) — never silently pass, because a check that cannot

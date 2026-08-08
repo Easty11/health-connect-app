@@ -1062,3 +1062,35 @@ left as-is.
 
 **Do not revisit unless:** the enforcement layers change — which the section now says to read live
 rather than transcribe.
+
+### #34 — Shared loop-rules block pruned to invariants; health-app return trip  ·  active
+
+**Decision:** The shared loop-rules block is replaced **verbatim** with health-app's pruned
+version (health-app `DECISIONS_LOG #186`): ~259 lines of rules-plus-provenance compressed to 97
+lines of invariants only. The block's essays — verbatim-propagation, boundary-criterion,
+number-at-merge window/enforcement, session-open rationale, secrets, branch-disposition — are not
+lost; they live in health-app's `FEEDBACK_ARCHIVE.md`, and HCA's old block was byte-identical to
+health-app's old block (verified), so nothing HCA-specific was in it to lose. Two new standing
+rules enter the block — a **severity gate on review** and **governance batching** (≤1 `gov(...)`
+commit per session, at close-out) — and a **moratorium** on new governance rules/hooks/mechanisms
+until three product items land. HCA's repo-specific sections below `END SHARED LOOP RULES` are
+untouched.
+
+**FEEDBACK / archive — no action taken here, and why.** health-app split its 22 numbered §7–28
+essays into a new `FEEDBACK_ARCHIVE.md`. HCA's `FEEDBACK.md` is a dated-entry log
+(`### YYYY-MM-DD — … [tag]`, 170 lines / 1,949 words), not the numbered-essay structure, so it has
+no equivalent section to condense and no archive file is created here. The shared canonical-stores
+table now names `FEEDBACK_ARCHIVE.md` as a store type; HCA simply does not populate it, as it does
+not populate `ptb-tasks`.
+
+**How you know:** the extracted `BEGIN…END` shared block is byte-identical across both repos
+(6,135 bytes, sha256 `622ae8559e81` on both sides); the old HCA block equalled the old health-app
+block (259 lines, identical) so the replacement dropped nothing; the session-open regexes in the
+new block match HCA's heading forms — `^### #?[0-9]+` hits `### #33`, `^#{2,3} Q[0-9]+` hits
+`### Q16` (verified against both stores). CRLF preserved, no lone LF introduced.
+
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max
+`### #33`, question max `Q16`. This entry takes **#34**.
+
+**Do not revisit unless:** health-app edits the shared block again — in which case it propagates
+here verbatim by the same route, never hand-merged.

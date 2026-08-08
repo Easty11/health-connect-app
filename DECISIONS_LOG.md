@@ -973,3 +973,31 @@ also exit 1. The permit-from-a-branch-with-an-open-PR control is the real land o
 **Do not revisit unless:** `gh`'s no-PR exit code changes, or a work-branch no-PR guard is judged
 worth adding.
 
+### #NEXT — `Q6` resolves on a criterion, not a preference  ·  active
+
+**Decision:** `Q6` (does `BRANCHES.md` retain DONE rows or drop them?) is settled. **Row a
+merged+deleted branch when any store cites an artefact produced on it — a CI run ID, control
+output, or a SHA quoted as evidence — so the citation resolves to an accounted-for branch rather
+than a dangling ref. Otherwise merged+deleted satisfies the header's "until merged+deleted" claim
+and no row is required.** A live branch is always rowed; this governs only terminal ones.
+
+**Why a criterion and not a preference.** The header implied DONE rows drop at merge; practice
+retained them. Both were defensible, and the ambiguity rode five retained rows and one deliberate
+omission. The test makes **every prior choice correct as made**: the four control branches are
+rowed because their run IDs are cited in `#24`/`#28`; `gov/close-q12` is not, because `#28` quotes
+its refusal output inline and nothing points at the branch itself. The two legacy "disposition
+evidence" rows (`fix/scraper-sh-relayout`, `chore/block-metro-debug-build`) are uncited-terminal —
+the criterion makes their rows *permitted, not required*, so they are not contradicted.
+
+**Floor, not biconditional.** "No row required" is a floor: a cited branch MUST be rowed; an
+uncited one MAY be. The header now states the test where the next writer will read it, so the call
+is a rule, not a judgement.
+
+**How you know:** run IDs `31172614745` / `31172624557` / `31172640907` and `a7cc309` / `5459886`
+are cited in `#24` (DECISIONS_LOG:589, :617–625); `gov/close-q12`'s only mention is inside `#28`'s
+quoted refusal transcript (DECISIONS_LOG:869), not a citation needing a row.
+
+**Number claimed at merge:** [PENDING — re-read `origin/master` max immediately before PR].
+
+**Do not revisit unless:** the shared block adopts a project-wide rule — then this belongs there,
+per `Q6`'s own "if they agree, it belongs in the shared block."

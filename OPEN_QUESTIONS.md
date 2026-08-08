@@ -85,13 +85,22 @@ doing. State stays **UNSTARTED**: a fired trigger makes the work worth doing, it
 does not do it, and the policy fork (correct/backfill vs leave with a provenance
 marker) remains Luke's, unchanged and out of scope here.
 
-### Q6 — Does `BRANCHES.md` retain DONE rows or drop them?  ·  UNSTARTED
+### Q6 — Does `BRANCHES.md` retain DONE rows or drop them?  ·  DONE → #NEXT
 The file header scopes it to branches "until merged+deleted", which implies DONE
 rows are dropped once the branch is gone. Current practice here retains them
 (`fix/scraper-sh-relayout`, `chore/block-metro-debug-build`) because the row
 carries the disposition evidence — how we know the code landed. health-app
 appears to retain likewise. Decide the rule, and whether both repos agree; if
 they do, it belongs in the shared block rather than in one repo's header.
+**Resolved (#NEXT, 2026-08-08):** on a criterion, not a preference. **Row a
+merged+deleted branch when any store cites an artefact produced on it — a CI run
+ID, control output, or a SHA quoted as evidence; otherwise merged+deleted suffices
+and no row is required** (a floor: cited ⇒ must row, uncited ⇒ may row). Tested
+against every existing row before adoption — the four control branches are rowed
+(run IDs cited in `#24`/`#28`), `gov/close-q12` is not (its refusal is quoted
+inline in `#28`, pointing at nothing), and the two legacy disposition-evidence rows
+are permitted-not-required. The test is now stated in `BRANCHES.md`'s header. Whether
+it rises to the shared block is left open — this repo's header states it for now.
 
 ### Q7 — #18's flat-`sourcePackage` contract unfulfilled in `aggregateSteps`  ·  OWED
 `aggregateSteps` in `src/healthConnect.js` drops `sourcePackage`: the accumulator
@@ -375,3 +384,4 @@ taken on a brief's word.**
 `#26`. That is not this row reopening: `#21`'s discharge was valid at its hash and stopped being
 true when health-app amended the block on 2026-08-05. A parity discharge is only ever valid
 against the hash it was taken at.
+

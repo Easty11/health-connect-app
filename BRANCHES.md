@@ -5,7 +5,7 @@ loop-rules block in `CLAUDE.md`. No fifth state. BLOCKED must name a blocker tha
 *now* and an owner; where the evidence does not settle barrier-vs-trigger, the row is
 UNSTARTED.
 
-**DONE-row retention (`Q6`, resolved #NEXT).** A live branch is always rowed. A
+**DONE-row retention (`Q6`, resolved #31).** A live branch is always rowed. A
 merged+deleted branch's row is **required** only when a store cites an artefact produced on
 that branch — a CI run ID, control output, or a SHA quoted as evidence — so the citation
 resolves to an accounted-for branch, not a dangling ref. Otherwise merged+deleted satisfies

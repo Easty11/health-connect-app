@@ -897,7 +897,7 @@ invisible to `git diff` and leaves the runs green — the check is
 `gh api repos/Easty11/health-connect-app/rules/branches/master` returning non-empty, and
 `bypass_actors` staying `[]`. `Q14` and `Q13` are untouched by this and remain open.
 
-### #NEXT — HCA was running a claim health-app retracted four days earlier  ·  active
+### #29 — HCA was running a claim health-app retracted four days earlier  ·  active
 
 **Decision:** `scripts/check_governance_placeholders.py` is brought to health-app's repaired form
 where the rule is shared, and repaired independently where it is not. The executable `read()` is
@@ -918,7 +918,7 @@ retracted claim as live documentation. Separately, health-app's copy carried two
 enforcement state, both false by `#24`/`20573455`, struck at health-app `#184`. The shared block is
 parity-governed by G1; `governance-guard.yml` was mirrored byte-identically at `#24`; this script
 was under neither mechanism, so both copies drifted and nothing watched. The register question
-minted this session (`Q#NEXT`) is where that gap now lives.
+minted this session (`Q15`) is where that gap now lives.
 
 **Not mirrored:** `main()`'s advisory string — HCA's `"before the fast-forward"` vs health-app's
 motion-neutral `"before it lands"`. That wording is a health-app decision; reconciling it here
@@ -931,12 +931,12 @@ and the `main()` string — confirmed by `diff`. Post-mirror `read()` md5 matche
 placeholder 1 naming file:line, non-UTF-8 2 no traceback, empty 2), plus the `--ref` git-show path
 exercised for the non-UTF-8 case where the original thread-decode bug lived.
 
-**Number claimed at merge:** [PENDING — re-read `origin/master` max immediately before PR].
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max `### #28`, question max `Q14`, 0 behind. This entry takes **#29**.
 
 **Do not revisit unless:** the two copies' `read()` diverge again (the register question's job to
 prevent), or health-app repairs `main()`'s wording and a return trip is owed.
 
-### #NEXT — `land` refuses from master now, but the exit-0 no-op it was minted against does not reproduce  ·  active
+### #30 — `land` refuses from master now, but the exit-0 no-op it was minted against does not reproduce  ·  active
 
 **Decision:** HCA's local `land` alias gains a `case` guard that refuses from `master`/`main`
 before calling `gh`: `!f() { b=$(git branch --show-current); case $b in master|main) echo land:
@@ -968,12 +968,12 @@ here. The pairing is rowed as a question in this store and noted for health-app'
 no-PR work branch: `no pull requests found`, exit 1 (not 0); the bare old-alias body from `master`
 also exit 1. The permit-from-a-branch-with-an-open-PR control is the real land of this session's PR.
 
-**Number claimed at merge:** [PENDING — re-read `origin/master` max immediately before PR].
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max `### #28`, question max `Q14`, 0 behind. This entry takes **#30**.
 
 **Do not revisit unless:** `gh`'s no-PR exit code changes, or a work-branch no-PR guard is judged
 worth adding.
 
-### #NEXT — `Q6` resolves on a criterion, not a preference  ·  active
+### #31 — `Q6` resolves on a criterion, not a preference  ·  active
 
 **Decision:** `Q6` (does `BRANCHES.md` retain DONE rows or drop them?) is settled. **Row a
 merged+deleted branch when any store cites an artefact produced on it — a CI run ID, control
@@ -997,7 +997,7 @@ is a rule, not a judgement.
 are cited in `#24` (DECISIONS_LOG:589, :617–625); `gov/close-q12`'s only mention is inside `#28`'s
 quoted refusal transcript (DECISIONS_LOG:869), not a citation needing a row.
 
-**Number claimed at merge:** [PENDING — re-read `origin/master` max immediately before PR].
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max `### #28`, question max `Q14`, 0 behind. This entry takes **#31**.
 
 **Do not revisit unless:** the shared block adopts a project-wide rule — then this belongs there,
 per `Q6`'s own "if they agree, it belongs in the shared block."

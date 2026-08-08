@@ -85,14 +85,14 @@ doing. State stays **UNSTARTED**: a fired trigger makes the work worth doing, it
 does not do it, and the policy fork (correct/backfill vs leave with a provenance
 marker) remains Luke's, unchanged and out of scope here.
 
-### Q6 — Does `BRANCHES.md` retain DONE rows or drop them?  ·  DONE → #NEXT
+### Q6 — Does `BRANCHES.md` retain DONE rows or drop them?  ·  DONE → #31
 The file header scopes it to branches "until merged+deleted", which implies DONE
 rows are dropped once the branch is gone. Current practice here retains them
 (`fix/scraper-sh-relayout`, `chore/block-metro-debug-build`) because the row
 carries the disposition evidence — how we know the code landed. health-app
 appears to retain likewise. Decide the rule, and whether both repos agree; if
 they do, it belongs in the shared block rather than in one repo's header.
-**Resolved (#NEXT, 2026-08-08):** on a criterion, not a preference. **Row a
+**Resolved (#31, 2026-08-08):** on a criterion, not a preference. **Row a
 merged+deleted branch when any store cites an artefact produced on it — a CI run
 ID, control output, or a SHA quoted as evidence; otherwise merged+deleted suffices
 and no row is required** (a floor: cited ⇒ must row, uncited ⇒ may row). Tested
@@ -385,7 +385,7 @@ taken on a brief's word.**
 true when health-app amended the block on 2026-08-05. A parity discharge is only ever valid
 against the hash it was taken at.
 
-### Q#NEXT — Which cross-repo-parity artefacts are governed, and by what rule?  ·  UNSTARTED
+### Q15 — Which cross-repo-parity artefacts are governed, and by what rule?  ·  UNSTARTED
 Mirror of health-app `Q87`. Recorded in this store's **four-state vocabulary** (heading suffix,
 no `**State:**` line): the imported `OPEN`/`OWED`/`DONE → #N` axis is deliberately not adopted
 here (`Q13`) and this row does not resolve `Q13` in passing — an undecided fork with no blocker
@@ -402,25 +402,25 @@ instances, each verified from this tree:
 |----------|------------------------------|
 | shared loop block (`CLAUDE.md`) | **G1-governed** — byte-identity, measured, paired-obligation (health-app `#92`) |
 | `.github/workflows/governance-guard.yml` | mirrored byte-identical, **ad hoc** (`#24`) — under no named rule |
-| `scripts/check_governance_placeholders.py` | **was drifted, undeclared** — HCA carried the retracted "alias calls the same script" claim and the pre-repair `read()`; both fixed this session (`#NEXT`). `read()` now byte-identical; docstrings repo-local by design |
+| `scripts/check_governance_placeholders.py` | **was drifted, undeclared** — HCA carried the retracted "alias calls the same script" claim and the pre-repair `read()`; both fixed this session (`#29`). `read()` now byte-identical; docstrings repo-local by design |
 | `.claude/commands/closeout.md` | **undeclared** — HCA 134 lines vs health-app 90 (both counted here) |
 | checker `main()` advisory string | **divergent by design** — HCA `"before the fast-forward"` vs health-app `"before it lands"`; left unreconciled this session |
 
 Two were known-drifted and nothing declares which paths are parity-governed. The checker is the
 sharp case: its own comment calls it *one implementation of one rule across every repo*, yet no
 register names it a parity artefact and nothing checks the two copies against each other — so a
-fix in one repo silently leaves the other stale, which is the drift `#NEXT` just cleaned up.
+fix in one repo silently leaves the other stale, which is the drift `#29` just cleaned up.
 
 **The fork:** build an explicit artefact-parity register (each cross-repo file, its governing
 mechanism, its equivalence criterion) or keep parity ad hoc per artefact. Not settled here — the
 register spans both repos, **owner Luke**. Cross-refs health-app `#92`/`Q87`, `#22`/`#24` (checker
-+ workflow), this session's `#NEXT` (checker drift). **Not this question:** the shared block itself
++ workflow), this session's `#29` (checker drift). **Not this question:** the shared block itself
 (G1-governed, settled) or any single artefact's current drift (a data point, not the gap).
 
-### Q#NEXT — HCA's `land` guard is owed to health-app's identical alias  ·  UNSTARTED
-`#NEXT` gave HCA's local `land` alias a `case` guard refusing from `master`/`main`. health-app's
+### Q16 — HCA's `land` guard is owed to health-app's identical alias  ·  UNSTARTED
+`#30` gave HCA's local `land` alias a `case` guard refusing from `master`/`main`. health-app's
 alias body is byte-identical, so the same fail-fast improvement applies there — but `land` is
 **repo-local config, not shared-block content**, so it is not editable from this repo. Rowed here
 so the pairing is not lost; **owner: health-app's next session**. Note the empirical finding that
 travels with it: the exit-0 silent-no-op premise did **not** reproduce under gh 2.93.0 (no-PR
-returns exit 1), so the guard is fail-fast clarity, not a fix for a live exit-0 bug — see `#NEXT`.
+returns exit 1), so the guard is fail-fast clarity, not a fix for a live exit-0 bug — see `#30`.

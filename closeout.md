@@ -3,7 +3,17 @@
 **Session:** 2026-08-04 → 2026-08-08 · governance (guard propagation → CI surface → block
 re-mirror → gate closed). Span taken from the repo's dated record, not asserted: 5 / 1 / 5 / 15
 commits across 08-04, 08-05, 08-07, 08-08.
-**Branch:** `master` · landed `5bfefa4` · `master == origin/master`
+**Branch:** `master` · content landed `5bfefa4` · close-out merged `794115d`
+**Why the header cannot name current master.** The ritual's gate asks that `closeout.md`
+header the new master SHA. Under ruleset `master-pr-gated` that is unsatisfiable by
+construction: this file's own commit and the merge commit that lands it both come *after*
+it is written, so master is permanently >=2 commits ahead of any SHA the file can observe.
+Under the old ff+push motion the gap was 1 and went unnoticed; the PR gate widened it and
+made it visible. The header therefore names the last commit this file could see, and the
+merge SHA is filled in afterwards. **The gate needs restating in the ritual definition** —
+`.claude/commands/closeout.md` is a generator, and `#21` established generators are swept
+before stores. Not done here: amending a ritual's gate semantics unbidden is not Code's
+call, and it is the same reasoning that kept `.gitattributes` out of `#25`.
 **Session-open ref:** `36a8444` · 26 commits
 
 **Supersedes the close-out at `5076dec`**, which headered `9b5663b`. That one was written

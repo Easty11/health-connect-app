@@ -896,3 +896,43 @@ asks whether a branch is in limbo; it does not ask whether the record survives.
 invisible to `git diff` and leaves the runs green — the check is
 `gh api repos/Easty11/health-connect-app/rules/branches/master` returning non-empty, and
 `bypass_actors` staying `[]`. `Q14` and `Q13` are untouched by this and remain open.
+
+### #NEXT — HCA was running a claim health-app retracted four days earlier  ·  active
+
+**Decision:** `scripts/check_governance_placeholders.py` is brought to health-app's repaired form
+where the rule is shared, and repaired independently where it is not. The executable `read()` is
+mirrored byte-for-byte (md5 `154e1871fab988fda9ce72170db4071f` — source lines joined with `\n`
+plus one trailing `\n`, on the LF blob): it captures raw bytes and decodes UTF-8 explicitly, so a
+`UnicodeDecodeError` cannot die inside a subprocess reader thread while git's returncode stays 0,
+and it routes non-UTF-8 and empty stores to exit 2. The module docstring is rewritten as HCA's own.
+
+**Why the split — `#22` clause 3, in a new place.** The executable body is the rule and is
+mirrored; the module docstring is evidence and is repo-local. Same clause that governed
+`governance-guard.yml`'s header at `#24`. `read()` is now identical across the two repos; the
+docstrings are deliberately not, and each states only its own repo's surfaces.
+
+**What drifted, and why nothing caught it.** The checker was copied once (`#22`) and both copies
+then moved independently. health-app struck the sentence *"…and the alias calls the same script"*
+on 2026-08-04 after verifying the alias body never called the script; HCA kept it, running a
+retracted claim as live documentation. Separately, health-app's copy carried two claims about HCA's
+enforcement state, both false by `#24`/`20573455`, struck at health-app `#184`. The shared block is
+parity-governed by G1; `governance-guard.yml` was mirrored byte-identically at `#24`; this script
+was under neither mechanism, so both copies drifted and nothing watched. The register question
+minted this session (`Q#NEXT`) is where that gap now lives.
+
+**Not mirrored:** `main()`'s advisory string — HCA's `"before the fast-forward"` vs health-app's
+motion-neutral `"before it lands"`. That wording is a health-app decision; reconciling it here
+would be undeclared parity in the other direction. Left divergent and named in the register.
+
+**How you know:** docstring-stripped bodies extracted with `ast` (docstring dropped through
+`body[0].end_lineno`), each >50 lines; pre-mirror they differed by **exactly two hunks** — `read()`
+and the `main()` string — confirmed by `diff`. Post-mirror `read()` md5 matches health-app's
+`154e1871…`; the four exit-code controls were re-run on Windows/`C:\Python314` (clean 0,
+placeholder 1 naming file:line, non-UTF-8 2 no traceback, empty 2), plus the `--ref` git-show path
+exercised for the non-UTF-8 case where the original thread-decode bug lived.
+
+**Number claimed at merge:** [PENDING — re-read `origin/master` max immediately before PR].
+
+**Do not revisit unless:** the two copies' `read()` diverge again (the register question's job to
+prevent), or health-app repairs `main()`'s wording and a return trip is owed.
+

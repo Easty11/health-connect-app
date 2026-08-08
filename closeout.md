@@ -1,130 +1,125 @@
 # closeout — health-connect-app
 
 **Session:** 2026-08-04 → 2026-08-08 · governance (guard propagation → CI surface → block
-re-mirror). Span taken from the repo's dated record, not asserted: 5 / 1 / 5 / 7 commits
-across 08-04, 08-05, 08-07, 08-08. The first draft of this file stamped a single date from
-memory and the `git log` block below contradicted it — which is the reason the contract
-requires that block.
-**Branch:** `master` · landed `9b5663b` · `master == origin/master`
-**Session-open ref:** `36a8444`
+re-mirror → gate closed). Span taken from the repo's dated record, not asserted: 5 / 1 / 5 / 15
+commits across 08-04, 08-05, 08-07, 08-08.
+**Branch:** `master` · landed `5bfefa4` · `master == origin/master`
+**Session-open ref:** `36a8444` · 26 commits
+
+**Supersedes the close-out at `5076dec`**, which headered `9b5663b`. That one was written
+before the ruleset existed and before `Q12` closed; seven commits have landed since. This file
+is the single sink, so the earlier body is replaced rather than appended to.
 
 ## Commits this session
 
-```
-9b5663b gov: BRANCHES terminal state for gov/block-remirror (DONE 3bd196d)
-3bd196d gov: BRANCHES row for gov/block-remirror
-eeae58b gov: resolve #NEXT -> #26/#27, Q#NEXT -> Q14 (on-branch, pre-ff)
-c0afce3 gov: DECISIONS_LOG #NEXT x2 — block re-mirror and land-is-repo-local
-2a91aeb gov: repair four stale rows, mirror health-app Q33, re-row G1
-9efdb89 gov: HCA land is repo-local; document fresh-clone setup and merge path
-fffd314 gov: re-mirror the shared block from health-app (G1 breach, health-app ahead)
-3add6b1 gov: BRANCHES terminal state for ci/placeholder-guard-hca (DONE 6483d19)
-e3324ba gov: #25 repair the CRLF flip a bare CR caused in #24
-6483d19 gov: resolve #NEXT -> #24 (on-branch, pre-ff)
-6a86376 gov: #NEXT CI guard propagated to HCA; Q12 -> OWED pending the ruleset
-983217c ci(gov): propagate #170's placeholder guard workflow to HCA
-18841b7 gov: Q12 correct the agent — server-side ref updates, not the @claude Action
-82a07da gov: BRANCHES row terminal state for gov/placeholder-guard-hca (DONE 78f460e)
-b7e3bf5 gov: #23 track .githooks/pre-push 100755 — mode is part of a verbatim copy
-78f460e gov: resolve #NEXT -> #22, Q#NEXT -> Q12/Q13 (on-branch, pre-ff)
-db20852 gov: #NEXT placeholder guard in HCA; Q#NEXT CI gap, Q#NEXT question-state axis
-f2fb3ef gov: propagate placeholder guard + post-Part-A shared block to HCA
-```
-
-Repo's own dated record (`git log --format="%ad %s" --date=short -10`):
+Leg since the previous close-out (`5076dec..HEAD`):
 
 ```
+5bfefa4 GitHub          Merge pull request #16 from Easty11/gov/close-q12
+0436994 Luke Eastlake   gov: #28 quote the real refusal output from both layers
+059d62a Luke Eastlake   gov: resolve #NEXT -> #28 (on-branch, pre-merge)
+2c810f5 Luke Eastlake   gov: row the control branches Q12's evidence cites
+2d892f9 Luke Eastlake   gov: #NEXT close Q12 on three verified layers; ruleset 20573455 live
+5459886 GitHub          Merge pull request #15 from Easty11/control/ruleset-merge-gate
+754b9b7 Luke Eastlake   CONTROL ONLY - merge gate
+```
+
+`754b9b7` / `5459886` are the operator's own merge-gate control, not Code's work — recorded
+here because they are on master and the gate proof in `#28` builds on them.
+
+Earlier legs (`36a8444..5076dec`, 19 commits) are unchanged from the superseded close-out:
+`f2fb3ef` → `5076dec`, covering `#22`–`#27`, `Q12`–`Q14`, and the CI propagation.
+
+Repo's own dated record (`git log --format="%ad %s" --date=short -10`), verbatim:
+
+```
+2026-08-08 Merge pull request #16 from Easty11/gov/close-q12
+2026-08-08 gov: #28 quote the real refusal output from both layers
+2026-08-08 gov: resolve #NEXT -> #28 (on-branch, pre-merge)
+2026-08-08 gov: row the control branches Q12's evidence cites
+2026-08-08 gov: #NEXT close Q12 on three verified layers; ruleset 20573455 live
+2026-08-08 Merge pull request #15 from Easty11/control/ruleset-merge-gate
+2026-08-08 CONTROL ONLY - merge gate
+2026-08-08 chore: session close-out
 2026-08-08 gov: BRANCHES terminal state for gov/block-remirror (DONE 3bd196d)
 2026-08-08 gov: BRANCHES row for gov/block-remirror
-2026-08-08 gov: resolve #NEXT -> #26/#27, Q#NEXT -> Q14 (on-branch, pre-ff)
-2026-08-08 gov: DECISIONS_LOG #NEXT x2 — block re-mirror and land-is-repo-local
-2026-08-08 gov: repair four stale rows, mirror health-app Q33, re-row G1
-2026-08-08 gov: HCA land is repo-local; document fresh-clone setup and merge path
-2026-08-08 gov: re-mirror the shared block from health-app (G1 breach, health-app ahead)
-2026-08-07 gov: BRANCHES terminal state for ci/placeholder-guard-hca (DONE 6483d19)
-2026-08-07 gov: #25 repair the CRLF flip a bare CR caused in #24
-2026-08-07 gov: resolve #NEXT -> #24 (on-branch, pre-ff)
 ```
 
 ## PENDING reconciliation
 
-No `;cc` pending-commit queue was carried into this session — work arrived as three
-chat→Code briefs, each adjudicated against the tree rather than applied. Reconciled
-item-by-item against what each brief asked for:
+No `;cc` pending-commit queue was carried in. Work arrived as five chat→Code briefs, each
+adjudicated against the tree rather than applied.
 
-**Brief 1 (HCA propagation, Parts B & C) — LANDED.**
-- Guard files copied byte-for-byte — `f2fb3ef`. Blob SHAs identical to health-app, which
-  is stronger than the `diff` the brief asked for.
-- Shared block copied verbatim, 155 → 215 — `f2fb3ef`.
-- `core.hooksPath .githooks` installed; hook proven to fire by a synthetic both-arms
-  refusal, not by its passes.
-- `#22`, `Q12`, `Q13` — `db20852`, resolved `78f460e`.
-- **Not in the brief, found by Code:** the hook landed mode 100644 — `#23`, `b7e3bf5`.
+**Briefs 1 and 3 (HCA propagation; Brief B) — LANDED.** Reconciled in the superseded
+close-out; unchanged. `#22`–`#27`, `Q13`, `Q14`, `Q8`/`Q11` closed.
 
-**Brief 2 (health-app CI) — NOT DONE HERE, and correctly so.**
-Its ANCHOR requires a health-app root on `ci/placeholder-guard-action`; this session is
-HCA-rooted on `master`. HALTED without writing. Independently, the work was already on
-health-app master as `#170` (`0a6acf0` → `a9d52d3`), so building it would have minted a
-second implementation. **Step 1's finding, reported not guessed:** there is no `@claude`
-Action in either repo — `.github` appears in exactly one commit in health-app's history,
-the CI commit itself. The real uncovered path is the web-UI merge button.
+**Brief 2 (health-app CI) — NOT DONE HERE, correctly.** ANCHOR required a health-app root;
+this session is HCA-rooted. HALTED without writing. The work was already on health-app master
+as `#170`. Step 1's finding, reported not guessed: no `@claude` Action exists in either repo.
 
-**Brief 3 (Brief B: block re-mirror, `land`, stale rows) — LANDED.**
-- Precondition checked first: Brief A on health-app master (`#182` at `fb16336`).
-- Block re-mirrored, `cmp` silent — `fffd314`.
-- `land` set `--local`, verified with the discriminating form — `9efdb89`.
-- Four stale rows repaired, `Q14` minted, G1 re-rowed — `2a91aeb`.
-- `#26`, `#27` — `c0afce3`, resolved `eeae58b`.
+**Brief D (health-app checker exit-contract) — NOT DONE HERE, correctly.** Same halt, same
+reason. Two read-only findings handed back rather than acted on:
+- D's step 2 rationale is **falsified**: docstring-stripped bodies are *not* identical —
+  `8477d608…` (health-app) vs `174277e7…` (HCA), both 78 lines, differing by one advisory
+  string in `main()`. `read()` itself is byte-identical, so the exit-contract analysis
+  transfers; the halt condition was keyed on the wrong thing.
+- D's step 6 strike list is **two sentences, not one**: the parenthetical
+  `(id 20414758, health-app only)` is the same defect and would have survived a strike aimed
+  at the first sentence.
 
-**Amendments, all three answered:**
-1. HCA-only content — **exactly the four lines predicted**, all deliberately replaced
-   upstream. Nothing lost.
-2. Vocabulary-neutral — **confirmed**; `parked` identical text on both sides. Not struck;
-   rowed as `Q14`, the mirror of health-app `Q33`.
-3. §14 occurrence 5 — **clears.** `08cc0b4` is 80 lines / 5205 B, matching `#21`'s record
-   byte-for-byte; the 77 belongs to `35b4110`. Not a miscount, no return trip owed. The
-   amendment aimed the check at HCA's closeout.md, which has never been 80.
-
-**Deviation from a brief's wording, deliberate:** Brief 2's follow-up said the CI work
-"closes Q12". It does not. `push: [master]` fires after the ref has moved — against the
-merge button that is detection, not prevention. `Q12` is **OWED**.
+**`Q12` closure (this leg) — LANDED, `#28`, merged `5bfefa4` via PR #16.**
+- Closed on **three verified layers**, not "the ruleset and nothing else" — `#27` had already
+  amended that wording once, and closing on it again would repeat the error the amendment
+  exists to record.
+- Control branches rowed — `2c810f5`.
+- Deviation, deliberate: `gov/close-q12` itself is **not** rowed. Merged+deleted, which the
+  gate permits; flagged under `Q6` rather than resolved unilaterally.
 
 ## Cold-resume handoff
 
-**Sprint state.** Six decisions minted (`#22`–`#27`), three questions minted (`Q12`–`Q14`),
-two closed (`Q8`, `Q11` → `#26`). Enforcement in this repo now spans three layers and
-**two of three are present**: the pre-push hook (per clone, set here) and
-`.github/workflows/governance-guard.yml` (both arms, four real runs). The third — a
-ruleset requiring the `placeholder guard (POSIX)` context — does not exist.
+**Sprint state.** Seven decisions minted (`#22`–`#28`), three questions minted (`Q12`–`Q14`),
+three closed (`Q8`, `Q11` → `#26`; `Q12` → `#28`). **All three enforcement layers are live in
+this repo for the first time**, and health-app and HCA are symmetric in enforcement for the
+first time.
 
-**The through-line.** Four of the six entries are one defect: a statement true at one
-instant, carried forward as a fact about now. `Q12`'s misattributed agent, `#24`'s
-inherited header, `#25`'s encoding, G1's "still discharged". `#26` writes down the general
-form: record *"discharged at `<md5>`"*, never *"discharged"*.
+| Layer | State | Does not cover |
+|---|---|---|
+| `.githooks/pre-push` via `core.hooksPath` | set in this clone | unconfigured clones, runners, the merge button |
+| `.github/workflows/governance-guard.yml` | in tree since `#24`, both arms | prevents nothing on its own |
+| ruleset `master-pr-gated` (`20573455`) | active, `bypass_actors: []`, strict | itself — deletion or one bypass actor is silent and leaves runs green |
 
-**Open questions.**
-- `Q12` **OWED** — no ruleset; `rules/branches/master` returns `[]`. The alias
-  prerequisite is discharged (`#27`); the ruleset is the only remaining item.
-- `Q13` **OPEN** — imported question-state axis vs the four work-states this store uses.
-  Lossy mapping, so a judgement, not a reformat.
-- `Q14` **OPEN** — the shared block is the last surviving site of `parked` in either repo.
-  Paired with health-app `Q33`; needs its own brief, mirror-first, G1 re-fingerprint.
-- `Q4` BLOCKED (day-lag), `Q7` OWED, `Q9` item 1, `Q10` — carried, untouched.
+**Two of the three still have no diff.** A green run is evidence the script passed, never
+evidence the layers are installed. Live checks:
+`gh api repos/Easty11/health-connect-app/rules/branches/master` non-empty, and
+`git config --get core.hooksPath` returning `.githooks`.
 
-**Branch gate.** All five session branches merged+deleted; three control refs closed and
-deleted. `feat/hrv-node-dump` (BLOCKED) and `fix/hrv-capture-regression` (UNSTARTED) rowed,
-neither touched. No branch in limbo. `feat/cbti-eval-trigger` is **health-app's**, not
-this repo's — checked read-only: two `+` commits, pushed, and already rowed there, so it
-does not halt that repo's ritual either.
+**The through-line.** Five of the seven entries are one defect: a statement true at one instant
+carried forward as a fact about now — `Q12`'s misattributed agent, `#24`'s inherited header,
+`#25`'s encoding, G1's "still discharged", and this file's own first draft stamping a date from
+memory. `#26` writes the general form: record *"discharged at `<md5>`"*, never *"discharged."*
 
-**Owed to health-app, not actionable from here:** the shared block's `parked` (paired with
-`Q33`); FEEDBACK §14's next occurrence — a brief gave health-app's block as `259 / 18757`
-where the tree gives `259 / 18717`; and health-app's repo-specific section still says HCA
-has "no `.github/workflows` directory at all", true when written, false since `6483d19`.
+**Open questions.** `Q13` OPEN (question-state axis vs the four work-states; lossy mapping, so a
+judgement not a reformat) · `Q14` OPEN (shared block is the last surviving site of `parked` in
+either repo; paired with health-app `Q33`) · `Q4` BLOCKED (day-lag) · `Q7` OWED · `Q6` UNSTARTED
+(retain DONE rows — now load-bearing, five added this session and one branch left unrowed on the
+gate's permission) · `Q9` item 1 · `Q10` UNSTARTED.
+
+**Branch gate.** Six work branches and four control branches all terminal. `feat/hrv-node-dump`
+(BLOCKED, `+1`) and `fix/hrv-capture-regression` (UNSTARTED, `+4/-1`) rowed, pushed, neither
+touched. PR #2 (June) still open against the latter. Nothing in limbo. Guard exits 0 against
+`origin/master`; no `#NEXT` in either store.
+
+**Owed to health-app, not actionable from here.** Brief D in full; the shared block's `parked`
+(paired with `Q33`); FEEDBACK §14's next occurrence (`259 / 18757` asserted vs `259 / 18717`
+measured); and two stale cross-repo claims in health-app — its repo-specific section says HCA
+has no `.github/workflows`, and its checker docstring says HCA has the hook only, both false
+since `6483d19` and `20573455`.
 
 ### Single clearest next action
 
-Set the ruleset on `Easty11/health-connect-app` requiring the `placeholder guard (POSIX)`
-status check by that exact string, mirroring health-app's `master-pr-gated` (`20414758`).
-That closes `Q12` and makes `#27`'s PR-shaped `land` load-bearing rather than
-anticipatory. **GitHub-side repo config, not committable — owner Luke.**
+**Governance is at a stopping point.** Next action is product, not governance: watch ONE real
+overnight/~5am sync land today's HRV value in Railway — Postgres query against Railway, not
+on-device UI — on the standalone release build. That resolves **Q4**, the only BLOCKED row in
+the repo, and unblocks `feat/hrv-node-dump`.
+
+Still owed from before: rotate the Hevy API key, exposed in a chat transcript 2026-07-11.

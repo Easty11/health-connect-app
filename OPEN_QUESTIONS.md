@@ -121,8 +121,8 @@ there; do not carry them from `Q33` into a plan.
 **Outstanding — owner Luke:** one shared-block brief, mirror-first, both repos, one G1
 re-fingerprint.
 
-### Q12 — The guard cannot see server-side ref updates  ·  DONE → #NEXT
-**State:** DONE → #NEXT. **Mirrors:** health-app `Q79` (closed → `#170`). **Related:** `#22`
+### Q12 — The guard cannot see server-side ref updates  ·  DONE → #28
+**State:** DONE → #28. **Mirrors:** health-app `Q79` (closed → `#170`). **Related:** `#22`
 (the hook), `#24` (the CI surface), `#27` (the alias prerequisite).
 
 **The versioned half is LANDED; the fork is decided.** `#24` propagated `#170`'s

@@ -820,7 +820,7 @@ load-bearing rather than anticipatory; or a third repo joins, at which point "on
 cannot hold two repos' motions" becomes three and the per-clone setup block is the thing to
 copy.
 
-### #NEXT — `Q12` closes on three verified layers, not on the ruleset alone  ·  active
+### #28 — `Q12` closes on three verified layers, not on the ruleset alone  ·  active
 
 **Decision:** `Q12` moves to `DONE → #NEXT`. Ruleset `master-pr-gated` (id `20573455`) was
 created by the operator on 2026-08-08 — `enforcement: active`, `bypass_actors: []`, rules
@@ -883,6 +883,8 @@ branches this row's evidence cites — `scratch/gov-control-{placeholder,mode,ex
 because **a control branch's whole value is the evidence it produced**, and a deleted branch with
 no row leaves the run IDs in a decision entry pointing at refs nobody can account for. The gate
 asks whether a branch is in limbo; it does not ask whether the record survives.
+
+**Number claimed at merge:** `origin/master`'s maxima re-read immediately before the merge — `^### #?[0-9]+` gives **`### #27`**, `^#{2,3} Q[0-9]+` gives **`### Q14`**, branch 0 behind. This entry takes **#28**; no new question is minted, `Q12` is closed against it.
 
 **Do not revisit unless:** the ruleset is deleted or gains a `bypass_actor`, either of which is
 invisible to `git diff` and leaves the runs green — the check is

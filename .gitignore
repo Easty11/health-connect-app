@@ -41,3 +41,7 @@ yarn-error.*
 
 *.zip
 dump.xml
+
+# stray artifacts of other workstreams — per DECISIONS_LOG #9; never track here
+hevy_routine.json
+checkin_build_brief.md

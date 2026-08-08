@@ -137,6 +137,9 @@ No decision minted (max stays **#28**). No question minted (max stays **Q14**). 
 - No `BLOCKED` rows remain in `OPEN_QUESTIONS.md` after `Q4`'s close.
 
 ### Next action
-Product, Luke's call: (1) rule `nodedump.txt`'s disposition (recommend gitignore + retain
-local) and, with it, `feat/hrv-node-dump`'s keep-behind-a-flag vs strip; (2) rotate the Hevy
-API key (exposed in a chat transcript 2026-07-11), still owed.
+Product, Luke's call: `nodedump.txt` is now committed as cited evidence (Brief E, step 11), so
+`feat/hrv-node-dump`'s keep-behind-a-flag vs strip is the residue.
+
+~~Rotate the Hevy API key (exposed 2026-07-11)~~ — **discharged: rotated 2026-07-11 by the
+operator** (struck 2026-08-08). It has not been a live action since that date; the stale "still
+owed" line is removed.

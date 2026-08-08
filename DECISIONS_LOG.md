@@ -896,3 +896,108 @@ asks whether a branch is in limbo; it does not ask whether the record survives.
 invisible to `git diff` and leaves the runs green — the check is
 `gh api repos/Easty11/health-connect-app/rules/branches/master` returning non-empty, and
 `bypass_actors` staying `[]`. `Q14` and `Q13` are untouched by this and remain open.
+
+### #29 — HCA was running a claim health-app retracted four days earlier  ·  active
+
+**Decision:** `scripts/check_governance_placeholders.py` is brought to health-app's repaired form
+where the rule is shared, and repaired independently where it is not. The executable `read()` is
+mirrored byte-for-byte (md5 `154e1871fab988fda9ce72170db4071f` — source lines joined with `\n`
+plus one trailing `\n`, on the LF blob): it captures raw bytes and decodes UTF-8 explicitly, so a
+`UnicodeDecodeError` cannot die inside a subprocess reader thread while git's returncode stays 0,
+and it routes non-UTF-8 and empty stores to exit 2. The module docstring is rewritten as HCA's own.
+
+**Why the split — `#22` clause 3, in a new place.** The executable body is the rule and is
+mirrored; the module docstring is evidence and is repo-local. Same clause that governed
+`governance-guard.yml`'s header at `#24`. `read()` is now identical across the two repos; the
+docstrings are deliberately not, and each states only its own repo's surfaces.
+
+**What drifted, and why nothing caught it.** The checker was copied once (`#22`) and both copies
+then moved independently. health-app struck the sentence *"…and the alias calls the same script"*
+on 2026-08-04 after verifying the alias body never called the script; HCA kept it, running a
+retracted claim as live documentation. Separately, health-app's copy carried two claims about HCA's
+enforcement state, both false by `#24`/`20573455`, struck at health-app `#184`. The shared block is
+parity-governed by G1; `governance-guard.yml` was mirrored byte-identically at `#24`; this script
+was under neither mechanism, so both copies drifted and nothing watched. The register question
+minted this session (`Q15`) is where that gap now lives.
+
+**Not mirrored:** `main()`'s advisory string — HCA's `"before the fast-forward"` vs health-app's
+motion-neutral `"before it lands"`. That wording is a health-app decision; reconciling it here
+would be undeclared parity in the other direction. Left divergent and named in the register.
+
+**How you know:** docstring-stripped bodies extracted with `ast` (docstring dropped through
+`body[0].end_lineno`), each >50 lines; pre-mirror they differed by **exactly two hunks** — `read()`
+and the `main()` string — confirmed by `diff`. Post-mirror `read()` md5 matches health-app's
+`154e1871…`; the four exit-code controls were re-run on Windows/`C:\Python314` (clean 0,
+placeholder 1 naming file:line, non-UTF-8 2 no traceback, empty 2), plus the `--ref` git-show path
+exercised for the non-UTF-8 case where the original thread-decode bug lived.
+
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max `### #28`, question max `Q14`, 0 behind. This entry takes **#29**.
+
+**Do not revisit unless:** the two copies' `read()` diverge again (the register question's job to
+prevent), or health-app repairs `main()`'s wording and a return trip is owed.
+
+### #30 — `land` refuses from master now, but the exit-0 no-op it was minted against does not reproduce  ·  active
+
+**Decision:** HCA's local `land` alias gains a `case` guard that refuses from `master`/`main`
+before calling `gh`: `!f() { b=$(git branch --show-current); case $b in master|main) echo land:
+refusing, not on a work branch; exit 1;; esac; gh pr merge --merge --delete-branch; }; f`. The
+documented fresh-clone setup (`CLAUDE.md`) is updated to match. No embedded double quotes
+(PowerShell re-quoting rule).
+
+**The premise did not reproduce.** As carried from the `#28` session and this brief, `land` from
+`master` runs `gh pr merge` against a branch that is not ours, finds no PR, and **exits 0** — a
+no-op reading as success at exactly the moment it is most likely to be run in error (right after a
+merge, branch already gone). Under **gh 2.93.0** it does not: `gh pr merge` with no PR returns
+**exit 1** (`no pull requests found`), from `master` and from a no-PR work branch alike. The
+exit-0 silent-success defect **does not reproduce here** — itself a statement true at one instant
+(an earlier `gh`, or a misobservation) carried forward as a fact about now, the same family as
+`#24`'s header, `#25`'s CRLF, `#26`'s stale figure, and health-app `#183`'s exit-0 read.
+
+**Adopted anyway, and honestly partial.** The guard still earns its place: `land` from `master`
+now refuses *deterministically and legibly* (`land: refusing, not on a work branch`, exit 1)
+instead of leaning on `gh`'s version-dependent exit code and oblique message — it is
+version-independent where the bare alias was not. It is **partial**: it guards only `master`/`main`,
+not the general no-PR-on-a-work-branch case, which still falls through to `gh` (exit 1 today, but a
+future `gh` returning 0 would resurface the no-op on a work branch).
+
+**Paired defect, not reached into.** health-app's alias body is identical, so the same guard
+applies there; but `land` is repo-local config, not shared-block content, so it is not edited from
+here. The pairing is rowed as a question in this store and noted for health-app's next session.
+
+**How you know:** three controls on gh 2.93.0 — from `master`: `land: refusing…`, exit 1; from a
+no-PR work branch: `no pull requests found`, exit 1 (not 0); the bare old-alias body from `master`
+also exit 1. The permit-from-a-branch-with-an-open-PR control is the real land of this session's PR.
+
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max `### #28`, question max `Q14`, 0 behind. This entry takes **#30**.
+
+**Do not revisit unless:** `gh`'s no-PR exit code changes, or a work-branch no-PR guard is judged
+worth adding.
+
+### #31 — `Q6` resolves on a criterion, not a preference  ·  active
+
+**Decision:** `Q6` (does `BRANCHES.md` retain DONE rows or drop them?) is settled. **Row a
+merged+deleted branch when any store cites an artefact produced on it — a CI run ID, control
+output, or a SHA quoted as evidence — so the citation resolves to an accounted-for branch rather
+than a dangling ref. Otherwise merged+deleted satisfies the header's "until merged+deleted" claim
+and no row is required.** A live branch is always rowed; this governs only terminal ones.
+
+**Why a criterion and not a preference.** The header implied DONE rows drop at merge; practice
+retained them. Both were defensible, and the ambiguity rode five retained rows and one deliberate
+omission. The test makes **every prior choice correct as made**: the four control branches are
+rowed because their run IDs are cited in `#24`/`#28`; `gov/close-q12` is not, because `#28` quotes
+its refusal output inline and nothing points at the branch itself. The two legacy "disposition
+evidence" rows (`fix/scraper-sh-relayout`, `chore/block-metro-debug-build`) are uncited-terminal —
+the criterion makes their rows *permitted, not required*, so they are not contradicted.
+
+**Floor, not biconditional.** "No row required" is a floor: a cited branch MUST be rowed; an
+uncited one MAY be. The header now states the test where the next writer will read it, so the call
+is a rule, not a judgement.
+
+**How you know:** run IDs `31172614745` / `31172624557` / `31172640907` and `a7cc309` / `5459886`
+are cited in `#24` (DECISIONS_LOG:589, :617–625); `gov/close-q12`'s only mention is inside `#28`'s
+quoted refusal transcript (DECISIONS_LOG:869), not a citation needing a row.
+
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max `### #28`, question max `Q14`, 0 behind. This entry takes **#31**.
+
+**Do not revisit unless:** the shared block adopts a project-wide rule — then this belongs there,
+per `Q6`'s own "if they agree, it belongs in the shared block."

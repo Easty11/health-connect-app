@@ -5,6 +5,15 @@ loop-rules block in `CLAUDE.md`. No fifth state. BLOCKED must name a blocker tha
 *now* and an owner; where the evidence does not settle barrier-vs-trigger, the row is
 UNSTARTED.
 
+**DONE-row retention (`Q6`, resolved #31).** A live branch is always rowed. A
+merged+deleted branch's row is **required** only when a store cites an artefact produced on
+that branch — a CI run ID, control output, or a SHA quoted as evidence — so the citation
+resolves to an accounted-for branch, not a dangling ref. Otherwise merged+deleted satisfies
+"until merged+deleted" above and **no row is required** (a retained row is permitted, not
+mandated). This is why the four control branches are rowed — their run IDs are cited in
+`#24`/`#28` — and `gov/close-q12` is not: `#28` quotes its refusal output inline, pointing at
+nothing that needs a row.
+
 | Branch | Purpose | Status | Detail | Blocker / outstanding (owner) |
 |--------|---------|--------|--------|-------------------------------|
 | scratch/gov-control-placeholder | `#24` positive control — synthetic `### #NEXT` + `### Q#NEXT` in HCA's own grammars | DONE → discarded 2026-08-07 | PR #12, run `31172614745`: **red at 2c** against the merge commit, naming both offences. Closed unmerged; branch deleted local and remote. **Discarded, not merged** — the content was never for master. |

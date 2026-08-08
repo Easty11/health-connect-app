@@ -819,3 +819,72 @@ alias is now *shaped* for a gate that does not exist yet. `Q12` stays **OWED**.
 load-bearing rather than anticipatory; or a third repo joins, at which point "one global body
 cannot hold two repos' motions" becomes three and the per-clone setup block is the thing to
 copy.
+
+### #NEXT — `Q12` closes on three verified layers, not on the ruleset alone  ·  active
+
+**Decision:** `Q12` moves to `DONE → #NEXT`. Ruleset `master-pr-gated` (id `20573455`) was
+created by the operator on 2026-08-08 — `enforcement: active`, `bypass_actors: []`, rules
+`pull_request` / `required_status_checks` / `non_fast_forward`, required context read back as
+exactly `'placeholder guard (POSIX)'`, `strict: true`. With the pre-push hook (`#22`) and the CI
+workflow (`#24`) already in the tree, all three enforcement layers exist in this repo for the
+first time, and health-app and HCA are symmetric in enforcement for the first time.
+
+**It does not close on "the ruleset and nothing else."** `#27` already amended that wording once,
+for missing the alias prerequisite that had to come first. Closing on it again would repeat the
+error the amendment exists to record. The row now carries a three-layer table naming what each
+layer covers **and what it does not** — the hook cannot bind a runner or a merge button; the
+workflow prevents nothing on its own; the ruleset cannot protect itself, because one deleted
+ruleset or one added bypass actor removes enforcement silently and leaves every run green. **Two
+of the three layers still have no diff.** That residue is what the row closes *with*, not despite.
+
+**The context string is the part that had to be checked.** It binds by exact match against
+`jobs.guard.name`. A required context that never reports reads as **pending**, not failed — so a
+typo yields a gate that blocks everything permanently rather than one that blocks nothing, and
+from the PR page neither looks like a misconfiguration. Read back from the API rather than
+assumed.
+
+**Verified on real content, and each layer refused in turn.** `#24`'s controls were synthetic by
+necessity; this is the first non-control land under the ruleset, so the sequence is the evidence:
+
+1. **Hook layer — refused before bytes left the machine.** With this branch's `### #NEXT` still
+   unresolved, `git push origin master`:
+
+       REFUSED: unresolved governance placeholder in <sha>.
+         DECISIONS_LOG.md:<line>  ### #NEXT — ...
+       error: failed to push some refs
+
+   **No `Enumerating objects` line anywhere in the output** — the pre-push hook aborted the push
+   before any object transfer began. That absence is the load-bearing observation: it
+   distinguishes a client-side refusal from a server-side one, and it is why the hook remains
+   worth having under a ruleset that would also have refused.
+
+2. **Ruleset layer — refused after the placeholder was resolved.** `git push origin master` with
+   a clean tree:
+
+       remote: error: GH013: Repository rule violations found for refs/heads/master.
+       remote: - Changes must be made through a pull request.
+
+   `GH013` is the server refusing a motion the hook had no reason to block. Before 2026-08-08
+   this push succeeded; four of them did, in the session that landed `#22` through `#27`.
+
+3. **PR path — permitted, once the required check reported green.**
+
+**This is also the retroactive justification for `#27`'s ordering.** `#27` recorded that the
+alias had to become PR-shaped *before* the ruleset, and that nothing had recorded the two as
+ordered. Step 2 above is that claim under test: the direct-push motion this repo documented until
+`#27` is now refused by the server. Had the ruleset landed first, every land in the `#22`–`#27`
+session would have failed on `GH013`, and the failure would have presented as a permissions error
+on an unrelated branch rather than as a governance decision.
+
+**Also rowed here, one concern in two commits.** `BRANCHES.md` gains rows for the control
+branches this row's evidence cites — `scratch/gov-control-{placeholder,mode,exec}` from `#24` and
+`control/ruleset-merge-gate` from the operator's merge-gate proof. All four were terminal
+(merged-or-discarded and deleted), which the gate permits without a row; they are rowed anyway
+because **a control branch's whole value is the evidence it produced**, and a deleted branch with
+no row leaves the run IDs in a decision entry pointing at refs nobody can account for. The gate
+asks whether a branch is in limbo; it does not ask whether the record survives.
+
+**Do not revisit unless:** the ruleset is deleted or gains a `bypass_actor`, either of which is
+invisible to `git diff` and leaves the runs green — the check is
+`gh api repos/Easty11/health-connect-app/rules/branches/master` returning non-empty, and
+`bypass_actors` staying `[]`. `Q14` and `Q13` are untouched by this and remain open.

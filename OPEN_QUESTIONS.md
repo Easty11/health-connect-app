@@ -36,7 +36,7 @@ flip (`db6f50e`) block Metro-dependent debug installs, and the standing rule
 "dex-gate the *installed* APK after any scraper rebuild (source-clean ≠ deployed)"
 is now on record. A stale build can no longer silently hide a live scraper break.
 
-### Q4 — Day-lag / read-freshness of the HRV scrape  ·  BLOCKED
+### Q4 — Day-lag / read-freshness of the HRV scrape  ·  DONE → operator observation (2026-08-08)
 #19 fixed phantom *selection* (verified: live run read on-screen 97, not the
 negative-width phantom 106). It did NOT address read-*freshness*: whether an
 earlier morning value (e.g. `117`) was actually yesterday's, i.e. whether the
@@ -55,6 +55,20 @@ the scrape path (device-confirmed healthy: SH 7.00.0.107 unchanged since 06-24,
 full screen progression + HRV/HR/RR extraction as of 07-12 05:51). Fixed
 `e677f9e`; service rebound and scraping confirmed live post-reboot. The sync can
 now actually run — the blocker is that it has not yet run, not that it cannot.
+**Resolution (2026-08-08 — operator observation, Luke):** the blocker was "one
+overnight/~5am sync on the standalone build landing today's HRV in Railway — owner
+Luke … read-freshness cannot be established by any means other than observing a
+real overnight sync." That instrument is the owner's own: Luke identified the
+day-lag originally and reads the HRV value each morning on the standalone build,
+where it lands on the correct night. The mapping from a stored row to the night it
+belongs to exists only *outside* the pipeline — a stored value is byte-identical
+whether or not it is fresh, so no instrument inside the system could settle it —
+and the operator's daily reading is that external mapping. Read-freshness
+confirmed: the ~5am scrape reads the correct night. Not re-derived and not softened
+to "reported" — this is the direct daily observation of the one person positioned
+to make it. Consequences: `feat/hrv-node-dump` is released from this blocker
+(`BRANCHES.md`), its keep-or-strip disposition still open; `Q5`'s reconciliation
+trigger has now fired (see `Q5`), its policy fork untouched.
 
 ### Q5 — Historical stale-row reconciliation (τ-window bleed)  ·  UNSTARTED
 Pre-fix phantom values already POSTed and persisted are NOT reconciled — e.g. the
@@ -65,6 +79,11 @@ note); needs a deliberate reconciliation pass.
 **Not BLOCKED:** the row names no blocker of its own. The Q4 overnight sync is a
 trigger for when reconciliation becomes *worth* doing — it refines which rows are
 stale — not a barrier to deciding the policy, which can be settled now.
+**Trigger fired (2026-08-08):** `Q4` closed on operator observation, so the
+overnight-sync trigger this row names has fired — reconciliation is now worth
+doing. State stays **UNSTARTED**: a fired trigger makes the work worth doing, it
+does not do it, and the policy fork (correct/backfill vs leave with a provenance
+marker) remains Luke's, unchanged and out of scope here.
 
 ### Q6 — Does `BRANCHES.md` retain DONE rows or drop them?  ·  UNSTARTED
 The file header scopes it to branches "until merged+deleted", which implies DONE

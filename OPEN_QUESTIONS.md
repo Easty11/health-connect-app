@@ -121,9 +121,9 @@ there; do not carry them from `Q33` into a plan.
 **Outstanding — owner Luke:** one shared-block brief, mirror-first, both repos, one G1
 re-fingerprint.
 
-### Q12 — The guard cannot see server-side ref updates  ·  OWED
-**State:** OWED. **Mirrors:** health-app `Q79` (closed → `#170`). **Related:** `#22` (the
-hook), `#24` (the CI surface).
+### Q12 — The guard cannot see server-side ref updates  ·  DONE → #28
+**State:** DONE → #28. **Mirrors:** health-app `Q79` (closed → `#170`). **Related:** `#22`
+(the hook), `#24` (the CI surface), `#27` (the alias prerequisite).
 
 **The versioned half is LANDED; the fork is decided.** `#24` propagated `#170`'s
 `.github/workflows/governance-guard.yml` here — 2a hook mode, 2b hook executed, 2c guard
@@ -145,6 +145,40 @@ direct pushes to master would have broken the landing motion this repo documente
 the moment it was set. The alias is now repo-local and PR-shaped (`#27`), so the prerequisite is
 discharged and the ordering is recorded rather than rediscovered. **Closing this row now requires
 the ruleset and nothing else** — which is what the original sentence asserted one step too early.
+
+**CLOSED. All three layers are installed and each was verified against this repo, not inferred
+from health-app's.** Ruleset `master-pr-gated` (id `20573455`) was created 2026-08-08 by the
+operator: `enforcement: active`, `bypass_actors: []` — so it binds the repo owner holding an
+admin token — with rules `pull_request`, `required_status_checks`, `non_fast_forward`, and the
+required context read back as exactly `'placeholder guard (POSIX)'`, `strict: true`.
+
+**The context string is the part worth checking, and it was checked.** It must match
+`jobs.guard.name` byte-for-byte; a required context that never reports reads as *pending*, not
+*failed*, so a typo here produces a gate that blocks everything forever rather than one that
+blocks nothing — and neither failure looks like a misconfiguration from the PR page.
+
+**What each layer covers, and what it does not.** Closing this row on "the ruleset" alone would
+repeat the error the amendment above already corrected once:
+
+| Layer | Binds | Covers | Does **not** cover |
+|---|---|---|---|
+| `.githooks/pre-push` via `core.hooksPath` | this clone only | any `git push` to master from a configured working copy; refuses **before bytes leave the machine** | a clone that never ran the install; CI runners; the merge button. Client-side by construction — this is the gap that opened the row. |
+| `.github/workflows/governance-guard.yml` | server-side, every ref | `pull_request`: the merge commit that **would** land. `push: [master]`: anything that reached master | on its own, **prevents nothing** — the PR arm only reports unless something requires it, and the push arm fires after the ref has already moved |
+| ruleset `master-pr-gated` (`20573455`) | the repository | makes the PR arm **binding**: requires a PR, requires the exact context, forbids non-fast-forward, binds the owner | itself — it is unversioned config. A deleted ruleset or one added `bypass_actor` removes enforcement silently and leaves every run green |
+
+**Two of the three layers still have no diff**, and that is the residue this row closes *with*,
+not despite. `core.hooksPath` is per clone and the ruleset is per repo; only the workflow file is
+visible to `git diff`. A green run is evidence the script passed — never evidence the layers are
+installed. Check them directly: `gh api repos/Easty11/health-connect-app/rules/branches/master`
+must be non-empty, and `git config --get core.hooksPath` must return `.githooks`.
+
+**Verified end-to-end on real content, not on a control branch.** The PR that closed this row was
+itself the proof, and each layer refused in turn before anything landed — see `#28` for the
+quoted output.
+
+**Owner Luke's action is complete.** health-app's counterpart is `master-pr-gated` (id
+`20414758`); the two repos are now symmetric in enforcement for the first time, which is what
+`Q79`'s close and this row's `**Mirrors:**` line were always pointing at.
 
 `core.hooksPath` is a **per-clone, client-side** setting; it cannot bind a runner *or a
 merge button*. Some ref update reaches HCA master without ever running the hook, so the

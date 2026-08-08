@@ -69,62 +69,44 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 ## Sprint block
 
 **Branch:** `master` (trunk)
-**Closed:** 2026-08-08 (Brief E rev 2: checker mirror, `land` guard, `Q6` criterion, cited evidence committed)
+**Closed:** 2026-08-08 (Brief H: struck the stale merge-path section, retracted `#30`'s exit-0 premise)
 
-### This session — landed on master (`0d16038`, PR #21)
-Governance/store + one dev artefact. No `app/`, no `src/`, no scraper source. Eight
-concern-split commits + a placeholder-resolution commit; `placeholder guard (POSIX)` green,
-merged `--merge` under ruleset `20573455`. Placeholders resolved **pre-PR** (2c runs `--ref
-HEAD` on the merge commit) against `origin/master`'s re-read max #28 / Q14, 0 behind.
+### This session — landed on master (`0694428`, PR #23)
+Governance/store only. No `app/`, no `src/`, no scraper source. Two concern-split commits + a
+placeholder-resolution commit; `placeholder guard (POSIX)` green, merged `--merge` under ruleset
+`20573455`. Placeholders resolved **pre-PR** against `origin/master`'s re-read max #31 / Q16, 0 behind.
 
-- `bf9e545` + `4023ba9` — **checker brought to health-app's repaired form (`#29`).** `read()`
-  mirrored byte-for-byte (md5 `154e1871…`, source lines joined `\n` + one trailing `\n`, LF
-  blob): byte-capture + explicit UTF-8 decode, non-UTF-8 and empty → exit 2. Docstring-stripped
-  bodies pre-mirror differed by **exactly two hunks** (read + main string). Docstring repaired
-  **repo-local** (`#22` clause 3): retracted *"the alias calls the same script"* deleted (health-app
-  struck it 2026-08-04; HCA had kept it); HCA's three surfaces stated, each verified from this
-  tree/API. `main()`'s advisory string left divergent by design. Four exit-code controls re-run
-  Windows/`C:\Python314` (0 / 1 file:line / 2 no-traceback / 2) + the `--ref` git-show path.
-- `d07b229` — **`land` guard (`#30`) + CLAUDE.md.** Alias refuses from `master`/`main` before
-  calling `gh`. **Empirical finding:** the exit-0 silent-no-op premise does **not** reproduce
-  under **gh 2.93.0** — no-PR returns **exit 1** from master and from a no-PR work branch. Guard
-  kept as fail-fast, version-independent clarity; **partial** (guards master/main only). Three
-  land controls observed: master→refuse exit 1; branch-with-PR→permitted (this land); no-PR
-  branch→exit 1.
-- `1bc0cda` — **`Q6` resolved on a criterion (`#31`).** Row a merged+deleted branch iff a store
-  cites an artefact produced on it (run ID, control output, SHA); floor semantics. Tested against
-  every row — four control branches rowed (run IDs cited `#24`/`#28`), `gov/close-q12` not.
-  `BRANCHES.md` header now states the test.
-- `f229dd6` — **`Q15` (parity register, mirrors health-app `Q87`) + `Q16` (land pairing) + Hevy
-  strike.** `Q15` in this store's four-state vocab (`Q13` untouched); names five cross-repo
-  artefacts. Hevy rotation struck — discharged 2026-07-11.
-- `6ce4273` — **`nodedump.txt` committed.** The cited evidence (`#19`/`BRANCHES`/`FEEDBACK`) that
-  lived on one machine; privacy objection withdrawn. `#9` does not cover this repo's own evidence.
+- `cdfe6a7` — **`#32`: `#30`'s premise retracted.** `#30` asserted at `:948` that `land` from
+  master *"finds no PR, and exits 0"* — inside an entry whose heading says it does not reproduce.
+  **Measured** 2026-08-08 from master, guard bypassed: `no pull requests found for branch "master"`,
+  **exit 1**. Same machine, gh 2.93.0, same day as `#28`'s note. Append-only: `#30` not edited; `#32`
+  supersedes its premise. The `case` guard stands on its own merits; it fixes no live defect. **Rule
+  earned: an exit code is measured or it is not stated** (sixth in the family).
+- `aebb81a` — **`#33`: CLAUDE.md merge-path section struck.** It stated the ruleset absent, PR arm
+  non-blocking, direct push succeeding, `Q12` OWED — all false by 2026-08-08 (ruleset `20573455`
+  active, `GH013` refuses direct push, `Q12` DONE `#28`); one was internally false even then (prose
+  said two layers absent, the table said one). `#184`: strike, don't transcribe. Replaced with
+  `gh api …/rulesets` + what the answer *means*. Ordering rationale retained and retensed (`#27`).
 
-### Findings to carry
-- **`land` exit-0 premise did not reproduce (gh 2.93.0 → exit 1).** `#28`'s session note that
-  `land` from master exits 0 is a carried-forward claim; under gh 2.93.0 it is exit 1. The guard
-  is retained as clarity, recorded honestly as partial (`#30`).
-- **`Q12` confirmed unchanged** (Brief E step 6): `DONE → #28`, three-layer table, residue named.
-  Its line-209 "no `.github`" is under a dated `CORRECTED 2026-08-04` header, superseded below —
-  a layered narrative, not a live-false claim.
-- **`BRANCHES.md` is `i/lf`, not `i/-text`** — HCA does not carry the CRLF-binary trap Brief D hit
-  in health-app. `.gitattributes` remains the durable fix (deferred).
-- **⚠ Stale `CLAUDE.md` "Merge path — CI-guarded, not yet CI-gated" (≈lines 285–300).** Claims the
-  ruleset is **absent** and `Q12` OWED and `git push origin master` still succeeds — all false
-  since `#28`/`20573455`. Out of Brief E's scope; flagged for a follow-up correction.
-- **Number-at-merge vs the PR gate (from the brief's GUARD).** 2c forces resolution *before* the
-  PR opens, so a collision window exists between PR-open and merge that ff+push did not have. Worth
-  its own row when someone next has both repos in view.
+### Settled this session (were "Findings to carry" in Brief E)
+- **`land` from master exits 1, and always did.** No longer hedged as "did not reproduce" — measured
+  as the reported input (`#32`). `#28`'s exit-0 note was inferred from the absence of an error line,
+  never measured.
+- **The stale merge-path section is struck** (`#33`) — enforcement state is now read live, not
+  transcribed.
+
+### Full-section sweep (Brief H gate 2)
+Re-read the entire repo-specific `CLAUDE.md` section (266→394), not the named lines only. The only
+transcribed-state claim beyond the struck section is `CLAUDE.md:289`'s gh-2.93.0 exit-1 note — a
+correct hedge, left as-is. Everything else is durable rules/architecture.
 
 ### Decisions / Questions
-Minted **#29** (checker drift), **#30** (`land`), **#31** (`Q6`); **Q15** (parity register), **Q16**
-(land pairing). `Q6` closed → `#31`. Each number claimed at merge, `origin/master` re-read #28/Q14.
-Stores changed: `DECISIONS_LOG`, `OPEN_QUESTIONS`, `BRANCHES`, `ROADMAP`, `CLAUDE`, plus
-`scripts/check_governance_placeholders.py` and `nodedump.txt`.
+Minted **#32** (premise measured, supersedes `#30`'s `:948`) and **#33** (merge-path section struck).
+No new questions. Each number claimed at merge, `origin/master` re-read #31 / Q16, 0 behind. Stores
+changed: `DECISIONS_LOG`, `CLAUDE`, `ROADMAP` (this block).
 
 ### Branch dispositions (terminal state)
-- `gov/checker-mirror` — **merged+deleted** local and remote via PR #21 (`0d16038`).
+- `gov/merge-path-strike` — **merged+deleted** local and remote via PR #23 (`0694428`).
 - `feat/hrv-node-dump` **UNSTARTED** · `fix/hrv-capture-regression` **UNSTARTED** — both rowed in
   `BRANCHES.md`, neither's code touched this session.
 
@@ -138,8 +120,16 @@ Stores changed: `DECISIONS_LOG`, `OPEN_QUESTIONS`, `BRANCHES`, `ROADMAP`, `CLAUD
 - **`Q9` item 1** — `ROADMAP.md` work queue above still carries `RESOLVED` / `parked` / `Blocked on`.
 - No `BLOCKED` rows remain in `OPEN_QUESTIONS.md`.
 
+### Governance threads still open (not health intelligence)
+- `#184`'s grep run **repo-wide**, not scoped to one file (this session swept `CLAUDE.md`'s section;
+  the whole-tree sweep for transcribed state is still owed).
+- `.gitattributes` — the durable fix for the CRLF-binary trap; **health-app**, not here.
+- Number-at-merge vs the PR gate: 2c forces resolution before PR-open, opening a collision window
+  ff+push did not have. Worth a row when someone has both repos in view.
+
 ### Next action
-Governance is at a stopping point — all three enforcement layers live, no `#NEXT` on master, no
-branch in limbo. Highest-value next: correct the stale `CLAUDE.md` "Merge path" section (ruleset is
-present, `Q12` DONE). Product, Luke's call: `feat/hrv-node-dump`'s keep-behind-a-flag vs strip (its
-evidence `nodedump.txt` is now committed). Hevy rotation is discharged (2026-07-11) — no longer owed.
+**Both owed merge-path threads are now closed.** What remains here is not health intelligence —
+`#184`'s repo-wide grep and health-app's `.gitattributes`. The actual priority is **product**: the
+4 August panel — first steady-state androgen read since the 9 June increase to ~122.5 mg/week — is
+unread in project knowledge. Reading it needs no repo, no PR, no brief; it is **chat-mode** work
+(project-knowledge PDFs + `Clinical_Protocol`/`Athlete_Profile`), not a Code-CLI task. Take it there.

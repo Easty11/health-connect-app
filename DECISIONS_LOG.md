@@ -1001,3 +1001,64 @@ quoted refusal transcript (DECISIONS_LOG:869), not a citation needing a row.
 
 **Do not revisit unless:** the shared block adopts a project-wide rule — then this belongs there,
 per `Q6`'s own "if they agree, it belongs in the shared block."
+
+### #32 — `#30`'s premise measured: `land` from master exits 1, and always did  ·  active
+
+**Decision:** `#30`'s factual claim at `:948` — that `land` from `master` "runs `gh pr merge` …
+finds no PR, and **exits 0**" — is **retracted**. `#30` is append-only and is **not edited**; this
+entry supersedes its premise. Measured 2026-08-08 from `master` with the alias guard bypassed
+(`gh pr merge --merge --delete-branch`): `no pull requests found for branch "master"`, **exit 1**.
+Same machine, same gh 2.93.0, same day as `#28`'s session note.
+
+**Why the contradiction stood for a week.** `#28`'s session note recorded `land` from `master` as
+exiting 0 — a silent success — and `#30` was minted against it, asserting it as fact at `:948`
+while its own heading already said the premise does not reproduce. The note was never stale; it was
+**never measured** — an exit code inferred from the absence of an error line. `#30`'s own no-PR
+control tested a *work branch*, not the reported input (`master`), so the contradiction survived
+until the reported case was actually run.
+
+**`#30`'s guard stands; only its premise falls.** The `case` guard earns its place on its own
+merits — a clear message, no dependence on `gh`'s version-dependent exit code — but it fixes no
+live exit-0 defect, because there was none.
+
+**How you know:** `gh pr merge --merge --delete-branch` from `master`, guard bypassed →
+`no pull requests found for branch "master"`, exit 1; the bare old-alias body from `master` →
+exit 1; a no-PR work branch → exit 1. gh 2.93.0, all measured 2026-08-08.
+
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max `### #31`, question max `Q16`, 0 behind. This entry takes **#32**.
+
+**Do not revisit unless:** `gh`'s no-PR exit code changes. **Rule earned: an exit code is measured
+or it is not stated** — sixth in the family after `#24`, `#25`, `#26`, health-app `#183`, and the
+close-out's unsatisfiable header gate.
+
+### #33 — The merge-path section described a repo that no longer exists  ·  active
+
+**Decision:** `CLAUDE.md`'s repo-specific *Merge path* section is **struck and replaced with a
+live-read, not updated**. As written it stated the ruleset **absent**, the PR arm non-blocking,
+`git push origin master` succeeding, and `Q12` **OWED**. All four were true when written and all
+four were false by 2026-08-08: ruleset `20573455` (`master-pr-gated`) is `enforcement: active`,
+`bypass_actors: []`; a direct push to master is refused `GH013`; `Q12` is `DONE → #28`. One claim
+was internally false even then — the prose said *two* layers were absent while the table beneath it
+listed *one*.
+
+**Why struck, not updated — `#184`.** A file may not hold transcribed state it cannot keep current.
+This section is the same defect as `#184` in the same repo four days later, missed because `#184`'s
+grep was scoped to the checker rather than run repo-wide. The ruleset row and the consequence
+paragraph are replaced with `gh api repos/Easty11/health-connect-app/rulesets` and what its answer
+*means* — durable — instead of what it currently *is* — not.
+
+**Retained:** the ordering rationale (the alias was made the PR motion before the ruleset was set).
+That is a decision's reasoning, not a state claim, and `#27` bore it out; it is retensed to past,
+not dropped.
+
+**How you know:** `gh api …/rulesets` → `20573455 master-pr-gated enforcement=active`,
+`bypass_actors []`; `gh api …/rules/branches/master` → 3 rules (`pull_request`,
+`required_status_checks`, `non_fast_forward`); `core.hooksPath` → `.githooks`; `OPEN_QUESTIONS.md`
+→ `Q12 · DONE → #28`. **Full-section sweep** run (not line-scoped): the only other transcribed-state
+claim in the repo-specific section is `CLAUDE.md:289`'s gh-2.93.0 exit-1 note — a correct hedge,
+left as-is.
+
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max `### #31`, question max `Q16`, 0 behind. This entry takes **#33**.
+
+**Do not revisit unless:** the enforcement layers change — which the section now says to read live
+rather than transcribe.

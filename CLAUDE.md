@@ -292,22 +292,27 @@ clarity, and it is version-independent; it does **not** cover the general no-PR-
 case, which still falls through to `gh`. No embedded double quotes — a single-quoted
 PowerShell string containing `"` reaches `git` split across arguments (project rule).
 
-### Merge path — CI-guarded, not yet CI-gated
+### Merge path — three enforcement layers, read live
 
-Enforcement here spans three layers and **two of them are absent**:
+Enforcement spans three layers. Two are unversioned config a `git diff` cannot see — a per-clone
+hook and a per-repo ruleset — so their state is **not transcribed here; read it live** (`#184`,
+`#33`). What a layer *does* is durable and stated; whether it is *installed* is a live read:
 
-| Layer | State |
-|-------|-------|
-| `core.hooksPath .githooks` (pre-push hook) | per-clone, set in this clone |
-| `.github/workflows/governance-guard.yml` | in the tree since `#24`; both arms run |
-| ruleset requiring `placeholder guard (POSIX)` | **absent** — `gh api repos/Easty11/health-connect-app/rules/branches/master` returns `[]` |
+| Layer | What it does | Read it live |
+|-------|--------------|--------------|
+| `.githooks/pre-push` (client hook) | refuses a placeholder push to master before bytes leave the machine; guards `master`/`main` only, `--no-verify` bypasses | `git config --get core.hooksPath` returns `.githooks` when installed in this clone |
+| `.github/workflows/governance-guard.yml` | server-side, on `pull_request` and `push: [master]`; job `placeholder guard (POSIX)` | versioned in the tree since `#24` |
+| ruleset (branch protection) | requires a PR and the exact check, forbids non-fast-forward, binds the owner | `gh api repos/Easty11/health-connect-app/rulesets` — a `master-pr-gated` entry with `enforcement: active` and `bypass_actors: []` means the gate is on and a direct push to master is refused `GH013`; no such entry means it is off |
 
-So the PR arm **reports and does not block**, `push: [master]` is detection after the fact,
-and `git push origin master` still succeeds. That is why `Q12` is OWED rather than DONE. The
-`land` body above is nonetheless already the PR motion, **because the ordering is not
-optional**: setting the ruleset first would refuse the direct-push motion this file used to
-document, on an alias then shared machine-globally with health-app. Alias first, ruleset
-second.
+A green CI run is evidence the script passed, never evidence the layers are installed — the hook is
+per clone, the ruleset is per repo, and only the workflow has a diff. Check them directly, above;
+do not read installation state off a green run.
+
+**Why the alias was already the PR motion before the ruleset was set.** `land` was made the
+`gh pr merge` motion (`#27`) *before* the ruleset existed, and the order was not optional: a ruleset
+refusing direct pushes to master would have broken the direct-push motion this file used to
+document — on an alias then shared machine-globally with health-app. Alias first, ruleset second;
+`#27` bore it out. (Reasoning retained and retensed to past — not a state claim.)
 
 **`--merge`, never `--squash` or `--rebase`, and never `--auto` or `--admin`** — same
 reasoning as health-app `#171`: `BRANCHES.md` rows record landing SHAs, and squash or rebase

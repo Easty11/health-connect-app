@@ -849,9 +849,11 @@ necessity; this is the first non-control land under the ruleset, so the sequence
 1. **Hook layer — refused before bytes left the machine.** With this branch's `### #NEXT` still
    unresolved, `git push origin master`:
 
-       REFUSED: unresolved governance placeholder in <sha>.
-         DECISIONS_LOG.md:<line>  ### #NEXT — ...
-       error: failed to push some refs
+       REFUSED: unresolved governance placeholder in 2c810f5639b5c51dbac8f0fef6670df60cc7e455.
+
+         DECISIONS_LOG.md:823  ### #NEXT — `Q12` closes on three verified layers, not on the ruleset alone  ·  active
+
+       error: failed to push some refs to 'https://github.com/Easty11/health-connect-app.git'
 
    **No `Enumerating objects` line anywhere in the output** — the pre-push hook aborted the push
    before any object transfer began. That absence is the load-bearing observation: it
@@ -863,8 +865,12 @@ necessity; this is the first non-control land under the ruleset, so the sequence
 
        remote: error: GH013: Repository rule violations found for refs/heads/master.
        remote: - Changes must be made through a pull request.
+       remote: - Required status check "placeholder guard (POSIX)" is expected.
+        ! [remote rejected] gov/close-q12 -> master (push declined due to repository rule violations)
 
-   `GH013` is the server refusing a motion the hook had no reason to block. Before 2026-08-08
+   `GH013` is the server refusing a motion the hook had no reason to block. **It cites the required
+   context by exact string**, which is stronger evidence than the API read-back alone: the gate is
+   not merely configured, it is actively being consulted and is resolving the name. Before 2026-08-08
    this push succeeded; four of them did, in the session that landed `#22` through `#27`.
 
 3. **PR path — permitted, once the required check reported green.**

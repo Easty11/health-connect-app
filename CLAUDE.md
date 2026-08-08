@@ -274,13 +274,23 @@ files in the tree and no enforcement wired to them until these run:
 
 ```powershell
 git config core.hooksPath .githooks
-git config --local alias.land '!gh pr merge --merge --delete-branch'
+git config --local alias.land '!f() { b=$(git branch --show-current); case $b in master|main) echo land: refusing, not on a work branch; exit 1;; esac; gh pr merge --merge --delete-branch; }; f'
 ```
 
 `stale` stays global and unchanged. `land` is **repo-local** because one global body cannot
 hold both repos' motions — see the `land` decision below and health-app `#171`. Verify with
 `git config --local --get alias.land`; the bare `git config --get` cannot tell a local value
 from a stale global one and is not a control (health-app `#103`).
+
+**Why the `case` guard (not a bare `gh pr merge`).** `gh pr merge` finds the PR for the
+*current* branch; run from `master` it operates on no branch of ours and does nothing. The
+guard makes `land` from `master`/`main` refuse loudly and deterministically (exit 1, explicit
+message) instead of leaning on `gh`'s own exit code, which is version-dependent — gh 2.93.0
+returns exit 1 with `no pull requests found`, so the exit-0 silent-success no-op the guard was
+minted against does **not** reproduce here. The guard still earns its place as fail-fast
+clarity, and it is version-independent; it does **not** cover the general no-PR-on-a-work-branch
+case, which still falls through to `gh`. No embedded double quotes — a single-quoted
+PowerShell string containing `"` reaches `git` split across arguments (project rule).
 
 ### Merge path — CI-guarded, not yet CI-gated
 

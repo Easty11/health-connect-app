@@ -936,3 +936,40 @@ exercised for the non-UTF-8 case where the original thread-decode bug lived.
 **Do not revisit unless:** the two copies' `read()` diverge again (the register question's job to
 prevent), or health-app repairs `main()`'s wording and a return trip is owed.
 
+### #NEXT — `land` refuses from master now, but the exit-0 no-op it was minted against does not reproduce  ·  active
+
+**Decision:** HCA's local `land` alias gains a `case` guard that refuses from `master`/`main`
+before calling `gh`: `!f() { b=$(git branch --show-current); case $b in master|main) echo land:
+refusing, not on a work branch; exit 1;; esac; gh pr merge --merge --delete-branch; }; f`. The
+documented fresh-clone setup (`CLAUDE.md`) is updated to match. No embedded double quotes
+(PowerShell re-quoting rule).
+
+**The premise did not reproduce.** As carried from the `#28` session and this brief, `land` from
+`master` runs `gh pr merge` against a branch that is not ours, finds no PR, and **exits 0** — a
+no-op reading as success at exactly the moment it is most likely to be run in error (right after a
+merge, branch already gone). Under **gh 2.93.0** it does not: `gh pr merge` with no PR returns
+**exit 1** (`no pull requests found`), from `master` and from a no-PR work branch alike. The
+exit-0 silent-success defect **does not reproduce here** — itself a statement true at one instant
+(an earlier `gh`, or a misobservation) carried forward as a fact about now, the same family as
+`#24`'s header, `#25`'s CRLF, `#26`'s stale figure, and health-app `#183`'s exit-0 read.
+
+**Adopted anyway, and honestly partial.** The guard still earns its place: `land` from `master`
+now refuses *deterministically and legibly* (`land: refusing, not on a work branch`, exit 1)
+instead of leaning on `gh`'s version-dependent exit code and oblique message — it is
+version-independent where the bare alias was not. It is **partial**: it guards only `master`/`main`,
+not the general no-PR-on-a-work-branch case, which still falls through to `gh` (exit 1 today, but a
+future `gh` returning 0 would resurface the no-op on a work branch).
+
+**Paired defect, not reached into.** health-app's alias body is identical, so the same guard
+applies there; but `land` is repo-local config, not shared-block content, so it is not edited from
+here. The pairing is rowed as a question in this store and noted for health-app's next session.
+
+**How you know:** three controls on gh 2.93.0 — from `master`: `land: refusing…`, exit 1; from a
+no-PR work branch: `no pull requests found`, exit 1 (not 0); the bare old-alias body from `master`
+also exit 1. The permit-from-a-branch-with-an-open-PR control is the real land of this session's PR.
+
+**Number claimed at merge:** [PENDING — re-read `origin/master` max immediately before PR].
+
+**Do not revisit unless:** `gh`'s no-PR exit code changes, or a work-branch no-PR guard is judged
+worth adding.
+

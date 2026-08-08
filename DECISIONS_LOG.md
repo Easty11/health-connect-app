@@ -1001,3 +1001,32 @@ quoted refusal transcript (DECISIONS_LOG:869), not a citation needing a row.
 
 **Do not revisit unless:** the shared block adopts a project-wide rule — then this belongs there,
 per `Q6`'s own "if they agree, it belongs in the shared block."
+
+### #NEXT — `#30`'s premise measured: `land` from master exits 1, and always did  ·  active
+
+**Decision:** `#30`'s factual claim at `:948` — that `land` from `master` "runs `gh pr merge` …
+finds no PR, and **exits 0**" — is **retracted**. `#30` is append-only and is **not edited**; this
+entry supersedes its premise. Measured 2026-08-08 from `master` with the alias guard bypassed
+(`gh pr merge --merge --delete-branch`): `no pull requests found for branch "master"`, **exit 1**.
+Same machine, same gh 2.93.0, same day as `#28`'s session note.
+
+**Why the contradiction stood for a week.** `#28`'s session note recorded `land` from `master` as
+exiting 0 — a silent success — and `#30` was minted against it, asserting it as fact at `:948`
+while its own heading already said the premise does not reproduce. The note was never stale; it was
+**never measured** — an exit code inferred from the absence of an error line. `#30`'s own no-PR
+control tested a *work branch*, not the reported input (`master`), so the contradiction survived
+until the reported case was actually run.
+
+**`#30`'s guard stands; only its premise falls.** The `case` guard earns its place on its own
+merits — a clear message, no dependence on `gh`'s version-dependent exit code — but it fixes no
+live exit-0 defect, because there was none.
+
+**How you know:** `gh pr merge --merge --delete-branch` from `master`, guard bypassed →
+`no pull requests found for branch "master"`, exit 1; the bare old-alias body from `master` →
+exit 1; a no-PR work branch → exit 1. gh 2.93.0, all measured 2026-08-08.
+
+**Number claimed at merge:** [PENDING — re-read `origin/master` max immediately before PR].
+
+**Do not revisit unless:** `gh`'s no-PR exit code changes. **Rule earned: an exit code is measured
+or it is not stated** — sixth in the family after `#24`, `#25`, `#26`, health-app `#183`, and the
+close-out's unsatisfiable header gate.

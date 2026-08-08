@@ -69,77 +69,77 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 ## Sprint block
 
 **Branch:** `master` (trunk)
-**Closed:** 2026-08-08 (Brief G: `Q4` closed on operator observation, `feat/hrv-node-dump` unblocked, untracked artifacts dispositioned)
+**Closed:** 2026-08-08 (Brief E rev 2: checker mirror, `land` guard, `Q6` criterion, cited evidence committed)
 
-### This session — landed on master (`cd911b1`, PR #19)
-Governance/store-only. No `app/`, no `src/`, no scraper source. Three concern-split commits,
-`placeholder guard (POSIX)` green, merged `--merge` under the ruleset.
+### This session — landed on master (`0d16038`, PR #21)
+Governance/store + one dev artefact. No `app/`, no `src/`, no scraper source. Eight
+concern-split commits + a placeholder-resolution commit; `placeholder guard (POSIX)` green,
+merged `--merge` under ruleset `20573455`. Placeholders resolved **pre-PR** (2c runs `--ref
+HEAD` on the merge commit) against `origin/master`'s re-read max #28 / Q14, 0 behind.
 
-- `64b4438` — **`Q4` closes on operator observation; `Q5` trigger fired.** `Q4` (day-lag /
-  HRV read-freshness) was the repo's only `BLOCKED` row. Its blocker was one overnight/~5am
-  sync landing today's HRV in Railway (owner Luke). The row→night mapping exists only
-  *outside* the pipeline — a stored value is byte-identical whether or not it is fresh — in
-  the operator who identified the day-lag and reads it daily on the standalone build. Closed
-  `DONE → operator observation (2026-08-08)`, attributed and dated, not softened to
-  "reported." `Q5`'s reconciliation trigger fired; it stays `UNSTARTED` (fired trigger =
-  worth doing, not done); its correct/backfill-vs-provenance-marker policy fork stays Luke's.
-- `4b54f71` — **`feat/hrv-node-dump` unblocked.** `BRANCHES.md` row 18 named the `Q4` sync
-  verbatim; `Q4` closed clears the sole live blocker. Status `BLOCKED → UNSTARTED` per the
-  store's tie-break (half-done work, no blocker → UNSTARTED; row 17 precedent). keep-behind-
-  a-flag vs strip disposition left open — Luke's.
-- `d341637` — **stray artifacts gitignored per `#9`.** `hevy_routine.json`,
-  `checkin_build_brief.md` — active `#9` rules them not-tracked-here. `nodedump.txt`
-  deliberately NOT ignored: cited evidence and its disposition is open.
+- `bf9e545` + `4023ba9` — **checker brought to health-app's repaired form (`#29`).** `read()`
+  mirrored byte-for-byte (md5 `154e1871…`, source lines joined `\n` + one trailing `\n`, LF
+  blob): byte-capture + explicit UTF-8 decode, non-UTF-8 and empty → exit 2. Docstring-stripped
+  bodies pre-mirror differed by **exactly two hunks** (read + main string). Docstring repaired
+  **repo-local** (`#22` clause 3): retracted *"the alias calls the same script"* deleted (health-app
+  struck it 2026-08-04; HCA had kept it); HCA's three surfaces stated, each verified from this
+  tree/API. `main()`'s advisory string left divergent by design. Four exit-code controls re-run
+  Windows/`C:\Python314` (0 / 1 file:line / 2 no-traceback / 2) + the `--ref` git-show path.
+- `d07b229` — **`land` guard (`#30`) + CLAUDE.md.** Alias refuses from `master`/`main` before
+  calling `gh`. **Empirical finding:** the exit-0 silent-no-op premise does **not** reproduce
+  under **gh 2.93.0** — no-PR returns **exit 1** from master and from a no-PR work branch. Guard
+  kept as fail-fast, version-independent clarity; **partial** (guards master/main only). Three
+  land controls observed: master→refuse exit 1; branch-with-PR→permitted (this land); no-PR
+  branch→exit 1.
+- `1bc0cda` — **`Q6` resolved on a criterion (`#31`).** Row a merged+deleted branch iff a store
+  cites an artefact produced on it (run ID, control output, SHA); floor semantics. Tested against
+  every row — four control branches rowed (run IDs cited `#24`/`#28`), `gov/close-q12` not.
+  `BRANCHES.md` header now states the test.
+- `f229dd6` — **`Q15` (parity register, mirrors health-app `Q87`) + `Q16` (land pairing) + Hevy
+  strike.** `Q15` in this store's four-state vocab (`Q13` untouched); names five cross-repo
+  artefacts. Hevy rotation struck — discharged 2026-07-11.
+- `6ce4273` — **`nodedump.txt` committed.** The cited evidence (`#19`/`BRANCHES`/`FEEDBACK`) that
+  lived on one machine; privacy objection withdrawn. `#9` does not cover this repo's own evidence.
 
-### Convention findings (Brief G gates)
-- **`DONE` needs no decision number here.** Existing `DONE` rows split `DONE → #N` (Q8/Q11/
-  Q12) and `DONE → <SHA>` (Q3, `db6f50e`). Q3 proves the store permits `DONE` citing a
-  non-decision artefact, so `Q4` closed `DONE → operator observation` with **no `#NEXT`
-  minted** — an operator observation is a finding, not a decision, and minting one would
-  inflate the log.
-- **`Q13` axis conflict acknowledged, not resolved.** This store uses the four-state
-  vocabulary (preamble + all pre-existing rows); the imported OPEN/OWED/DONE→#N question-
-  state axis is deliberately not adopted (`Q13`, OPEN). `Q4` resolved within the four-state
-  axis; `Q13` untouched. Re-labelling the 11 rows is lossy and remains Luke's call.
-
-### `nodedump.txt` — disposition open, recommend gitignore + retain local
-382 lines / 65 KB, pure Samsung Health accessibility node tree. **No direct identifiers**
-(name/email/account/serial/token scans empty) but **does** contain personal physiological
-values (HRV `106`/`97` ms, HR `56` bpm, sleep/energy scores, steps, bed/wake times) — a
-public-repo concern. **Never committed anywhere** (not in history, not on
-`feat/hrv-node-dump`), yet cited as evidence in `#19`, `BRANCHES.md` row 18, and `FEEDBACK`.
-Of commit / gitignore+retain-local / delete: **recommend gitignore + retain-local** — keeps
-health data out of the public repo *and* preserves the cited artefact (delete destroys it;
-`#19` prose keeps the specific evidentiary detail as a backstop). Left untracked pending
-Luke's decision; once the two strays are ignored it is the one file a blanket `git add .`
-could stage — flag.
-
-### Branch dispositions (terminal state)
-- `gov/close-q4` — **merged+deleted** local and remote via PR #19 (`cd911b1`).
-- `feat/hrv-node-dump` **UNSTARTED** (unblocked this session) · `fix/hrv-capture-regression`
-  **UNSTARTED** — both rowed in `BRANCHES.md`, neither's code touched this session.
+### Findings to carry
+- **`land` exit-0 premise did not reproduce (gh 2.93.0 → exit 1).** `#28`'s session note that
+  `land` from master exits 0 is a carried-forward claim; under gh 2.93.0 it is exit 1. The guard
+  is retained as clarity, recorded honestly as partial (`#30`).
+- **`Q12` confirmed unchanged** (Brief E step 6): `DONE → #28`, three-layer table, residue named.
+  Its line-209 "no `.github`" is under a dated `CORRECTED 2026-08-04` header, superseded below —
+  a layered narrative, not a live-false claim.
+- **`BRANCHES.md` is `i/lf`, not `i/-text`** — HCA does not carry the CRLF-binary trap Brief D hit
+  in health-app. `.gitattributes` remains the durable fix (deferred).
+- **⚠ Stale `CLAUDE.md` "Merge path — CI-guarded, not yet CI-gated" (≈lines 285–300).** Claims the
+  ruleset is **absent** and `Q12` OWED and `git push origin master` still succeeds — all false
+  since `#28`/`20573455`. Out of Brief E's scope; flagged for a follow-up correction.
+- **Number-at-merge vs the PR gate (from the brief's GUARD).** 2c forces resolution *before* the
+  PR opens, so a collision window exists between PR-open and merge that ff+push did not have. Worth
+  its own row when someone next has both repos in view.
 
 ### Decisions / Questions
-No decision minted (max stays **#28**). No question minted (max stays **Q14**). `Q4` closed
-→ operator observation; `Q5` trigger noted (stays UNSTARTED). Stores changed:
-`OPEN_QUESTIONS`, `ROADMAP`, `BRANCHES`, `.gitignore`.
+Minted **#29** (checker drift), **#30** (`land`), **#31** (`Q6`); **Q15** (parity register), **Q16**
+(land pairing). `Q6` closed → `#31`. Each number claimed at merge, `origin/master` re-read #28/Q14.
+Stores changed: `DECISIONS_LOG`, `OPEN_QUESTIONS`, `BRANCHES`, `ROADMAP`, `CLAUDE`, plus
+`scripts/check_governance_placeholders.py` and `nodedump.txt`.
+
+### Branch dispositions (terminal state)
+- `gov/checker-mirror` — **merged+deleted** local and remote via PR #21 (`0d16038`).
+- `feat/hrv-node-dump` **UNSTARTED** · `fix/hrv-capture-regression` **UNSTARTED** — both rowed in
+  `BRANCHES.md`, neither's code touched this session.
 
 ### Open (carried forward)
-- **`Q13` · OPEN** — imported question-state axis vs this store's four-state; lossy remap,
-  Luke's judgement.
-- **`Q14` · OPEN** — shared block is the last surviving site of `parked`. Mirror of
-  health-app `Q33`; own brief, mirror-first, G1 re-fingerprint.
+- **`Q15` · UNSTARTED** — cross-repo artefact-parity register: build it or keep ad hoc. Owner Luke.
+- **`Q16` · UNSTARTED** — `land` guard owed to health-app's identical alias. Owner: health-app.
+- **`Q13` · OPEN** — imported question-state axis vs this store's four-state; lossy remap.
+- **`Q14` · OPEN** — shared block is the last surviving site of `parked`; mirror of health-app `Q33`.
 - **`Q7` · OWED** — `#18`'s flat-`sourcePackage` unfulfilled in `aggregateSteps`.
-- **`Q6` · UNSTARTED** — retain `DONE` rows or drop them.
 - **`Q10` · UNSTARTED** — the ritual's own ANCHOR states required state in the declarative.
-- **`Q9` item 1** — `ROADMAP.md` work queue above still carries `RESOLVED` / `parked` /
-  `Blocked on`. Inert debt.
-- No `BLOCKED` rows remain in `OPEN_QUESTIONS.md` after `Q4`'s close.
+- **`Q9` item 1** — `ROADMAP.md` work queue above still carries `RESOLVED` / `parked` / `Blocked on`.
+- No `BLOCKED` rows remain in `OPEN_QUESTIONS.md`.
 
 ### Next action
-Product, Luke's call: `nodedump.txt` is now committed as cited evidence (Brief E, step 11), so
-`feat/hrv-node-dump`'s keep-behind-a-flag vs strip is the residue.
-
-~~Rotate the Hevy API key (exposed 2026-07-11)~~ — **discharged: rotated 2026-07-11 by the
-operator** (struck 2026-08-08). It has not been a live action since that date; the stale "still
-owed" line is removed.
+Governance is at a stopping point — all three enforcement layers live, no `#NEXT` on master, no
+branch in limbo. Highest-value next: correct the stale `CLAUDE.md` "Merge path" section (ruleset is
+present, `Q12` DONE). Product, Luke's call: `feat/hrv-node-dump`'s keep-behind-a-flag vs strip (its
+evidence `nodedump.txt` is now committed). Hevy rotation is discharged (2026-07-11) — no longer owed.

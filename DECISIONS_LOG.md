@@ -1002,7 +1002,7 @@ quoted refusal transcript (DECISIONS_LOG:869), not a citation needing a row.
 **Do not revisit unless:** the shared block adopts a project-wide rule — then this belongs there,
 per `Q6`'s own "if they agree, it belongs in the shared block."
 
-### #NEXT — `#30`'s premise measured: `land` from master exits 1, and always did  ·  active
+### #32 — `#30`'s premise measured: `land` from master exits 1, and always did  ·  active
 
 **Decision:** `#30`'s factual claim at `:948` — that `land` from `master` "runs `gh pr merge` …
 finds no PR, and **exits 0**" — is **retracted**. `#30` is append-only and is **not edited**; this
@@ -1025,13 +1025,13 @@ live exit-0 defect, because there was none.
 `no pull requests found for branch "master"`, exit 1; the bare old-alias body from `master` →
 exit 1; a no-PR work branch → exit 1. gh 2.93.0, all measured 2026-08-08.
 
-**Number claimed at merge:** [PENDING — re-read `origin/master` max immediately before PR].
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max `### #31`, question max `Q16`, 0 behind. This entry takes **#32**.
 
 **Do not revisit unless:** `gh`'s no-PR exit code changes. **Rule earned: an exit code is measured
 or it is not stated** — sixth in the family after `#24`, `#25`, `#26`, health-app `#183`, and the
 close-out's unsatisfiable header gate.
 
-### #NEXT — The merge-path section described a repo that no longer exists  ·  active
+### #33 — The merge-path section described a repo that no longer exists  ·  active
 
 **Decision:** `CLAUDE.md`'s repo-specific *Merge path* section is **struck and replaced with a
 live-read, not updated**. As written it stated the ruleset **absent**, the PR arm non-blocking,
@@ -1058,7 +1058,7 @@ not dropped.
 claim in the repo-specific section is `CLAUDE.md:289`'s gh-2.93.0 exit-1 note — a correct hedge,
 left as-is.
 
-**Number claimed at merge:** [PENDING — re-read `origin/master` max immediately before PR].
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max `### #31`, question max `Q16`, 0 behind. This entry takes **#33**.
 
 **Do not revisit unless:** the enforcement layers change — which the section now says to read live
 rather than transcribe.

@@ -296,7 +296,7 @@ PowerShell string containing `"` reaches `git` split across arguments (project r
 
 Enforcement spans three layers. Two are unversioned config a `git diff` cannot see — a per-clone
 hook and a per-repo ruleset — so their state is **not transcribed here; read it live** (`#184`,
-`#NEXT`). What a layer *does* is durable and stated; whether it is *installed* is a live read:
+`#33`). What a layer *does* is durable and stated; whether it is *installed* is a live read:
 
 | Layer | What it does | Read it live |
 |-------|--------------|--------------|

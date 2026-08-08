@@ -1030,3 +1030,35 @@ exit 1; a no-PR work branch → exit 1. gh 2.93.0, all measured 2026-08-08.
 **Do not revisit unless:** `gh`'s no-PR exit code changes. **Rule earned: an exit code is measured
 or it is not stated** — sixth in the family after `#24`, `#25`, `#26`, health-app `#183`, and the
 close-out's unsatisfiable header gate.
+
+### #NEXT — The merge-path section described a repo that no longer exists  ·  active
+
+**Decision:** `CLAUDE.md`'s repo-specific *Merge path* section is **struck and replaced with a
+live-read, not updated**. As written it stated the ruleset **absent**, the PR arm non-blocking,
+`git push origin master` succeeding, and `Q12` **OWED**. All four were true when written and all
+four were false by 2026-08-08: ruleset `20573455` (`master-pr-gated`) is `enforcement: active`,
+`bypass_actors: []`; a direct push to master is refused `GH013`; `Q12` is `DONE → #28`. One claim
+was internally false even then — the prose said *two* layers were absent while the table beneath it
+listed *one*.
+
+**Why struck, not updated — `#184`.** A file may not hold transcribed state it cannot keep current.
+This section is the same defect as `#184` in the same repo four days later, missed because `#184`'s
+grep was scoped to the checker rather than run repo-wide. The ruleset row and the consequence
+paragraph are replaced with `gh api repos/Easty11/health-connect-app/rulesets` and what its answer
+*means* — durable — instead of what it currently *is* — not.
+
+**Retained:** the ordering rationale (the alias was made the PR motion before the ruleset was set).
+That is a decision's reasoning, not a state claim, and `#27` bore it out; it is retensed to past,
+not dropped.
+
+**How you know:** `gh api …/rulesets` → `20573455 master-pr-gated enforcement=active`,
+`bypass_actors []`; `gh api …/rules/branches/master` → 3 rules (`pull_request`,
+`required_status_checks`, `non_fast_forward`); `core.hooksPath` → `.githooks`; `OPEN_QUESTIONS.md`
+→ `Q12 · DONE → #28`. **Full-section sweep** run (not line-scoped): the only other transcribed-state
+claim in the repo-specific section is `CLAUDE.md:289`'s gh-2.93.0 exit-1 note — a correct hedge,
+left as-is.
+
+**Number claimed at merge:** [PENDING — re-read `origin/master` max immediately before PR].
+
+**Do not revisit unless:** the enforcement layers change — which the section now says to read live
+rather than transcribe.

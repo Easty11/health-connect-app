@@ -1094,3 +1094,74 @@ new block match HCA's heading forms — `^### #?[0-9]+` hits `### #33`, `^#{2,3}
 
 **Do not revisit unless:** health-app edits the shared block again — in which case it propagates
 here verbatim by the same route, never hand-merged.
+
+### #35 — ExerciseSession record metadata forwarded; payload-log truncation surfaced  ·  active
+
+**Decision:** `workoutMapper` (`src/healthConnect.js`) now forwards three Health Connect
+record-metadata fields on every ExerciseSession — `metadata.id`, `metadata.recordingMethod`,
+`metadata.device` — all nullable, shared by `fetchWorkoutData()` and `fetchAllData()`. `id` is the
+backend idempotency key for `aerobic_sessions.source_session_id`; `recordingMethod` and `device`
+are principled inputs to cross-source aerobic arbitration, intended to replace the duration /
+package-name heuristics (cross-ref the health-app aerobic ingestion brief). Payload key stays
+`workouts`; no contract regeneration; no other mapper changed.
+
+**Empirical field findings (G1) — the gate, read from a real `[HC raw] ExerciseSession sample`,
+not from the library type declaration.** Two consecutive syncs 2026-08-10, same session keyed on
+`startTime = 2026-08-03T10:26:09Z`; sole writer `com.sec.android.app.shealth`, `exerciseType 79`:
+- `metadata.id` = `"10c7f296-5996-48b1-9af9-86f3eaabae52"` — present, a UUID, **stable**
+  (byte-identical across both syncs, diffed on startTime identity, not array position).
+- `metadata.recordingMethod` = `0` (`RECORDING_METHOD_UNKNOWN`) — present as a key,
+  **non-informative** for this writer, and non-informative *regardless of capture mode*: the
+  session was genuinely recorded (operator-confirmed), yet Samsung Health still wrote `0`.
+- `metadata.device` = `{model:null, manufacturer:null, type:0}` (`TYPE_UNKNOWN`) — present as a
+  key, **non-informative** for this writer.
+
+**What was not observed, and for which writers.** Only Samsung Health wrote *any* record in this
+window — sleep, HRV (0 records), heart-rate, steps and exercise all carry
+`dataOrigin: com.sec.android.app.shealth`. The non-population of `recordingMethod`/`device` is
+therefore established **only for Samsung Health**; Garmin, chest-strap and every other writer are
+unobserved. The fields are forwarded anyway (nullable, harmless) so a future writer that *does*
+populate them (e.g. a chest strap → `device.type 7`, `recordingMethod 1`) reaches the backend with
+no further HCA change.
+
+**Why land all three despite two being non-informative.** The keys are *present* (not absent) and
+`id` is present and stable → the v2 GUARD's land-all-three arm, not its land-`id`-alone arm.
+Non-informative ≠ absent. The arbitration consequence — that `recordingMethod`/`device` give the
+Samsung path no signal, so arbitration falls back to overlap-plus-fidelity-rank and the
+micro-session floor stays a live open question — is a health-app / chat decision, recorded there,
+not resolved here.
+
+**Payload-log truncation — retrospective, not a regression (own commit).** `api.js`'s
+`Syncing data:` full-body dump is cut at logcat's 4068-byte max payload (`adb logcat -g`); the
+payload serialises `sleep` first, so every later key — `hrv, heartRate, steps, workouts, errors` —
+has **never** been observable in that line. Any past debugging that read `Syncing data:` was
+reading a partial body. Fixed by a bounded `[HC payload summary]` log (per-key counts + the first
+workout's `id`/`startTime`/`exerciseType`/`recordingMethod`/`device`), which stays under the cap
+and made G2/G3 observable rather than deductive.
+
+**How you know:**
+- **G1** — raw `[HC raw] ExerciseSession sample` captured live over two syncs, parsed
+  startTime-keyed; `id` identical across both → stable; paths/values as tabled above.
+- **G2** — on the release build, `[HC payload summary]` shows `firstWorkout.id =
+  10c7f296-5996-48b1-9af9-86f3eaabae52` in the **outgoing** body (`workouts: 6`), both syncs.
+- **G3** — both round-trips carried `recordingMethod: 0` and `device: {…}` in the body and logged
+  **no** `Sync error status` / `Sync error detail` (the only failure path in `syncHealthData`) →
+  200, not 422 → backend `extra='ignore'` confirmed empirically, not assumed.
+- **G4** — offline execution of the *extracted* `workoutMapper` source against `metadata` absent /
+  `{}` / present-without-`id`: all return without throwing, forwarded fields `null`. Backend
+  null-tolerance stays deductive from `extra='ignore'` (the other repo's gate).
+- **G5** — the change touches only `workoutMapper` (+ a separate `api.js` log commit); no other
+  mapper, no `SyncScreen` counts, no permission groups.
+- **Truncation** — `adb logcat -g` → `max payload is 4068 B`; both pre-change `Syncing data:` lines
+  measured at total 4095 / body ~4034 with `contains_workouts_key = false`.
+- **Ring-buffer rotation** — a fresh `adb logcat -d` after the syncs returned 0 ExerciseSession
+  samples because the device's ring buffer had rotated (earliest live line `12:12` > sync `09:59`);
+  this device runs a torrent client that churns the buffer. Future captures: `adb logcat -G 5M`
+  (device max; 16M was requested and capped) and/or stream to file, as done here.
+
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max
+`### #34`, question max `Q16`. This entry takes **#35**.
+
+**Do not revisit unless:** a non-Samsung writer appears whose `recordingMethod`/`device` carry real
+values — that changes the arbitration input, which is a health-app decision, not a re-open of this
+forwarding.

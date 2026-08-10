@@ -208,6 +208,14 @@ function workoutMapper(r) {
     title: r.title ?? null,
     durationMinutes: Math.round((new Date(r.endTime) - new Date(r.startTime)) / 60000),
     sourcePackage: r.metadata?.dataOrigin ?? null,
+    // Health Connect record metadata forwarded for backend cross-source ingestion.
+    // Paths confirmed empirically from a real [HC raw] ExerciseSession sample (see
+    // DECISIONS_LOG #35). All nullable — Samsung Health populates `id` with a stable
+    // UUID but leaves recordingMethod/device at their UNKNOWN sentinels (0 / type 0);
+    // other writers may populate them, so they are forwarded rather than dropped.
+    id: r.metadata?.id ?? null,
+    recordingMethod: r.metadata?.recordingMethod ?? null,
+    device: r.metadata?.device ?? null,
   };
 }
 

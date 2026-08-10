@@ -1,57 +1,54 @@
 # closeout.md — health-connect-app
 
+Single committed cold-resume handoff. Overwritten each `/closeout`. Read after `CLAUDE.md`.
+
 ## Commits this session
+
 ```
-0694428 Merge pull request #23 from Easty11/gov/merge-path-strike
-1f32cbc Resolve number-at-merge placeholders: #32, #33
-aebb81a Strike CLAUDE.md merge-path section; read enforcement live not transcribed (#NEXT)
-cdfe6a7 Supersede #30's premise: land from master exits 1, and always did (#NEXT)
-```
-Session-open ref `3a9d16b`. Repo's own dated record:
-```
-2026-08-08 Merge pull request #23 from Easty11/gov/merge-path-strike
-2026-08-08 Resolve number-at-merge placeholders: #32, #33
-2026-08-08 Strike CLAUDE.md merge-path section; read enforcement live not transcribed (#NEXT)
-2026-08-08 Supersede #30's premise: land from master exits 1, and always did (#NEXT)
+d569adf Merge pull request #26 from Easty11/feat/exercise-metadata-forward
+db86dee docs(decisions): #35 — forward ExerciseSession record metadata; log truncation
+70c30d0 chore: add bounded payload-summary log to syncHealthData
+9cc1ee7 feat: forward Health Connect record metadata on ExerciseSession
 ```
 
+All on master via PR #26 (`--merge`, `placeholder guard (POSIX)` green, ruleset `20573455`).
+Branch `feat/exercise-metadata-forward` merged+deleted local and remote.
+
 ## PENDING reconciliation
-No chat-side (`;cc`) queue — Brief H was a self-contained Code brief. Deliverables, all landed on `0694428`:
-- **`#33` — CLAUDE.md merge-path section struck** (`aebb81a`): four false claims replaced with a
-  live-read (`gh api …/rulesets` + what it means); ordering rationale retained, retensed.
-- **`#32` — `#30`'s `:948` premise retracted** (`cdfe6a7`): measured exit 1, append-only supersession.
-- **Four other hedge sites assessed** (Brief H step 3): `CLAUDE.md:289`, `OPEN_QUESTIONS.md:425–26`
-  correct hedges left as-is; `ROADMAP.md:89/105` settled by this close-out's regeneration.
-- **Placeholders resolved pre-PR** (#32/#33) — `1f32cbc`; checker green on `--ref HEAD`.
+
+No `;cc` pending-commit queue was carried into this session — it began from a **direct Code brief**
+(HCA forwards ExerciseSession record metadata, v2 amended), not a chat close-out handoff. Nothing
+provisional outstanding: the mapper change, the observability log, and `#35` are all on master.
 
 ## Cold-resume handoff
 
-**Branch:** `master` @ `0694428`. Clean tree. Maxima: decisions **#33**, questions **Q16**.
+**Sprint state.** `#35` landed: `workoutMapper` forwards `metadata.id` / `recordingMethod` /
+`device` (all nullable) on every ExerciseSession, plus a bounded `[HC payload summary]` log that
+fixes a retrospective 4068-byte truncation defect in `Syncing data:`. All five gates discharged
+empirically (G1 raw sample · G2 id in outgoing body · G3 200/no-422 · G4 offline throw-safety ·
+G5 isolation). First `src/` product change in several sessions; the governance backlog is quiet.
 
-**What Brief H did.** Closed the two owed merge-path threads. (1) Struck `CLAUDE.md`'s repo-specific
-*Merge path* section, which described a repo that no longer exists — ruleset absent, PR arm
-non-blocking, direct push succeeding, `Q12` OWED, all false since `#28`/`20573455`, one internally
-false even when written. Replaced with a live-read (`#184`: a file may not hold state it cannot keep
-current). (2) Retracted `#30`'s `:948` claim that `land` from master "exits 0": measured, it is
-**exit 1**, and always was — `#28`'s note was inferred, never measured. `#30` append-only, superseded
-by `#32`. Rule earned: **an exit code is measured or it is not stated.**
+**The finding (recorded, not acted on).** For the only writer observed — Samsung Health —
+`recordingMethod` is `0` (UNKNOWN) and `device` is `{null,null,type:0}` (UNKNOWN), *regardless of
+capture mode*. So the amendment's realized value is `id` (the v1 objective) plus the truncation fix;
+`recordingMethod`/`device` are a **Garmin-contingent bet**, inert until a non-Samsung writer
+populates them. Arbitration stays on overlap-plus-fidelity-rank; the micro-session floor stays open.
 
-**Full-section sweep (gate 2).** The whole repo-specific `CLAUDE.md` section was re-read, not the
-named lines only. The only other transcribed-state claim is `CLAUDE.md:289`'s gh-2.93.0 hedge —
-correct, left. Everything else durable.
+**Device / environment (not repo state — costs an hour to rediscover).**
+- Phone **SM_S921B** runs a **release build carrying `[HC payload summary]`** (installed via
+  `npm run android`). Committed source matches — no drift.
+- Logcat **ring buffer rotates fast** (torrent client churns it); a ~20-min-old capture is already
+  gone. Future captures: `adb logcat -G 5M` (device max) **and stream to a file**. Truncation cap
+  is `max payload is 4068 B`.
 
-**Open questions.** `Q15` UNSTARTED (parity register — owner Luke) · `Q16` UNSTARTED (land guard owed
-to health-app) · `Q13` OPEN (question-state axis) · `Q14` OPEN (shared block's last `parked`) · `Q7`
-OWED (`#18` flat-`sourcePackage`) · `Q10` UNSTARTED (ANCHOR declarative). No `BLOCKED` rows remain.
+**Open questions (unchanged this session):** `Q15` UNSTARTED · `Q16` UNSTARTED · `Q13` OPEN ·
+`Q14` OPEN · `Q7` OWED · `Q10` UNSTARTED · `Q9` UNSTARTED. No `BLOCKED` rows.
 
-**Branches.** `gov/merge-path-strike` merged+deleted. Local `feat/hrv-node-dump` (UNSTARTED) and
-`fix/hrv-capture-regression` (UNSTARTED) both rowed in `BRANCHES.md`.
-
-**Governance threads still open (not health intelligence).** `#184`'s grep run **repo-wide** (this
-session swept only `CLAUDE.md`'s section); `.gitattributes` in **health-app**; the number-at-merge
-vs PR-gate collision window (a row when someone has both repos in view).
-
-**Single clearest next action — product, and it is chat-mode.** The 4 August panel (first steady-state
-androgen read since the 9 June increase to ~122.5 mg/week) is unread in project knowledge. It needs
-no repo, no PR, no brief — read it in chat with `Clinical_Protocol`/`Athlete_Profile`; the Code CLI
-cannot see project knowledge. Five sessions of scaffolding, zero product; that is the thread to pull.
+**Single clearest next action.** Not "build step 3." **health-app step 3 (backend aerobic
+ingestion) keyed on `metadata.id`, AND the open decision on whether `recordingMethod`/`device`
+persist backend-side** — a genuine fork (persist-now costs a migration on columns you can't yet
+use; persist-later costs a second migration plus a blind window). Recommended read: *persist, don't
+consume* — one nullable JSON blob on `AerobicSession`. **This is health-app-rooted; it belongs in
+that session's stores, not HCA's.** Separately, Deb's Garmin lane is blocked on **her first sync**
+(does Garmin write HRV to Health Connect, and does it populate the two fields Samsung leaves
+UNKNOWN?), not on anything built here.

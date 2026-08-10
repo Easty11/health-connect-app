@@ -67,6 +67,29 @@ export async function getStoredToken() {
 
 export async function syncHealthData(data, token) {
   console.log('Syncing data:', JSON.stringify(data, null, 2));
+  // Bounded, deterministic summary of the OUTGOING body. The full dump above is cut by
+  // logcat's ~4 KB per-message cap, so every key after `sleep` (hrv, heartRate, steps,
+  // workouts, errors) has never been observable there — a retrospective limitation, not
+  // a regression. This line stays under the cap so the wire contract remains inspectable,
+  // in particular the workout metadata now forwarded (see DECISIONS_LOG #35).
+  const w0 = data.workouts?.[0] ?? null;
+  console.log('[HC payload summary]', JSON.stringify({
+    counts: {
+      sleep: data.sleep?.length ?? 0,
+      hrv: data.hrv?.length ?? 0,
+      heartRate: data.heartRate?.length ?? 0,
+      steps: data.steps?.length ?? 0,
+      workouts: data.workouts?.length ?? 0,
+      errors: data.errors?.length ?? 0,
+    },
+    firstWorkout: w0 ? {
+      id: w0.id ?? null,
+      startTime: w0.startTime,
+      exerciseType: w0.type,
+      recordingMethod: w0.recordingMethod ?? null,
+      device: w0.device ?? null,
+    } : null,
+  }));
   try {
     // When a token is passed explicitly, send it directly; otherwise the
     // request interceptor falls back to the stored token.

@@ -113,8 +113,8 @@ through the aggregate row, the first-contributor path (`??=`), and the
 projection. Unreviewed and unlanded — owner Luke. A stash is a surface nothing
 points at; this row is what points at it. Recover with `git stash list`.
 
-### Q14 — The shared block still says `parked`; mirror of health-app `Q33`  ·  OPEN
-**State:** OPEN. **Mirrors:** health-app `Q33` (OPEN). **Related:** `#20` (four states), `#21`,
+### Q14 — The shared block still says `parked`; mirror of health-app `Q33`  ·  DONE → #34
+**State:** DONE → #34. **Mirrors:** health-app `Q33` (OPEN). **Related:** `#20` (four states), `#21`,
 `#93` (health-app's sweep), `Q9`, `Q11` (both now closed against it).
 
 `CLAUDE.md:186` here and `CLAUDE.md:198` in health-app carry the same sentence:
@@ -148,6 +148,10 @@ there; do not carry them from `Q33` into a plan.
 
 **Outstanding — owner Luke:** one shared-block brief, mirror-first, both repos, one G1
 re-fingerprint.
+
+**Closed by #34:** the shared block was replaced verbatim with health-app's pruned version;
+the `parked` site is gone (`grep -i park` on `CLAUDE.md` returns nothing), byte-identical both
+repos (sha256 `622ae8559e81`) — the mirror-first replacement and G1 re-fingerprint this row required.
 
 ### Q12 — The guard cannot see server-side ref updates  ·  DONE → #28
 **State:** DONE → #28. **Mirrors:** health-app `Q79` (closed → `#170`). **Related:** `#22`
@@ -424,3 +428,8 @@ alias body is byte-identical, so the same fail-fast improvement applies there �
 so the pairing is not lost; **owner: health-app's next session**. Note the empirical finding that
 travels with it: the exit-0 silent-no-op premise did **not** reproduce under gh 2.93.0 (no-PR
 returns exit 1), so the guard is fail-fast clarity, not a fix for a live exit-0 bug — see `#30`.
+
+### Q17 — Release buildType signed with the debug keystore  ·  UNSTARTED
+android/app/build.gradle sets `signingConfig signingConfigs.debug` on release, with the
+RN template's own "generate your own keystore in production" caution still in place.
+Acceptable for sideloading to household devices; blocks any real distribution.

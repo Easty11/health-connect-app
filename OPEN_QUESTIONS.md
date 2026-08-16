@@ -15,7 +15,7 @@ roadmap-LATER into an actioned migration. #12 defines the tactical-re-map
 response and the migration's existence but leaves the trigger loosely specified.
 Nothing prevents deciding this — it is undecided, not obstructed.
 
-### Q2 — Native HRV scrape end-to-end to DB, post-:355  ·  OWED
+### Q2 — Native HRV scrape end-to-end to DB, post-:355  ·  DONE → operator observation (2026-08-16)
 Verify the native Samsung Health HRV accessibility scrape end-to-end to the
 backend DB (capture -> POST -> persisted row) following the :355 work — confirm a
 scraped value persists as a stored row, not only a successful capture/POST.
@@ -23,6 +23,14 @@ scraped value persists as a stored row, not only a successful capture/POST.
 persisted row (not on-device UI) — owner Luke. The capture path itself is
 device-confirmed healthy (full screen progression + HRV/HR/RR extraction, 07-12
 05:51), so what remains is the named check, not the work.
+**Resolution (2026-08-16 — operator observation, Luke):** the named check ran.
+Railway `samsung_hrv_readings` holds scraped rows through 2026-08-14 (`id=101,
+hrv_ms=72, extraction_method='accessibility', context='passive_overnight'`),
+continuous back through the post-:355 window. Capture -> POST -> persisted row is
+confirmed end-to-end: a scraped value exists as a stored row in the backend DB,
+established by a single-statement Railway dashboard query, not on-device UI. The
+`extraction_method`/`context` values identify the row as scraper-sourced passive
+overnight capture — the path the check named, not an incidental write.
 
 ### Q3 — Stale-APK-masked Compose-break defect record  ·  DONE → `db6f50e` (2026-07-11)
 Record the defect where a stale installed APK masked the SH 7.x Compose

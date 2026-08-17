@@ -190,14 +190,15 @@ function stepsMapper(r) {
 function aggregateSteps(raw) {
   const byDate = {};
   for (const r of raw.data) {
-    if (!byDate[r.date]) byDate[r.date] = { hasAggregate: false, count: 0 };
+    if (!byDate[r.date]) byDate[r.date] = { hasAggregate: false, count: 0, sourcePackage: null };
     if (r.durationMs >= 23 * 60 * 60 * 1000) {
-      byDate[r.date] = { hasAggregate: true, count: r.count };
+      byDate[r.date] = { hasAggregate: true, count: r.count, sourcePackage: r.sourcePackage };
     } else if (!byDate[r.date].hasAggregate) {
       byDate[r.date].count += r.count;
+      byDate[r.date].sourcePackage ??= r.sourcePackage;
     }
   }
-  return Object.entries(byDate).map(([date, v]) => ({ date, count: v.count }));
+  return Object.entries(byDate).map(([date, v]) => ({ date, count: v.count, sourcePackage: v.sourcePackage }));
 }
 
 function workoutMapper(r) {

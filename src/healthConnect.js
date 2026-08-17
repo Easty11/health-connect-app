@@ -190,15 +190,56 @@ function stepsMapper(r) {
 function aggregateSteps(raw) {
   const byDate = {};
   for (const r of raw.data) {
-    if (!byDate[r.date]) byDate[r.date] = { hasAggregate: false, count: 0, sourcePackage: null };
+    if (!byDate[r.date]) {
+      byDate[r.date] = { hasAggregate: false, count: 0, sourcePackage: null, bySource: new Map() };
+    }
     if (r.durationMs >= 23 * 60 * 60 * 1000) {
-      byDate[r.date] = { hasAggregate: true, count: r.count, sourcePackage: r.sourcePackage };
+      // A daily aggregate wins outright for count, so it wins outright for the writer:
+      // its own package, never a tally over the interval records it supersedes.
+      byDate[r.date] = {
+        hasAggregate: true, count: r.count, sourcePackage: r.sourcePackage, bySource: null,
+      };
     } else if (!byDate[r.date].hasAggregate) {
       byDate[r.date].count += r.count;
-      byDate[r.date].sourcePackage ??= r.sourcePackage;
+      // Tally steps per writer rather than locking whichever writer arrived first.
+      // The day carries ONE flat sourcePackage (#18), and that one string is read by
+      // health-app's F1 dedup — which prefers direct-API Polar over `fi.polar.polarflow`
+      // arriving via HC. Attributing a 5100-step day to a writer who contributed 100 of
+      // them lets F1 discard the whole day as that minority source's duplicate. Majority
+      // contributor is the provenance F1 should actually keep.
+      // Null writers are counted in `count` but excluded from the tally: they name nobody,
+      // so they cannot win, and a plain-object key would coerce them to the string "null".
+      if (r.sourcePackage != null) {
+        const bySource = byDate[r.date].bySource;
+        bySource.set(r.sourcePackage, (bySource.get(r.sourcePackage) ?? 0) + r.count);
+      }
     }
   }
-  return Object.entries(byDate).map(([date, v]) => ({ date, count: v.count, sourcePackage: v.sourcePackage }));
+  return Object.entries(byDate).map(([date, v]) => ({
+    date,
+    count: v.count,
+    sourcePackage: v.hasAggregate ? v.sourcePackage : majorityWriter(v.bySource),
+  }));
+}
+
+/**
+ * The writer contributing the most steps on a day, or null if no record named one.
+ *
+ * Tie-break is deliberate, not an accident of key ordering: `Map` iterates in insertion
+ * order and the comparison is strict `>`, so on equal step counts the FIRST writer seen
+ * holds and no later equal writer displaces it. `best` starts below zero so a writer
+ * whose records total zero steps is still attributed rather than dropped to null.
+ */
+function majorityWriter(bySource) {
+  let winner = null;
+  let best = -1;
+  for (const [pkg, steps] of bySource) {
+    if (steps > best) {
+      winner = pkg;
+      best = steps;
+    }
+  }
+  return winner;
 }
 
 function workoutMapper(r) {

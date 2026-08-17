@@ -69,9 +69,90 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 ## Sprint block
 
 **Branch:** `master` (trunk)
-**Closed:** 2026-08-10 (Brief: forward ExerciseSession record metadata; fix payload-log truncation)
+**Closed:** 2026-08-17 (Brief 2: store omnibus + stash adjudication, then the majority-count amendment)
 
-### This session — landed on master (`d569adf`, PR #26)
+### This session — two concerns landed, `1edfdf8` (PR #30) and `10651cb` (PR #31)
+Governance first, then the last stranded code item. Guard green on every head; both branches
+merged+deleted local and remote, both rowed in `BRANCHES.md` under `#31`'s cited-⇒-must-row floor.
+Minted **`#36`**, **`Q18`**, **`Q19`**; closed **`Q7`** and **`Q13`**.
+
+**PR #30 — `chore/store-omnibus` (`ff2f3f6`).** Three stranded store items in one pass.
+- **`Q13` ruled and closed.** The store's preamble taught the *work-item* axis while the shared
+  block defines a *question* axis. Resolved toward **adoption**, not narrowing: every row here is a
+  fork or a defect awaiting a ruling, not work someone failed to start. The preamble was rewritten
+  too — it is a generator, and leaving it would re-teach the wrong axis next session (`#21`'s rule).
+- **Sweep, read row-by-row rather than regexed.** Six `UNSTARTED → OPEN`; **`Q16 → OWED`**, the one
+  that is not `OPEN` and the reason a regex would have been wrong — `#30` settled it and only a
+  health-app-rooted execution remains, with its loop-close named. **Zero `BLOCKED` to re-tag**: `Q4`
+  was the sole occurrence and closed 2026-08-08, so the lossy mapping `Q13` flagged never had to be
+  paid.
+- **`Q18` minted — scraper canary.** Canonical home for what health-app's register calls *"issue
+  #9"*; no GitHub issue of that number exists. HRV is absent at source, so the scraper is the only
+  delivery path and the SPOF residual is this repo's. The 2026-08-16 operator read shows no rows
+  08-09/10/11 and nothing after 08-14, silently. Sub-question left open and named as the reason it
+  is a question not a task: **gap-vs-failure discrimination** — an unworn ring is a legitimate gap,
+  three silent days is not.
+- **`Q19` minted — the `Q42` carry.** `parseSleepTimingContentDesc` captures `(\d+:\d+)`, which
+  cannot hold a meridiem; `parseClockToMinutes` accepts the truncation as a valid time. Verified on
+  master at the lines named. Recorded as **inferred, not observed** — every confirmed live string on
+  file is 24-hour, so the trigger wants a real 12-hour capture before a fix.
+
+**PR #31 — `fix/aggregatesteps-sourcepackage` (`fe2ebee` → `2ee21dc` → `2de57e3`).** `Q7`'s stash,
+adjudicated live and then amended.
+- **Adjudication:** the stash still applied clean and master had **not** satisfied `#18`
+  independently — only `9cc1ee7` touched the file since base `63bdc73`, and it edits
+  `workoutMapper`. Disposition (a), operator's word. Stash dropped at close (`3d3d395`).
+- **Review found a data-loss path in the stash's own fix.** `??=` shipped a day of 100 Polar + 5000
+  Samsung steps as `fi.polar.polarflow`; `#18`'s note says F1 dedup prefers direct AccessLink v4
+  over that package, so F1 could discard the whole 5100-step day. **Worse than the `'unknown'`
+  sentinel it replaced** — an absent provenance is inert, a wrong one is silently actionable.
+- **`#36` — majority-count attribution.** The day attributes to the writer contributing the most
+  steps; ties hold the first writer seen (stated in the helper, not left to key order); the `>=23h`
+  aggregate branch is unchanged in kind; null writers count but never attribute. Resolved at source
+  rather than logged as a hazard, which is why no companion question was minted.
+
+### Gates — the control is what makes the green mean something
+18 assertions, extracted from the **source text on disk** rather than re-implemented. 18/18 pass on
+the landed code, and **both negative controls discriminate**:
+- vs `origin/master`: **17 of 18 fail**; the sole pass is the count regression guard — correct,
+  counts are untouched.
+- vs `fe2ebee` (the `??=` commit): **exactly 3 fail**, and they are exactly the three majority
+  assertions. Everything else passing is the evidence the rework is **surgical** — single-writer
+  days, null handling, aggregate precedence, counts, tie-breaks, zero-step attribution, key safety
+  and emitted shape all unchanged.
+
+### Decisions / Questions
+Minted **`#36`** (claimed at merge against a re-read `#35` / `Q19`), **`Q18`**, **`Q19`**. Closed
+**`Q7` → `#36` (`10651cb`)** and **`Q13` → `ff2f3f6`**. Stores changed: `DECISIONS_LOG`,
+`OPEN_QUESTIONS`, `BRANCHES`, `FEEDBACK`, `ROADMAP` (this block).
+
+### The one residual, stated plainly
+**`#18`'s Postgres check stays owed** — non-null `source_package` on steps-type rows in
+`health_connect_record_sources` after one post-deploy sync. `#18`'s own How-you-know named it; it
+has never run. `Q7` closes the **emitter** half only. This is a ~30-second Railway dashboard query
+and it is the entire distance between "emitter verified" and `#18` fully closed.
+
+### Branch dispositions (terminal state)
+- `chore/store-omnibus` — **merged+deleted** (`1edfdf8`), rowed in `BRANCHES.md`.
+- `fix/aggregatesteps-sourcepackage` — **merged+deleted** (`10651cb`), rowed in `BRANCHES.md`.
+- `feat/hrv-node-dump` · `fix/hrv-capture-regression` — pre-existing, rowed, **neither touched**.
+
+### Next action
+**Run `#18`'s owed Postgres check.** One Railway dashboard query: non-null `source_package` on
+steps-type rows in `health_connect_record_sources`, after one post-deploy sync has carried the
+`#36` emitter. It is the only thing between "emitter verified" and `#18` fully closed, and it needs
+the operator (Railway, not on-device UI, not runnable from a Code session).
+
+Behind it, in this repo, nothing is blocked — `Q18` (canary) and `Q19` (12-hour clock) are the two
+freshly-minted opens, and `Q19` wants a real 12-hour-locale capture before a fix is written against
+it. The live frontier is health-app-side and **not reachable from an HCA-rooted session**: the
+`fix/q45-nap-attribution` orphan and `Q102` restriction-mapping.
+
+### Superseded by this session (kept for the record)
+The block below described the 2026-08-10 ExerciseSession-metadata session (`d569adf`, `#35`). Its
+device/environment notes still carry — see "Device / environment state" there, unchanged.
+
+### 2026-08-10 session (superseded) — landed on master (`d569adf`, PR #26)
 First `src/` product change in several sessions — a wire-contract addition, not governance. Three
 concern-split commits; `placeholder guard (POSIX)` green, merged `--merge` under ruleset `20573455`.
 `#35` numbered pre-PR against `origin/master`'s re-read max #34 / Q16.
@@ -121,11 +202,13 @@ stores, not here. Number claimed at merge, `origin/master` re-read #34 / Q16. St
   captures: `adb logcat -G 5M` (device max; 16M requested and capped) **and stream to a file**, as
   done here. The truncation cap behind `#35` is `max payload is 4068 B` (`adb logcat -g`).
 
-### Open (carried forward — unchanged this session)
+### Open (as of 2026-08-10 — superseded; states re-tagged to the question axis on 2026-08-17)
 - `Q15` UNSTARTED · `Q16` UNSTARTED · `Q13` OPEN · `Q14` OPEN · `Q7` OWED · `Q10` UNSTARTED ·
   `Q9` UNSTARTED. No `BLOCKED` rows in `OPEN_QUESTIONS.md`.
+  **Stale — read `OPEN_QUESTIONS.md`, not this line.** `Q13` and `Q7` have since closed and the
+  `UNSTARTED` states no longer exist in that store (`Q13`, `ff2f3f6`).
 
-### Next action
+### Next action (2026-08-10 — superseded, see the current one above)
 **health-app step 3 — backend aerobic ingestion — is unblocked** now `#26` is on master: the wire
 carries `metadata.id`, so ingestion keys `aerobic_sessions.source_session_id` on it. **It is not
 "build step 3" — it carries an open decision.** The wire now *also* carries `recordingMethod` and

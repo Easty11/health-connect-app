@@ -120,7 +120,7 @@ inline in `#28`, pointing at nothing), and the two legacy disposition-evidence r
 are permitted-not-required. The test is now stated in `BRANCHES.md`'s header. Whether
 it rises to the shared block is left open — this repo's header states it for now.
 
-### Q7 — #18's flat-`sourcePackage` contract unfulfilled in `aggregateSteps`  ·  OWED
+### Q7 — #18's flat-`sourcePackage` contract unfulfilled in `aggregateSteps`  ·  DONE → #36 (`10651cb`)
 `aggregateSteps` in `src/healthConnect.js` drops `sourcePackage`: the accumulator
 does not carry the field and the final projection emits only `{date, count}`.
 #18 ("HCA emits flat sourcePackage") is therefore overstated on master — the
@@ -130,6 +130,29 @@ contract holds on other paths but not this one.
 through the aggregate row, the first-contributor path (`??=`), and the
 projection. Unreviewed and unlanded — owner Luke. A stash is a surface nothing
 points at; this row is what points at it. Recover with `git stash list`.
+
+**CLOSED 2026-08-17 → `#36`, merged `10651cb` (PR #31).** The stash was adjudicated live
+rather than left to die: it still applied clean (`git apply --check` exit 0) and master had
+**not** satisfied the contract independently — only `9cc1ee7` touched the file since the
+stash's base `63bdc73`, and it edits `workoutMapper`. Disposition (a), the operator's word.
+The stash is now dropped (object `3d3d395`, recoverable by SHA until gc).
+
+**The landed fix is NOT the stash's `??=`, and the difference is the point.** Review of the
+recovered stash found a data-loss path: first-non-null attribution shipped a day of 100 Polar
+steps + 5000 Samsung steps as `fi.polar.polarflow`, and `#18`'s own note says health-app's F1
+dedup prefers direct AccessLink v4 over that package — so F1 could discard the whole
+5100-step day as a Polar duplicate. **Attribution is now majority-count** (the writer
+contributing the most steps, ties holding the first writer seen), chosen specifically so the
+provenance F1 reads is the provenance F1 should keep. The multi-writer collision is
+**resolved at source, not recorded as a hazard** — which is why this close mints no companion
+question for it.
+
+**Residual, and it is the only one — `#18`'s Postgres check stays owed.** Non-null
+`source_package` on steps-type rows in `health_connect_record_sources` after one post-deploy
+sync. `#18`'s How-you-know named it and it has never run. This row closes the **emitter**
+half; that query is the whole distance between "emitter verified" and `#18` fully closed, and
+it is a Railway dashboard query, not a code task. Not re-rowed as a new question — it belongs
+to `#18`'s own outstanding line, where it already sits.
 
 ### Q14 — The shared block still says `parked`; mirror of health-app `Q33`  ·  DONE → #34
 **State:** DONE → #34. **Mirrors:** health-app `Q33` (OPEN). **Related:** `#20` (four states), `#21`,
@@ -280,8 +303,8 @@ The local install does not test it — this machine has 3.14.5 and a runner imag
 that remains is narrower and now symmetrical in kind: **health-app has its ruleset, HCA does
 not.** One `gh api` call or one settings page closes this row.
 
-### Q13 — The imported block's question-state axis is not the axis this store uses  ·  DONE → this edit (2026-08-17)
-**State:** DONE → this edit (2026-08-17). **Created by:** the verbatim shared-block copy in `#22`.
+### Q13 — The imported block's question-state axis is not the axis this store uses  ·  DONE → `ff2f3f6` (2026-08-17)
+**State:** DONE → `ff2f3f6` (2026-08-17). **Created by:** the verbatim shared-block copy in `#22`.
 **Related:** `#20` (four states adopted here), `#21`, `Q9` (struck vocabulary outside the
 swept stores — the inverse direction of the same seam).
 
@@ -340,7 +363,7 @@ barrier that held, not a live state claim.
 state travels in the heading suffix, which the preamble now names as this store's form of the
 shared block's `**State:**` label.
 
-**Closed against this edit, not against a decision entry.** No rule was minted: `#34` already
+**Closed against `ff2f3f6`, not against a decision entry.** No rule was minted: `#34` already
 landed the shared block carrying this axis, and applying a rule already adopted is not a new
 decision. This row is its own how-you-know — the defect it describes is the edit that fixes it.
 

@@ -1165,3 +1165,67 @@ and made G2/G3 observable rather than deductive.
 **Do not revisit unless:** a non-Samsung writer appears whose `recordingMethod`/`device` carry real
 values — that changes the arbitration input, which is a health-app decision, not a re-open of this
 forwarding.
+
+---
+
+### #36 — An aggregated step day is attributed to its majority-count writer  ·  active
+
+**Decision:** `aggregateSteps` (`src/healthConnect.js`) emits `sourcePackage` for a day built from
+interval records as **the writer contributing the most steps that day**, tallied per writer in a
+`Map` and selected at projection by `majorityWriter()`. Ties hold the **first writer seen**
+(insertion-order iteration, strict `>`), which is stated in the helper's docstring rather than left
+to key ordering. A `>= 23h` daily-aggregate record is unaffected and does not enter the tally: it
+already wins outright for `count`, so it wins outright for the writer. Null writers contribute to
+`count` but never to attribution.
+
+**Rationale — `#18` does not answer this question, and could not have.** `#18` says HCA forwards
+the flat `sourcePackage` alias on every record passed through `safeFetch`. That contract was
+written for **per-record** forwarding, where "which writer" cannot arise: each record has exactly
+one. Aggregation collapses N records into one row and thereby *creates* the question. One flat
+string per row is what the contract's shape allows, so the only open choice is **which** writer,
+and that choice is not derivable from `#18`.
+
+**Why majority and not first-seen — a named downstream failure, not a preference.** The recovered
+stash (`Q7`) used `??=`, i.e. first non-null writer wins. `#18`'s own closing note records that
+Polar reaches the platform two ways — direct AccessLink v4 (health-app `#17`, authoritative) and
+`fi.polar.polarflow` via Health Connect — and that the F1 dedup pass must prefer direct-API. So a
+day of 100 Polar steps at 07:00 and 5000 Samsung steps at 18:00 ships as `fi.polar.polarflow`, and
+F1 discards the whole 5100-step day as a Polar duplicate. **5000 Samsung steps destroyed by a
+provenance string naming a writer who contributed 2% of them.** That is strictly worse than the
+`'unknown'` sentinel the field replaced: an absent provenance is inert, a wrong one is silently
+actionable. Majority-count is the provenance F1 should actually keep.
+
+**Status:** active. Landed with the code it describes, on the same branch, so master never holds
+the implementation without its reasoning.
+
+**How you know:** a control extracts `aggregateSteps` and `majorityWriter` **from the source text
+on disk** — not a re-implementation — and exercises them over 18 assertions (aggregate precedence
+both directions, single- and multi-writer sums, per-writer summing, arrival-order independence,
+both tie-break directions, null-writer handling, zero-step attribution, `__proto__`-shaped keys,
+emitted shape, count regression). 18/18 pass on the landed code. **Both negative controls
+discriminate**, which is what makes the green meaningful:
+- against `origin/master`: **17 of 18 fail**; the sole pass is the count regression guard, correct
+  because counts are untouched.
+- against `fe2ebee` (the `??=` commit this supersedes): **exactly 3 fail**, and they are exactly
+  the three majority assertions — multi-writer, the minority-first discriminator, and per-writer
+  summing. Every other assertion passes, which is the evidence the rework is surgical rather than
+  a rewrite: single-writer days, null handling, aggregate precedence, counts, tie-breaks,
+  zero-step attribution, key safety and emitted shape are all unchanged.
+
+**Known limit, deliberate and not a defect:** a multi-writer day still reports **one** writer, so
+the minority contributor's steps travel under the majority's package. That is the contract's shape
+(`#18`: one flat string per record), not an error in this rule — and it is the safe direction,
+because F1 keeping a majority-attributed day costs nothing while F1 discarding one costs the day.
+
+**Do not revisit unless:** F1 dedup gains per-writer splits for a single day — at which point one
+attribution per row stops being the right shape at all, and the fix is the payload contract, not
+this selection rule. A change in which package F1 treats as authoritative does **not** reopen
+this: the rule is "attribute to who actually contributed the steps", which is independent of who
+F1 prefers.
+
+**Residual, unchanged by this entry:** `#18`'s How-you-know still owes a Postgres check — non-null
+`source_package` rows in `health_connect_record_sources` after one post-deploy sync. This decision
+governs the emitter; nothing here verifies the DB.
+
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max
+`### #35`, question max `Q19`. This entry takes **#36**.

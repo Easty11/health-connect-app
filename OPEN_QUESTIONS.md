@@ -1,14 +1,24 @@
 # OPEN_QUESTIONS.md — health-connect-app
 
 Canonical store for machine-checkable code-state defects and unresolved
-questions (see the CLAUDE.md stores table). Status is the four-state vocabulary
-— DONE / BLOCKED / OWED / UNSTARTED — per the shared loop-rules block. No fifth
-state. BLOCKED must name a blocker that holds *now* and an owner; where the
-evidence does not settle barrier-vs-trigger, the item is UNSTARTED.
+questions (see the CLAUDE.md stores table). State is the **question** vocabulary
+— OPEN / OWED / DONE → #N — per the shared loop-rules block. No fourth state,
+and **not** the work-item axis: a question is not a work item, so `UNSTARTED` and
+`BLOCKED` do not exist here. An untouched question is a live fork (`OPEN`), not
+`UNSTARTED`. A question gated on a dependency is `OPEN` with the blocker named
+in-body, not `BLOCKED` — the blocker is a fact about the question, not a state of
+it. `OWED` is for a question already settled whose loop-close is named and not yet
+run. Carried as a heading suffix here, which is this store's form of the shared
+block's `**State:**` label; rows that also carry an explicit `**State:**` line
+must agree with their heading.
+
+Ruled and swept 2026-08-17 (`Q13`) — before that date rows carried the four-state
+work-item vocabulary, and heading states in commits older than this one read on
+that axis.
 
 ---
 
-### Q1 — SH-relayout cadence vs SDK-migration trigger (#12)  ·  UNSTARTED
+### Q1 — SH-relayout cadence vs SDK-migration trigger (#12)  ·  OPEN
 Pin the concrete cadence/threshold at which accumulated Samsung Health
 Compose-relayout breakages convert the Samsung Health Data SDK migration from
 roadmap-LATER into an actioned migration. #12 defines the tactical-re-map
@@ -78,18 +88,18 @@ to make it. Consequences: `feat/hrv-node-dump` is released from this blocker
 (`BRANCHES.md`), its keep-or-strip disposition still open; `Q5`'s reconciliation
 trigger has now fired (see `Q5`), its policy fork untouched.
 
-### Q5 — Historical stale-row reconciliation (τ-window bleed)  ·  UNSTARTED
+### Q5 — Historical stale-row reconciliation (τ-window bleed)  ·  OPEN
 Pre-fix phantom values already POSTed and persisted are NOT reconciled — e.g. the
 Room row `2026-07-09 = 117` (synced=1) remains, and any Railway rows from prior
 stale POSTs stand. Decide whether historical rows get corrected/backfilled or left
 as-is with a provenance marker. Out of scope for the selector fix (#19 closing
 note); needs a deliberate reconciliation pass.
-**Not BLOCKED:** the row names no blocker of its own. The Q4 overnight sync is a
+**No blocker:** the row names no blocker of its own. The Q4 overnight sync is a
 trigger for when reconciliation becomes *worth* doing — it refines which rows are
 stale — not a barrier to deciding the policy, which can be settled now.
 **Trigger fired (2026-08-08):** `Q4` closed on operator observation, so the
 overnight-sync trigger this row names has fired — reconciliation is now worth
-doing. State stays **UNSTARTED**: a fired trigger makes the work worth doing, it
+doing. State stays **OPEN**: a fired trigger makes the work worth doing, it
 does not do it, and the policy fork (correct/backfill vs leave with a provenance
 marker) remains Luke's, unchanged and out of scope here.
 
@@ -270,8 +280,8 @@ The local install does not test it — this machine has 3.14.5 and a runner imag
 that remains is narrower and now symmetrical in kind: **health-app has its ruleset, HCA does
 not.** One `gh api` call or one settings page closes this row.
 
-### Q13 — The imported block's question-state axis is not the axis this store uses  ·  OPEN
-**State:** OPEN. **Created by:** the verbatim shared-block copy in `#22`.
+### Q13 — The imported block's question-state axis is not the axis this store uses  ·  DONE → this edit (2026-08-17)
+**State:** DONE → this edit (2026-08-17). **Created by:** the verbatim shared-block copy in `#22`.
 **Related:** `#20` (four states adopted here), `#21`, `Q9` (struck vocabulary outside the
 swept stores — the inverse direction of the same seam).
 
@@ -301,6 +311,38 @@ not Code's call, and #21 already recorded that over-application is a failure mod
 under-application.
 
 **Outstanding — owner Luke:** rule the axis, then sweep or narrow in one pass.
+
+**RULED AND SWEPT, 2026-08-17 — the axis is adopted, in one pass, as this row required.** The
+fork resolved toward adoption rather than narrowing the block: the shared block's reasoning is
+right about what this store holds. Every row here is a fork or a defect awaiting a ruling, not a
+unit of work someone is failing to start — `UNSTARTED` was never saying anything true about
+them, and the file's own preamble now states the question axis instead of teaching the work-item
+one to the next session.
+
+**Six rows re-tagged `UNSTARTED → OPEN`** — `Q1`, `Q5`, `Q9`, `Q10`, `Q15`, `Q17`. Each was read
+before re-tagging, not swept by pattern: all six carry an undecided fork and none names a
+command owed.
+
+**One row re-tagged `UNSTARTED → OWED`, and it is the reason the sweep was a read and not a
+regex** — `Q16`. Nothing there is undecided; `#30` settled it, and only a health-app-rooted
+execution remains, with the loop-close named. A blanket `→ OPEN` would have re-opened a
+question that is closed. See the note on that row.
+
+**Zero `BLOCKED` headings to re-tag.** This row recorded `Q4` as the sole `BLOCKED` occurrence
+when it was minted; `Q4` has since closed `DONE → operator observation (2026-08-08)`, so the
+mapping this row called **lossy in one direction** — `BLOCKED` asserting a barrier that `OPEN`
+plus a note only describes — never had to be paid. That was the one judgement that made this a
+ruling rather than a reformat, and the evidence retired it before the ruling landed. `Q4`'s
+in-body `**Blocker (holds now):**` paragraph stays as written: it is the historical record of a
+barrier that held, not a live state claim.
+
+**`Status:` → `State:` needed no sweep** — no row in this file ever used a `Status:` label; the
+state travels in the heading suffix, which the preamble now names as this store's form of the
+shared block's `**State:**` label.
+
+**Closed against this edit, not against a decision entry.** No rule was minted: `#34` already
+landed the shared block carrying this axis, and applying a rule already adopted is not a new
+decision. This row is its own how-you-know — the defect it describes is the edit that fixes it.
 
 
 ### Q11 — health-app's `/closeout` still instructs `parked`; ritual divergence ruled  ·  DONE → #26
@@ -337,7 +379,7 @@ rule forbids it from here) — owner Luke, two items:** (1) strike `parked` at `
 vocabulary and for the header frame in the interim.** Paired obligation, mirror-first,
 per #20's standing rule.
 
-### Q10 — The `/closeout` ANCHOR states required state in the declarative  ·  UNSTARTED
+### Q10 — The `/closeout` ANCHOR states required state in the declarative  ·  OPEN
 `.claude/commands/closeout.md:14-25` still carries the shape last session's FEEDBACK
 entry flagged in briefs: "**ANCHOR — run this first, stop if it fails**", with no
 separation of required state from how to reach it, and no statement of which failures
@@ -347,7 +389,7 @@ applied to the ritual's own. Out of #21's scope fence (that brief was the column
 logged rather than swept, because amending a ritual's halt semantics unbidden is not
 Code's call.
 
-### Q9 — Struck vocabulary survives outside the two swept stores  ·  UNSTARTED
+### Q9 — Struck vocabulary survives outside the two swept stores  ·  OPEN
 The #20 sweep covered `BRANCHES.md` and `OPEN_QUESTIONS.md`, and the exit-condition
 grep returns zero across both. But the shared block names `ROADMAP.md` and close-outs
 as governed too, and two surfaces still carry the struck dialect:
@@ -397,11 +439,17 @@ taken on a brief's word.**
 true when health-app amended the block on 2026-08-05. A parity discharge is only ever valid
 against the hash it was taken at.
 
-### Q15 — Which cross-repo-parity artefacts are governed, and by what rule?  ·  UNSTARTED
+### Q15 — Which cross-repo-parity artefacts are governed, and by what rule?  ·  OPEN
 Mirror of health-app `Q87`. Recorded in this store's **four-state vocabulary** (heading suffix,
 no `**State:**` line): the imported `OPEN`/`OWED`/`DONE → #N` axis is deliberately not adopted
 here (`Q13`) and this row does not resolve `Q13` in passing — an undecided fork with no blocker
 and nothing owed is `UNSTARTED`.
+
+**Re-tagged 2026-08-17 at `Q13`'s close:** the axis is now ruled and this store uses the
+question vocabulary, so the heading reads `OPEN` — the same thing the paragraph above describes
+(*undecided fork, no blocker, nothing owed*), named on the axis that now applies. The paragraph
+is left standing rather than rewritten: it records why the row was `UNSTARTED` when written, and
+that reason was correct at the time.
 
 The shared-loop model has exactly one explicit parity mechanism: **G1** governs the
 verbatim-propagated shared block by byte-identity, measured, under health-app `#92`'s
@@ -429,7 +477,7 @@ register spans both repos, **owner Luke**. Cross-refs health-app `#92`/`Q87`, `#
 + workflow), this session's `#29` (checker drift). **Not this question:** the shared block itself
 (G1-governed, settled) or any single artefact's current drift (a data point, not the gap).
 
-### Q16 — HCA's `land` guard is owed to health-app's identical alias  ·  UNSTARTED
+### Q16 — HCA's `land` guard is owed to health-app's identical alias  ·  OWED
 `#30` gave HCA's local `land` alias a `case` guard refusing from `master`/`main`. health-app's
 alias body is byte-identical, so the same fail-fast improvement applies there — but `land` is
 **repo-local config, not shared-block content**, so it is not editable from this repo. Rowed here
@@ -437,7 +485,101 @@ so the pairing is not lost; **owner: health-app's next session**. Note the empir
 travels with it: the exit-0 silent-no-op premise did **not** reproduce under gh 2.93.0 (no-PR
 returns exit 1), so the guard is fail-fast clarity, not a fix for a live exit-0 bug — see `#30`.
 
-### Q17 — Release buildType signed with the debug keystore  ·  UNSTARTED
+**`OWED`, not `OPEN` (re-tagged 2026-08-17 at `Q13`'s close).** This is the one row in the file
+where nothing is undecided: `#30` settled that the guard belongs on this alias body, and
+health-app's body is byte-identical, so the same conclusion carries with no judgement left to
+make. What remains is the execution and its loop-close is named — a health-app-rooted session,
+which the single-repo rule forbids from here. Settled + loop-close named is exactly `OWED`;
+calling it `OPEN` would re-pose a question `#30` already answered.
+
+### Q17 — Release buildType signed with the debug keystore  ·  OPEN
 android/app/build.gradle sets `signingConfig signingConfigs.debug` on release, with the
 RN template's own "generate your own keystore in production" caution still in place.
 Acceptable for sideloading to household devices; blocks any real distribution.
+
+### Q18 — Scraper canary — the sole HRV path has no failure detection, and the 2026-08-16 read shows live gaps  ·  OPEN
+**State:** OPEN. **Canonical home for** what health-app's `DECISIONS_LOG` "Known open issues"
+row 9 — and health-app `Q13`/`#215` after it — call *"issue #9"*. **No GitHub issue of that
+number exists**: the register row predates this store, and the name is a register ordinal that
+reads like an issue link. Recording that here is half the point of the row — the next reader to
+go looking for issue #9 should find this instead of finding nothing.
+
+**Cross-repo citations in this row are carried from the brief and are NOT verified from this
+tree** — the single-repo rule forbids reading health-app from here. Verify them on a
+health-app-rooted session before acting on them; the HCA-side facts below are verified here.
+
+**Why the residual lands in this repo.** health-app `Q13` confirmed HRV is absent *at source* —
+it does not flow through Health Connect at all — which is why `CLAUDE.md` states the Samsung
+Health accessibility scraper as the permanent HRV path rather than a stopgap. A sole path is a
+single point of failure by construction, and the SPOF residual belongs to the repo that owns the
+path. That is this one.
+
+**The gap is observed, not hypothesised.** The 2026-08-16 operator read — the same Railway read
+that closed `Q2` — shows `samsung_hrv_readings` with **no rows for 08-09, 08-10 or 08-11, and
+nothing at all after 08-14**. Three missing days and a trailing silence. **Nothing announced
+either one.** Note what that does to `Q2`'s close: the same read is honest evidence that the
+capture → POST → persisted-row path *works*, and honest evidence that it is *not working now* —
+those are compatible, and only the first was recorded. (Operator-reported; a Railway query is not
+runnable from this tree.)
+
+**The failure mode is silence, which is the whole defect.** A dead scraper and a healthy one on
+a night the ring was not worn produce the identical downstream observation: no row. There is no
+liveness signal, no staleness check, and no floor on plausibility anywhere in the path.
+
+**Scope, per health-app's `ROADMAP` item "Scraper canary + honest score degradation":** detect
+null / stale / implausible HRV; surface the degraded state; **never silently score without
+HRV**. The third clause is the one with teeth — a readiness score computed over a missing input
+is worse than no score at all, because it is indistinguishable from a real one at the point of
+use.
+
+**Sub-question, unresolved — and the reason this is a question and not a task.**
+Gap-vs-failure discrimination. An unworn ring is a **legitimate gap** and must not raise an
+alarm; three silent days is a **failure** and must. Nothing written down separates them, and a
+canary that cannot tell them apart is either noise or blind — and a noisy canary gets muted,
+which is the same end state as no canary with extra steps. **Decide the discriminator before
+building the detector.**
+
+### Q19 — `parseSleepTimingContentDesc` accepts a meridiem-less clock — a 12-hour phone clock stores "10:12 pm" as 10:12, silently  ·  OPEN
+**State:** OPEN. **Cross-refs:** health-app `Q42`, whose next-action this row discharges;
+health-app `#117` (the 4h prefill sanity-gate). Both carried from the brief, unverified from
+this tree; everything below is verified here against master this session.
+
+**The capture group cannot hold a meridiem.**
+`HRVDataParser.parseSleepTimingContentDesc`
+(`android/app/src/main/java/com/anonymous/healthconnectapp/hrv/HRVDataModel.kt:312-325`) matches
+`Bedtime\s*(\d+:\d+)` and `wake-up time\s*(\d+:\d+)`, then assigns groups 2 and 3 **verbatim** to
+`data.bedtime` / `data.wakeTime`. On a phone set to a 12-hour clock, `"Bedtime 10:12 pm"` stores
+`"10:12"` — the `pm` is not mis-parsed, it is discarded by the `.*?` before the next literal,
+and no code downstream ever learns it existed.
+
+**Nothing catches it, because the result is a well-formed time.** `parseClockToMinutes`
+(`HRVDataModel.kt:383-389`) matches `^(\d{1,2}):(\d{2})$` and range-gates `h in 0..23` /
+`min in 0..59`; `10:12` passes every check. `minutesBetweenClockTimes` (`:376-381`) then wraps
+past midnight, so a `10:12 → 05:57` pair yields a plausible **1185-minute** time-in-bed where
+the truth is 465. Every layer sees a valid clock time; the error is invisible to a validator
+that only asks whether the string is a time.
+
+**Blast radius — every consumer of `bedtime`/`wakeTime`:**
+- sleep-efficiency derivation, `actual sleep ÷ time in bed` (`HRVAccessibilityService.kt:817`)
+- the RN bridge payload (`HRVAccessibilityService.kt:666-667`), surfaced in `App.js:205-206`
+- the Room row (`data/HRVReading.kt:18-19`)
+- the sync POST, which ships them to the backend as `bedtime` / `wake_time`
+  (`data/HRVSyncWorker.kt:88-89`)
+
+**Why this repo owns the fix.** health-app's 4h prefill sanity-gate (`#117`) covers the
+*prefill* path only. It cannot see a source mis-parse that arrives as a syntactically perfect
+clock string, and a value that is wrong by twelve hours but well-formed is exactly what a
+gate on form does not catch. The defect is at the scrape, so the fix is at the scrape.
+
+**One thing is inferred, and a fix must not skip it.** Every confirmed live string on file is
+24-hour — `"Bedtime 22:12"`, `"Bedtime22:39"` (`nodedump.txt:285`, `:24`). **The 12-hour
+rendering has not been observed**; it is read off the regex, not off a device. That the regex
+would silently truncate such a string is proved by the code; that Samsung Health emits one on a
+12-hour-locale phone is not, and per the verify-before-you-build invariant it should be captured
+before a fix is written against it. The defect is real either way — the parser accepts a string
+it cannot interpret — but its trigger condition is not yet empirical.
+
+**Not yet ruled:** whether the fix widens the capture to take an optional meridiem and normalise
+to 24h, or **refuses** a meridiem-bearing desc outright rather than storing a number it cannot
+trust. The second is the smaller change and the honest one under infer → surface → confirm; the
+first is only writable against a real 12-hour capture.

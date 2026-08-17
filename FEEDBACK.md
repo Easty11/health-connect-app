@@ -22,6 +22,46 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-08-17 — governance that is a code change's rationale lands with that branch  [ritual]
+**Friction:** Two standing rules pointed opposite ways. **Governance batching** says at most one
+`gov(...)` commit per session, at close-out, never interleaved with feature work. **Number-at-merge**
+and the DECISIONS_LOG discipline ("every code-gating decision carries a How-you-know artifact") both
+assume a decision entry rides the branch whose code it decides. `#36`'s reasoning was *produced by
+the review of that branch*, so batching it to close-out would have put the implementation on master
+ahead of its rationale — and had the session ended in between, the branch would have been deleted
+and taken the review with it.
+**Cost:** None realised — the collision was named and resolved before the land, and the operator
+endorsed the resolution. Untreated, the expensive version is silent: a future session follows
+batching literally, lands `majorityWriter()` bare, and the "why not `??=`" reasoning dies with the
+branch. That is the `Q12` dies-at-merge and `#19` logged-≠-landed hazard in a new costume.
+**Fix:** **Governance that is the rationale for code on a branch lands with that branch, as its own
+commit — not at close-out.** Batching's purpose is to keep code commits clean and stores from
+thrashing, which a single separate `gov(...)` commit on the same branch fully satisfies. Store
+*reconciliation* (question closes, ROADMAP, `closeout.md`) still batches to close-out, because it
+cites landing SHAs that do not exist until the merge. The test: does this governance edit explain
+the diff beside it, or record what happened to the session? The first rides the branch; the second
+waits. When two rules collide, resolve toward the reason behind both and **name the bend** rather
+than pick one silently.
+
+### 2026-08-17 — a PowerShell read-modify-write silently double-encoded a store  [env]
+**Friction:** A one-token substitution in `OPEN_QUESTIONS.md` was done as
+`(Get-Content -Raw).Replace(...) | Set-Content -Encoding utf8`. Windows PowerShell 5.1's
+`Get-Content` decodes a BOM-less UTF-8 file as the **ANSI codepage**, so every em-dash, `→` and `·`
+came into memory as mojibake; `-Encoding utf8` then wrote that mojibake back as valid UTF-8 and
+added a BOM. The substitution itself never matched (its search string contained a real `→`), so the
+command's *only* effect was to corrupt 166 lines of a canonical store.
+**Cost:** None landed — caught immediately by `git diff --stat` reading 189/166 for a
+one-line change, and reverted with `git checkout --`. The near-miss is the point: had the diff not
+been checked, a governance store would have gone to master with every special character mangled and
+a BOM the guard does not inspect.
+**Fix:** **Never round-trip a repo file through `Get-Content`/`Set-Content` for an edit.** Use the
+`Edit` tool, which is encoding-correct by construction. Where PowerShell must touch file content,
+read bytes explicitly (`[System.IO.File]::ReadAllText($p, [Text.Encoding]::UTF8)`). Standing check
+that caught this one and should be habitual: **after any scripted edit, `git diff --stat` must match
+the edit's expected size** — a one-line change reporting hundreds of touched lines is an encoding
+event, not a big edit. Generalises the existing rule about DB scripts (CLAUDE.md: write a Python
+file, don't fight inline quoting) from quoting to encoding.
+
 ### 2026-07-20 — a convention holds only where it is generated  [ritual]
 **Friction:** The stores were swept to the four states twice (#16/#17 propagated the
 block, #20 swept `BRANCHES.md` and `OPEN_QUESTIONS.md`), while the ritual that *writes*

@@ -39,6 +39,12 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 
 ## Phase 2
 
+- **Calibrate `sleepBasis` + wire the outcome.** `src/sleepBasis.js` landed with
+  `UNCALIBRATED` thresholds (`MIN_TOTAL_SLEEP_MIN`, `MIN_SLEEP_EFFICIENCY`,
+  `MIN/MAX_TIME_IN_BED_MIN`) behind `RULESET_VERSION`. Before wiring the
+  `SUFFICIENT`/`INSUFFICIENT` outcome into readiness: eyeball reason_codes over 3–4
+  trusted nights, freeze the numbers (Luke on the values — don't mint solo), and bump
+  `RULESET_VERSION` in the same commit. GATE-FIRST per the module header.
 - **Q5 — backend dual-field collapse.** Blocked on capturing a real sync payload
   to drive the schema shape.
 - **Scraper follow-ups (from 2026-06-25 sleep-capture session).**
@@ -69,50 +75,53 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 ## Sprint block
 
 **Branch:** `master` (trunk)
-**Closed:** 2026-08-25 (Session B: `### Merge disposition` propagation from health-app #238)
+**Closed:** 2026-08-25 (Session C: sleep-basis window validity schema)
 
-### This session — one governance propagation landed, `cc6b474` (PR #33)
-Copied the `### Merge disposition` subsection from health-app master's shared loop block into HCA's,
-restoring byte-identity between the two blocks — the propagation half of **health-app #238**. Insertion
-only: 13 lines, 0 deletions (`git diff --stat CLAUDE.md`); both shared blocks `diff`-empty post-copy
-(110/110 lines). No local decision minted, no new question — the decision is health-app #238, recorded
-in HCA's `BRANCHES` row and referenced, never restated. Merged `--merge` on green under the very rule
-being propagated (Code self-merges, no confirmation, no operator wait).
+### This session — one feature landed, `9ecbdad` merged as `d01dc11` (PR #35)
+Implemented the sleep-basis validity schema from the brief as **`src/sleepBasis.js`** — a pure,
+source-agnostic evaluator. `evaluateSleepBasis(basisWindow, observedNights)` enumerates every calendar
+night in `[start, end]`, classifies each `valid`/`invalid` with a machine `reason_code` + human
+`evidence`, then gates `nights_valid` against `nights_required` to a `SUFFICIENT`/`INSUFFICIENT`
+outcome. Realises the full contract: `basis_window`, per-night `{status, reason_code, evidence,
+sleep_efficiency, time_in_bed, total_sleep, source}`, `nights_valid`/`nights_required`/`outcome`/
+`outcome_reason`/`ruleset_version`. Merged `--merge` on green under the self-merge rule.
 
-**PR #33 — `claude/merge-disposition-propagate-5rhrfl` (`cc6b474`).**
-- **Byte-identity restored.** Pre-copy `diff` of the two shared blocks was a single hunk `21,33d20` —
-  exactly the 13-line subsection, deletions only, no drift. Post-copy `diff` empty (110/110). Spliced
-  from health-app master programmatically, not retyped, to guarantee the bytes.
-- **Self-contained-PR SHA limit.** A `--merge` commit's SHA is unknowable from the branch it merges, so
-  the `BRANCHES` row identifies by **PR #33** with the merge SHA recoverable from it (health-app #238
-  LOG item 1). Row flipped to DONE in the landing motion.
-- **Housekeeping scope held.** `BRANCHES` row only — no Recent-landings pointer (HCA has no such block);
-  `DECISIONS_LOG` and `OPEN_QUESTIONS` untouched (verified absent from the PR's file set).
+**PR #35 — `claude/sleep-data-schema-n5fv5b` (`9ecbdad` → `d01dc11`).**
+- **Device-agnostic (invariant held).** Each night's `source` tag is passed through and never branched
+  on — a Health Connect night and a scraper night are gated by the same rule. Mirrors the pure,
+  source-agnostic shape of `flagDeepSegments` in `deepSleepConfidence.js`.
+- **No solo-minted frozen numbers.** Thresholds are explicit, named, and marked `UNCALIBRATED` (same
+  discipline as `deepSleepConfidence.js`); `RULESET_VERSION` (`sleep-basis/2026-08-25.1`) freezes the
+  ruleset so a stored outcome stays reproducible — any threshold/reason-code/policy change bumps it.
+- **Q19-class backstop.** The `time_in_bed` plausibility bound rejects a meridiem-less-clock night
+  (~465 min rendered as ~1185 min) as `IMPLAUSIBLE` rather than counting it valid. `Q19` stays OPEN —
+  the fix belongs at the scrape; this is a downstream backstop, not a substitute.
+- **Verified.** Pure module, no I/O — node harness over a 7-night window exercising every reason code
+  (`VALID`/`SHORT_SLEEP`/`IMPLAUSIBLE`/`MISSING`/`LOW_EFFICIENCY`/derived-efficiency); all assertions
+  pass (`nights_valid = 3`, `INSUFFICIENT`). No backend/wire change; `src/contract/` untouched.
 
 ### Decisions / Questions
-**None minted.** The decision is **health-app #238**; HCA records the propagation in its `BRANCHES` row
-and nowhere else. Maxima unchanged: decisions **#36**, questions **Q19**. Stores changed this session:
-`CLAUDE.md` (shared block), `BRANCHES`, `ROADMAP` (this block).
-
-### Two items raised in Session A — not this repo's work, left for health-app
-Both belong in health-app and were **not** batched here (this session embodied no new decision):
-1. A self-contained governance PR cannot record its own merge SHA — either such rows identify by PR
-   number, or the SHA is backfilled on the next governance touch. → health-app `OPEN_QUESTIONS`.
-2. `claude/<concern>-<hash>` branch names carry the concern and are arguably compliant but read as a
-   violation of the `claude/<hash>` ban in every `BRANCHES` row — one clause would close it. → health-app
-   shared block.
+**None minted.** The schema is app-side logic, not an architecture fork or a wire contract; the
+uncalibrated thresholds and outcome policy are a deliberate GATE-FIRST deferral, not a decision. Maxima
+unchanged: decisions **#36**, questions **Q19**. Stores changed this session: `ROADMAP` (this block)
+and `closeout.md` only — no `DECISIONS_LOG`, `OPEN_QUESTIONS`, `FEEDBACK`, or `BRANCHES` edit.
 
 ### Branch dispositions (terminal state)
-- `claude/merge-disposition-propagate-5rhrfl` — **merged+deleted** local and remote (`cc6b474`, PR #33),
-  rowed in `BRANCHES.md` DONE → PR #33. `git cherry origin/master` empty; remote-tracking ref pruned.
+- `claude/sleep-data-schema-n5fv5b` — **merged+deleted** local and remote (`9ecbdad`, PR #35 → merge
+  `d01dc11`). `git cherry origin/master` empty; remote ref auto-deleted on merge. **No `BRANCHES` row
+  required** — the Q6/#31 cited-⇒-must-row floor does not apply: no store cites an artefact produced on
+  this branch.
 - `feat/hrv-node-dump` · `fix/hrv-capture-regression` — pre-existing, rowed UNSTARTED, **neither touched**.
 
 ### Next action
-Unchanged from the prior close-out and health-app-side: **run `#18`'s owed Postgres check** — non-null
-`source_package` on steps-type rows in `health_connect_record_sources` after one post-deploy sync. It
-needs the operator (Railway, not runnable from a Code session). In-repo, nothing is blocked; `Q18`
-(scraper canary) and `Q19` (12-hour clock) are the open frontier, `Q19` wanting a real 12-hour-locale
-capture before a fix.
+Two live, both operator-gated:
+1. Unchanged carry — **run `#18`'s owed Postgres check** (non-null `source_package` on steps-type rows
+   in `health_connect_record_sources` after one post-deploy sync; Railway, not runnable from a Code
+   session).
+2. New — **calibrate `sleepBasis` thresholds against 3–4 trusted nights, then wire the outcome into
+   readiness** (queued under Phase 2). Needs real trusted-night data and Luke on the numbers; bump
+   `RULESET_VERSION` when they freeze. `Q18` (scraper canary) and `Q19` (12-hour clock) remain the open
+   frontier.
 
 ### Superseded by this session (kept for the record)
 The block below described the 2026-08-17 store-omnibus + stash-adjudication session (`1edfdf8` PR #30,

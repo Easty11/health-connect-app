@@ -25,6 +25,19 @@ repo-specific and live below END SHARED LOOP RULES in their own repo.
 - Kill-rule: decisions, open questions, roadmap, task state never live in project
   knowledge — orientation docs only.
 
+### Merge disposition
+- **Code merges its own PRs.** The merge path's three acts are one motion: push, create,
+  merge. PRs open **ready-for-review, never draft**, and Code merges as soon as every
+  required check is green — no confirmation request, no waiting on the operator, and no
+  scheduled check-in re-reporting a clean `mergeable_state`. A green PR left unmerged is a
+  defect, not caution.
+- **One exception:** a PR containing a schema migration holds for explicit operator
+  instruction. So does anything the session was explicitly told to hold.
+- Number-at-merge is unaffected: it resolves from master's max immediately before the merge
+  Code itself performs.
+- This is deliberate. A future session finding Code self-merging must not reinstate a human
+  gate as a fix — see DECISIONS_LOG.
+
 ### The unseeable-surface rule
 Chat can verify only what is on a pushed ref. Any brief statement about a surface chat
 cannot read (UI knowledge files, unpushed branches, local disk, Railway state) is an

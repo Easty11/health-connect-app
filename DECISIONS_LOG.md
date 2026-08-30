@@ -248,27 +248,21 @@ OPEN_QUESTIONS in a separate session.
 **Supersedes:** none.
 **How you know:** device log confirms `record.metadata.dataOrigin` is a flat string
 (not `.packageName`); code review of every mapper in `src/healthConnect.js` confirms
-`sourcePackage` is forwarded on all five record types. Postgres verification (non-null
-`source_package` rows in `health_connect_record_sources` post-deploy) still owed —
-not verifiable from this session (no live sync run).
-**Verification attempt 2026-08-30 (remote Claude Code session) — still owed, now with a
-proven reason a Code session cannot discharge it.** The derived read is
-`SELECT count(*) AS total, count(source_package) AS non_null,
-count(*) FILTER (WHERE source_package IS NULL) AS nulls FROM
-health_connect_record_sources WHERE <steps-type predicate>;` — read-only, one statement.
-Two things blocked execution, either sufficient alone: (1) this session's egress policy
-returns **403 to CONNECT `backboard.railway.com:443`** (proxy status endpoint), so
-`railway login`/`link`/`run`/`connect` all fail and the Railway CLI cannot authenticate
-here; the Railway MCP authenticates (as `easty11`, project `health-app`, service
-`health-app-DB`) but exposes no SQL path. (2) The agent egress proxy is HTTPS-only, so the
-Postgres wire protocol cannot tunnel through it even given a DSN — and rendering
-`DATABASE_URL` is barred by `#111` regardless. This empirically confirms the store's
-existing framing (`closeout.md`, `ROADMAP.md`, `OPEN_QUESTIONS.md` Q7): the check is
-**operator-only, run on the Railway dashboard / an operator machine with a linked CLI**,
-not a Code task. Secondary finding: `#18` names the table and column but not the
-record-type discriminator column for "steps-type"; the operator resolves `<steps-type
-predicate>` against the live schema when running it. `#18` stays `active`; the check stays
-owed.
+`sourcePackage` is forwarded on all five record types. **Postgres verification DISCHARGED
+2026-08-30** (operator, read-only against `health-app-DB`). The owed residual — non-null
+`source_package` in `health_connect_record_sources` after one post-deploy sync — is met:
+**zero null `source_package` across all 58,325 rows present**, by record type (rows/nulls)
+exercise 82/0, heart_rate 58,013/0, sleep 146/0, steps 84/0. Recency confirmed post-deploy,
+`max(synced_at) = 2026-08-30 07:26:44`. (A remote Claude Code session earlier that day could
+not run it — Railway's API host is egress-blocked there and the agent proxy is HTTPS-only —
+which is why this is an operator run; that attempt note is superseded by this result.)
+**Verified for four of the five record types this decision claims.** The table holds exercise
+(= workouts), heart_rate, sleep, steps; the fifth, **HRV** (`fetchHRVData` →
+`HeartRateVariabilityRmssd`, `src/healthConnect.js:160-167`), has **zero rows** — its mapper
+forwards `sourcePackage` identically, but nothing has ever synced through it, because Samsung
+Ring HRV flows through the accessibility scraper (the permanent HRV path), not Health Connect.
+Tracked as **`Q20`**, open — not closed and not fixed here. This closes the owed check only;
+`#18` stays `active`.
 
 ### #19 — Energy-score reads select first VALID-BOUNDS node, not `.firstOrNull()` (phantom-duplicate fix)  ·  active  ·  supersedes #12 (value-read portion only)
 **Lineage — logged ≠ landed.** This decision was first written 26 Jun 2026 as

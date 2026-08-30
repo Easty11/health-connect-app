@@ -147,12 +147,14 @@ provenance F1 reads is the provenance F1 should keep. The multi-writer collision
 **resolved at source, not recorded as a hazard** — which is why this close mints no companion
 question for it.
 
-**Residual, and it is the only one — `#18`'s Postgres check stays owed.** Non-null
-`source_package` on steps-type rows in `health_connect_record_sources` after one post-deploy
-sync. `#18`'s How-you-know named it and it has never run. This row closes the **emitter**
-half; that query is the whole distance between "emitter verified" and `#18` fully closed, and
-it is a Railway dashboard query, not a code task. Not re-rowed as a new question — it belongs
-to `#18`'s own outstanding line, where it already sits.
+**Residual DISCHARGED 2026-08-30 — `#18`'s Postgres check has now run.** Operator query,
+read-only against `health-app-DB`: **zero null `source_package` across all 58,325 rows**
+(steps 84/0, plus heart_rate 58,013/0, sleep 146/0, exercise 82/0), `max(synced_at) =
+2026-08-30 07:26:44`, post-deploy. The steps-type row this question owned — the `aggregateSteps`
+emitter path — reads 84/0, so the emitter half `Q7` closed is now confirmed end-to-end in the DB.
+Recorded canonically on `#18`'s own line in `DECISIONS_LOG`. One caveat, now **`Q20`** (open):
+the fifth record type `#18` claims, HRV via Health Connect, has zero rows and has never synced
+through that path.
 
 ### Q14 — The shared block still says `parked`; mirror of health-app `Q33`  ·  DONE → #34
 **State:** DONE → #34. **Mirrors:** health-app `Q33` (OPEN). **Related:** `#20` (four states), `#21`,
@@ -606,3 +608,35 @@ it cannot interpret — but its trigger condition is not yet empirical.
 to 24h, or **refuses** a meridiem-bearing desc outright rather than storing a number it cannot
 trust. The second is the smaller change and the honest one under infer → surface → confirm; the
 first is only writable against a real 12-hour capture.
+
+### Q20 — `#18`'s `sourcePackage` forwarding is proven for 4 of 5 record types; HRV via Health Connect (`fetchHRVData`) has zero rows and has never synced  ·  OPEN
+**State:** OPEN. **Related:** `#18` (the five-record-type forwarding claim, Postgres-discharged
+2026-08-30 for the other four), `Q18` (scraper canary — the sole *live* HRV path), `Q2`/`Q4`
+(the native HRV scrape, end-to-end). **Minted:** 2026-08-30, out of the operator's `#18` Postgres run.
+**Number-at-merge:** questions max re-read `Q19` immediately before this row; takes `Q20`.
+
+**What the check found.** The operator's read of `health_connect_record_sources` (2026-08-30,
+`max(synced_at) = 2026-08-30 07:26:44`, post-deploy) returned four record types — exercise 82,
+heart_rate 58,013, sleep 146, steps 84 — all with **zero** null `source_package` (58,325 rows total).
+`#18` claims five (`src/healthConnect.js:250-251`: "sleep, HRV, heart rate, steps, workouts"). The
+absent fifth is **HRV**.
+
+**The HRV mapper is code-correct, not broken.** `fetchHRVData` (`src/healthConnect.js:160-167`)
+reads `HeartRateVariabilityRmssd` through `safeFetch` and forwards
+`sourcePackage: r.metadata?.dataOrigin ?? null` — the identical shape proven on the other four.
+So its zero rows are **never-synced**, not written-wrong: nothing has ever produced an HRV record
+on the Health Connect side of this deployment.
+
+**Why, and why that is expected.** The architecture invariant is explicit — Samsung Ring HRV does
+**not** flow through Health Connect; the accessibility scraper is the permanent HRV path. So the HC
+HRV read has no producer here, and zero rows is the architecture, not a defect. `#18`'s "all five
+record types" claim is therefore true in code but only 4/5-exercisable by HC data as the platform
+is actually wired.
+
+**What is genuinely open (not closed, not fixed this session).** Is `fetchHRVData` (a) latent
+capacity for a future non-Samsung HRV source that *would* arrive via Health Connect, kept
+deliberately; (b) effectively dead code given the scraper is the permanent path; or (c) owed a
+non-DB verification — a live `[HC raw]` HRV capture — to confirm the mapper end-to-end the way the
+other four were confirmed by the Postgres run? The ruling wants the operator's intent for the HC HRV
+path before any code moves. Until then `#18`'s emitter claim stands as "5 written, 4
+proven-by-live-data".

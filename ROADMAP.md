@@ -114,14 +114,15 @@ and `closeout.md` only — no `DECISIONS_LOG`, `OPEN_QUESTIONS`, `FEEDBACK`, or 
 - `feat/hrv-node-dump` · `fix/hrv-capture-regression` — pre-existing, rowed UNSTARTED, **neither touched**.
 
 ### Next action
-Two live, both operator-gated:
-1. Unchanged carry — **run `#18`'s owed Postgres check** (non-null `source_package` on steps-type rows
-   in `health_connect_record_sources` after one post-deploy sync; Railway, not runnable from a Code
-   session).
-2. New — **calibrate `sleepBasis` thresholds against 3–4 trusted nights, then wire the outcome into
-   readiness** (queued under Phase 2). Needs real trusted-night data and Luke on the numbers; bump
-   `RULESET_VERSION` when they freeze. `Q18` (scraper canary) and `Q19` (12-hour clock) remain the open
-   frontier.
+1. **DONE 2026-08-30 — `#18`'s owed Postgres check ran** (operator, `health-app-DB`): zero null
+   `source_package` across all 58,325 rows (steps 84/0, heart_rate 58,013/0, sleep 146/0, exercise
+   82/0), `max(synced_at) = 2026-08-30 07:26:44`, post-deploy. Residual discharged on `#18`'s line;
+   `#18` stays `active`. One caveat opened as **`Q20`** — HRV via Health Connect has zero rows (never
+   synced; Samsung Ring HRV takes the scraper path).
+2. Live, operator-gated — **calibrate `sleepBasis` thresholds against 3–4 trusted nights, then wire the
+   outcome into readiness** (queued under Phase 2). Needs real trusted-night data and Luke on the
+   numbers; bump `RULESET_VERSION` when they freeze. `Q18` (scraper canary), `Q19` (12-hour clock) and
+   now `Q20` (HC HRV mapper unexercised) are the open frontier.
 
 ### Superseded by this session (kept for the record)
 The block below described the 2026-08-17 store-omnibus + stash-adjudication session (`1edfdf8` PR #30,

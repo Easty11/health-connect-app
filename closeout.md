@@ -37,7 +37,8 @@ What the brief required, all landed in `9ecbdad`:
 
 ## Cold-resume handoff
 
-**Maxima:** decisions **#36**, questions **Q19** (unchanged this session — no mint).
+**Maxima:** decisions **#36**, questions **Q20** (was Q19 at this session's open; **Q20** minted in the
+2026-08-30 `#18` follow-up noted below).
 
 **Current sprint state:** `src/sleepBasis.js` is on master — a pure, source-agnostic sleep-basis
 validity gate, not yet wired into readiness (thresholds uncalibrated by design, GATE-FIRST). No
@@ -55,19 +56,17 @@ accepts a meridiem-less clock; wants a real 12-hour-locale capture before a fix.
 `sleepBasis` `IMPLAUSIBLE` bound is a downstream backstop for the Q19 class, not the fix.
 `Q15`, `Q17` open; `Q16` OWED.
 
-**Single clearest next action:** unchanged carry — run **`#18`'s owed Postgres check**
-(non-null `source_package` on steps-type rows in `health_connect_record_sources` after one
-post-deploy sync; operator-only, Railway dashboard). New follow-up now queued under Phase 2:
+**Single clearest next action:**
 
-> **Update 2026-08-30 (remote Code session, PR #37):** `#18`'s check was attempted from a
-> remote Claude Code session and **could not run** — Railway API host `backboard.railway.com:443`
-> is egress-blocked here (403 CONNECT), the Railway MCP has no SQL path, and the HTTPS-only agent
-> proxy cannot carry the Postgres wire protocol. The "operator-only, Railway dashboard" framing
-> above is now empirically confirmed, not just assumed. Provenance appended to `#18`'s
-> How-you-know in `DECISIONS_LOG.md`; `#18` stays `active`, check stays **owed**. When run:
-> `#18` names the table/column but not the record-type discriminator — resolve the steps-type
-> predicate against the live schema.
+> **Update 2026-08-30 — `#18`'s owed Postgres check DISCHARGED.** Operator ran it read-only against
+> `health-app-DB`: **zero null `source_package` across all 58,325 rows** (steps 84/0, heart_rate
+> 58,013/0, sleep 146/0, exercise 82/0), `max(synced_at) = 2026-08-30 07:26:44`, post-deploy.
+> Residual discharged on `#18`'s How-you-know in `DECISIONS_LOG`; `#18` stays `active`. One caveat
+> opened as **`Q20`**: HRV via Health Connect (`fetchHRVData`) has zero rows — never synced through
+> that path, because Samsung Ring HRV takes the scraper route. (A remote Code session earlier that
+> day could not run the check — Railway API egress-blocked, agent proxy HTTPS-only — hence the
+> operator run; that attempt note is now superseded.)
 
-**calibrate `sleepBasis` thresholds against 3–4 trusted nights and wire the outcome into
-readiness** — needs real trusted-night data and Luke on the numbers; bump `RULESET_VERSION`
-when they freeze.
+Live follow-up, queued under Phase 2: **calibrate `sleepBasis` thresholds against 3–4 trusted nights
+and wire the outcome into readiness** — needs real trusted-night data and Luke on the numbers; bump
+`RULESET_VERSION` when they freeze.

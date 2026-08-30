@@ -58,6 +58,16 @@ accepts a meridiem-less clock; wants a real 12-hour-locale capture before a fix.
 **Single clearest next action:** unchanged carry — run **`#18`'s owed Postgres check**
 (non-null `source_package` on steps-type rows in `health_connect_record_sources` after one
 post-deploy sync; operator-only, Railway dashboard). New follow-up now queued under Phase 2:
+
+> **Update 2026-08-30 (remote Code session, PR #37):** `#18`'s check was attempted from a
+> remote Claude Code session and **could not run** — Railway API host `backboard.railway.com:443`
+> is egress-blocked here (403 CONNECT), the Railway MCP has no SQL path, and the HTTPS-only agent
+> proxy cannot carry the Postgres wire protocol. The "operator-only, Railway dashboard" framing
+> above is now empirically confirmed, not just assumed. Provenance appended to `#18`'s
+> How-you-know in `DECISIONS_LOG.md`; `#18` stays `active`, check stays **owed**. When run:
+> `#18` names the table/column but not the record-type discriminator — resolve the steps-type
+> predicate against the live schema.
+
 **calibrate `sleepBasis` thresholds against 3–4 trusted nights and wire the outcome into
 readiness** — needs real trusted-night data and Luke on the numbers; bump `RULESET_VERSION`
 when they freeze.

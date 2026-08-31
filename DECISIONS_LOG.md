@@ -1241,3 +1241,30 @@ governs the emitter; nothing here verifies the DB.
 
 **Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max
 `### #35`, question max `Q19`. This entry takes **#36**.
+
+### #37 — § Merge-disposition synced verbatim from health-app #257 (four-bullet form)  ·  active
+
+**Decision:** HCA's shared-block **§ Merge disposition** is replaced **verbatim** with
+health-app master's post-#257 form (health-app merge `939136e`). One bullet is inserted after
+**Code merges its own PRs.** — **Origin creates no lane; draft is not a hold.** — and the single
+**One exception** bullet is replaced by the two bullets **Holds — do not self-merge…** and
+**Un-ratified decisions route to chat…**. The `Number-at-merge` and `This is deliberate` bullets
+already matched and are untouched. This is a byte-for-byte mirror under the #16 parity convention:
+the shared block is authored from health-app's frame and copied, never hand-merged or localized —
+so the `(Supersedes the Q125 two-lane convention.)` parenthetical is carried in unchanged even
+though HCA has no local Q125, because breaking byte-equality to "fix" the reference would defeat
+the diff-verifiable parity invariant. Edits are confined inside `BEGIN…END SHARED LOOP RULES`; no
+repo-specific section and no code or schema were touched, and no OPEN_QUESTIONS change is made
+(there is no Q125 in HCA to resolve).
+
+**How you know:** the extracted `### Merge disposition … ` block is byte-identical across both
+repos (1,672 bytes, sha256 `bfa82a31176b` on both sides), and the whole `BEGIN…END SHARED LOOP
+RULES` span is now byte-identical too (sha256 `97989d8f1261` on both) — full shared-block parity
+restored, provable by diffing the two blocks. Copy source read from a fresh `Easty11/health-app`
+master checkout (`1505c9c`), not transcribed from the brief.
+
+**Number claimed at merge:** `origin/master` re-read immediately before the PR — decision max
+`### #36`, question max `Q20`. This entry takes **#37**.
+
+**Do not revisit unless:** health-app edits the shared block again — in which case it propagates
+here verbatim by the same route, never hand-merged.

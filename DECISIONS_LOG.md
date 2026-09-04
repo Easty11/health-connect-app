@@ -1268,3 +1268,38 @@ master checkout (`1505c9c`), not transcribed from the brief.
 
 **Do not revisit unless:** health-app edits the shared block again — in which case it propagates
 here verbatim by the same route, never hand-merged.
+
+### #38 — All HC `readRecords` must paginate via `pageToken`; unpaginated reads silently truncate  ·  active
+
+**Decision:** Every Health Connect `readRecords` call **must** follow `result.pageToken` until it is
+falsy, accumulating records across pages. A single unpaginated read mirrors the Android SDK default
+`pageSize=1000` and, under the default **ascending** order, silently keeps only the **oldest** 1000
+records — dropping the recent end. HeartRate is the only record type exceeding 1000 in a multi-day
+window (exercise/sleep are single-digit counts), so it alone truncated. All fetchers route through
+`safeFetch` (`src/healthConnect.js`), so pagination is centralised there — one seam, all types.
+**Order is not relied upon: pagination is the completeness guarantee.** Setting `ascendingOrder:
+false` is explicitly **not** the fix — it only flips which end truncates (looks correct on recent
+data, silently drops the oldest), so it is banned as a substitute for the loop.
+
+**Corollary — the "a re-sync backfills the gap" assumption was wrong.** A prior working assumption
+held that re-syncing would eventually recover the missing recent records. It cannot: ascending order
+returns the **same oldest page** on every unpaginated sync, so the recent end never arrives no matter
+how many times you sync. A future session must not reintroduce "just re-sync" as a recovery path —
+only the wider window (the 30-day deep-sync) plus pagination recovers aged history.
+
+**How you know:** the truncation is confirmed empirically — Deb (user 4) had HR only Aug 23→25
+inside a window reaching Aug 31, and 11 of 13 activities showed zero in-window HR while exercise and
+sleep coverage were complete over the same window; the asymmetry is exactly the single-page-of-1000,
+ascending-order signature. The library default (`pageSize=1000`, `pageToken` on overflow, ascending
+order) is `react-native-health-connect@3.5.3` mirroring the Android SDK. The **fix's** behavioural
+confirmation — that the recent end now returns — is **operator-side and OWED (see `Q21`)**: per the
+unseeable-surface rule, Code cannot verify a post-deploy Railway result from its side; it confirms
+only that the code paginates and that CI (`placeholder guard (POSIX)`) is green.
+
+**Number claimed at merge:** `origin/master` re-read immediately before this close-out — decision max
+`### #37`, question max `Q20`. This entry takes **#38** (and mints `Q21`). The fix itself landed on
+master via **PR #40**, merge `a7d90b6`, before this governance entry.
+
+**Do not revisit unless:** Health Connect changes its default page size or ordering semantics, or a
+verified capture shows the loop over-fetching or non-terminating (the 100-page safety cap is a
+backstop, not an expected path — if it ever logs, that is the signal to revisit).

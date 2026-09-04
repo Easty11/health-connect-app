@@ -640,3 +640,24 @@ non-DB verification — a live `[HC raw]` HRV capture — to confirm the mapper 
 other four were confirmed by the Postgres run? The ruling wants the operator's intent for the HC HRV
 path before any code moves. Until then `#18`'s emitter claim stands as "5 written, 4
 proven-by-live-data".
+
+### Q21 — HC pagination fix (`#38`) + 30-day deep-sync: two operator-side post-deploy verifications owed  ·  OWED
+**State:** OWED — design settled, loop-close named (both are Luke's post-deploy runs against Railway,
+per the unseeable-surface rule Code cannot self-verify). **Related:** `#38` (the pagination decision
+this verifies), PR #40 (`a7d90b6`). **Minted:** 2026-09-04, at the `#38` close-out.
+**Number-at-merge:** questions max re-read `Q20` immediately before this row; takes `Q21`.
+
+**1. Behavioural gate — does the fix restore recent HR coverage?** After the fix deploys and Deb
+syncs, re-run the per-activity HR query from the source session. **Pass = Aug 25→31 activities show
+non-zero `hr_recs_90min`, not just Aug 24.** This is the fix's real acceptance test; Code reports only
+CI-green and that the code paginates, never that the fix "works". Owner: Luke.
+
+**2. Payload-size contingency — does the 30-day deep-sync POST fit the backend body limit?** A full-HR
+30-day sync is a multi-MB POST (~25k+ HR points). Code cannot verify the backend/Railway body limit
+from its side (observe-not-assert). **If the deep sync 413s or times out, the fix is to chunk the
+backfill into narrower windows** — weekly `fetch*` calls with explicit start/end — rather than one
+30-day shot. Shipped as a single 30-day trigger; this row carries the contingency so a 413 is a known
+fork, not a surprise. Owner: Luke to observe; a future Code session to chunk if it trips.
+
+**Closes when:** both runs are done — the behavioural query passes (or names a residual defect) and
+the 30-day POST is confirmed to fit (or chunking lands).

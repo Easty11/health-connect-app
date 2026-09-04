@@ -1,72 +1,74 @@
 # closeout.md — health-connect-app
 
-Session close-out, 2026-08-25 (Session C: sleep-basis window validity schema). Cold-resume
-handoff. Overwritten each `/closeout`.
+Session close-out, 2026-09-04 (HC HeartRate pagination fix + 30-day deep-sync backfill).
+Cold-resume handoff. Overwritten each `/closeout`.
 
 ---
 
 ## Commits this session
 
-Session-open ref: `e6e1eef` (master, pre-session). `git log --oneline e6e1eef..HEAD`:
+Ran from a direct Code brief (paginate `safeFetch` + optional 30-day backfill). Feature work
+landed on master via **PR #40** (`claude/hca-heartrate-pagination-zn3m1i`), self-merged `--merge`
+on green as **`a7d90b6`**:
 
 ```
-9ecbdad feat: sleep-basis window validity gate (schema + pure evaluator)
+2026-09-04 Merge pull request #40 from Easty11/claude/hca-heartrate-pagination-zn3m1i (a7d90b6)
+2026-09-04 feat: 30-day deep-sync trigger for HR backfill (77e5133)
+2026-09-04 fix: paginate Health Connect readRecords via pageToken (712db1b)
 ```
 
-Landed on master via **PR #35** (`claude/sleep-data-schema-n5fv5b`), merged `--merge` on green
-as **`d01dc11`**. The close-out commit (`chore: session close-out`, this file + ROADMAP sprint
-block) lands separately on its own governance branch via its own PR — master is PR-gated.
+The governance close-out (`chore: session close-out`, this file + `DECISIONS_LOG` + `OPEN_QUESTIONS`
++ `BRANCHES` + `ROADMAP` sprint block) lands separately on `gov/hc-pagination-closeout` via its own
+PR — master is PR-gated.
 
 ## PENDING reconciliation
 
-**No `;cc` pending-commit queue was carried into this session.** It ran from a direct code
-brief (implement the sleep-basis schema), not a chat close-out handoff. Nothing was provisional
-at open, so there is nothing to reconcile.
+**No `;cc` pending-commit queue was carried into this session.** It ran from a direct code brief, not
+a chat close-out handoff. Nothing was provisional at open, so there is nothing to reconcile.
 
-What the brief required, all landed in `9ecbdad`:
-- **Schema realised** — `src/sleepBasis.js` implements the full contract (`basis_window`,
-  per-night `{status, reason_code, evidence, sleep_efficiency, time_in_bed, total_sleep,
-  source}`, `nights_valid`/`nights_required`/`outcome`/`outcome_reason`/`ruleset_version`).
-- **Pure + device-agnostic** — `evaluateSleepBasis()` does no I/O and never branches on
-  `source`; mirrors `flagDeepSegments` in `deepSleepConfidence.js`.
-- **Thresholds `UNCALIBRATED`, versioned** — named constants behind `RULESET_VERSION`
-  (`sleep-basis/2026-08-25.1`); no solo-minted frozen number.
-- **Verified** — node harness over a 7-night window hits every reason code; all assertions pass.
-- **Merged under the self-merge rule** — required check `placeholder guard (POSIX)` green,
-  `mergeable_state: clean`, merged with no confirmation request (`d01dc11`).
+What the brief required:
+- **The fix (STEP 1) — landed `712db1b`.** `safeFetch` loops on `pageToken` until falsy, accumulating
+  records across pages then mapping. Mid-loop failure returns accumulated partial pages + error (never
+  an empty set); 100-page safety cap logs if it trips; `ascendingOrder` deliberately unset. Every
+  fetcher routes through `safeFetch`, so all record types are fixed at one seam.
+- **The backfill (STEP 2) — landed `77e5133`.** Distinct "Deep sync (30d)" button in `SyncScreen.js`
+  calls `fetchAllData(30)`; routine sync stays 7d. `handleSync(days=7)` parameterised; arrow handlers
+  keep the press event out of `days`. **Not** deferred — shipped as a single 30-day trigger, with the
+  payload-size contingency carried as `Q21`.2 rather than pre-emptively chunked.
+- **Guards honoured.** No order "fix", terminating loop with a capped backstop, no backend edits, no
+  zones / `aerobic_sessions`. Merged under the self-merge rule: `placeholder guard (POSIX)` green,
+  `mergeable_state: clean`, non-schema, no operator hold.
+- **LOG (STEP) — done here.** `DECISIONS_LOG` #38 appended; `BRANCHES` row DONE → `a7d90b6`;
+  `ROADMAP` sprint block regenerated; `Q21` minted OWED (STEP 2 shipped, so its owed verifications are
+  tracked rather than the "defer STEP 2 → OWED" branch).
 
 ## Cold-resume handoff
 
-**Maxima:** decisions **#36**, questions **Q20** (was Q19 at this session's open; **Q20** minted in the
-2026-08-30 `#18` follow-up noted below).
+**Maxima:** decisions **#38**, questions **Q21** (minted this session from master max #37 / Q20).
 
-**Current sprint state:** `src/sleepBasis.js` is on master — a pure, source-agnostic sleep-basis
-validity gate, not yet wired into readiness (thresholds uncalibrated by design, GATE-FIRST). No
-governance store other than `ROADMAP` was touched; `DECISIONS_LOG`/`OPEN_QUESTIONS`/`BRANCHES`/
-`FEEDBACK` are untouched. No in-repo work is blocked.
+**Current sprint state:** the Health Connect read truncation is fixed on master — `safeFetch`
+paginates, so HR coverage now matches exercise/sleep coverage for the requested window. A 30-day
+deep-sync trigger recovers aged on-device history. No backend change. HR still aggregates to a daily
+scalar — zones remain out of scope (Build A/B).
 
-**Branch terminal state:** `claude/sleep-data-schema-n5fv5b` merged+deleted (local and remote;
-`git cherry origin/master` empty). No `BRANCHES.md` row required — the Q6/#31 cited-⇒-must-row
-floor does not apply (no store cites an artefact produced on the branch). `feat/hrv-node-dump`
-and `fix/hrv-capture-regression` pre-existing, rowed UNSTARTED, neither touched.
+**Branch terminal state:** `claude/hca-heartrate-pagination-zn3m1i` merged+deleted (local; remote
+auto-deleted on merge; `git cherry origin/master` empty), rowed in `BRANCHES.md` because `#38` cites
+`a7d90b6`. `feat/hrv-node-dump` and `fix/hrv-capture-regression` pre-existing, rowed UNSTARTED,
+neither touched.
 
-**Open questions (live frontier):** `Q18` — scraper canary (the sole HRV path has no failure
-detection; the 2026-08-16 read showed silent gaps). `Q19` — `parseSleepTimingContentDesc`
-accepts a meridiem-less clock; wants a real 12-hour-locale capture before a fix. The new
-`sleepBasis` `IMPLAUSIBLE` bound is a downstream backstop for the Q19 class, not the fix.
-`Q15`, `Q17` open; `Q16` OWED.
+**Open questions (live frontier):** **`Q21`** (new) — two operator-side post-deploy verifications
+OWED to Luke: (1) behavioural HR-coverage gate, (2) 30-day POST body-limit. `Q18` (scraper canary),
+`Q19` (12-hour clock), `Q20` (HC HRV mapper unexercised) remain OPEN; `Q15`/`Q17` OPEN; `Q16` OWED.
 
 **Single clearest next action:**
 
-> **Update 2026-08-30 — `#18`'s owed Postgres check DISCHARGED.** Operator ran it read-only against
-> `health-app-DB`: **zero null `source_package` across all 58,325 rows** (steps 84/0, heart_rate
-> 58,013/0, sleep 146/0, exercise 82/0), `max(synced_at) = 2026-08-30 07:26:44`, post-deploy.
-> Residual discharged on `#18`'s How-you-know in `DECISIONS_LOG`; `#18` stays `active`. One caveat
-> opened as **`Q20`**: HRV via Health Connect (`fetchHRVData`) has zero rows — never synced through
-> that path, because Samsung Ring HRV takes the scraper route. (A remote Code session earlier that
-> day could not run the check — Railway API egress-blocked, agent proxy HTTPS-only — hence the
-> operator run; that attempt note is now superseded.)
+> **OWED to Luke — behavioural verification of the fix (`Q21`.1).** After the fix deploys and Deb
+> syncs, re-run the per-activity HR query from the source session. **Pass = Aug 25→31 activities show
+> non-zero `hr_recs_90min`, not just Aug 24.** Per the unseeable-surface rule this is Luke's Railway
+> verification; Code reports only that the code paginates and CI is green — never that the fix "works".
+> Watch alongside it (`Q21`.2): if the 30-day deep-sync POST 413s / times out, chunk the backfill into
+> weekly windows.
 
-Live follow-up, queued under Phase 2: **calibrate `sleepBasis` thresholds against 3–4 trusted nights
-and wire the outcome into readiness** — needs real trusted-night data and Luke on the numbers; bump
-`RULESET_VERSION` when they freeze.
+Live follow-up, unchanged under Phase 2: **calibrate `sleepBasis` thresholds against 3–4 trusted
+nights and wire the outcome into readiness** — needs real trusted-night data and Luke on the numbers;
+bump `RULESET_VERSION` when they freeze.

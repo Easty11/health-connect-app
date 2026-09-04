@@ -128,22 +128,54 @@ export const requestPermissions = async () => {
 
 // ── individual fetchers, each isolated so one failure doesn't stop others ──
 
+// Health Connect mirrors the Android SDK default pageSize=1000 and returns a pageToken
+// once a type exceeds one page. Default order is ASCENDING, so an unpaginated single read
+// silently keeps only the OLDEST 1000 records and drops the recent end — HeartRate is the
+// only type that exceeds 1000 in a multi-day window, so it alone truncates. Every fetcher
+// routes through safeFetch, so following pageToken here is the completeness guarantee for
+// all of them. Order is not relied upon; full pagination makes it irrelevant. (DECISIONS_LOG.)
+const HC_PAGE_SIZE = 1000;
+// Safety cap against a pathological non-terminating pageToken. 100 pages ≈ 100k records,
+// far beyond any real window (a 30-day HeartRate window is tens of pages), so it never trips
+// in practice — but if HC ever misbehaves it bounds the loop and logs loudly rather than
+// spinning forever. Tripping it re-introduces truncation, hence the error-level log.
+const HC_MAX_PAGES = 100;
+
 async function safeFetch(recordType, startDate, endDate, mapper) {
+  const all = [];
+  let pageToken;
+  let pages = 0;
   try {
-    const result = await readRecords(recordType, {
-      timeRangeFilter: toTimeRange(startDate, endDate),
-    });
-    // Log a sample raw record so we can verify the actual library shape
-    if (result.records.length > 0) {
-      console.log(`[HC raw] ${recordType} sample:`, JSON.stringify(result.records[0], null, 2));
-    } else {
-      console.log(`[HC raw] ${recordType}: 0 records`);
-    }
-    return { data: result.records.map(mapper).filter(Boolean), error: null };
+    do {
+      const result = await readRecords(recordType, {
+        timeRangeFilter: toTimeRange(startDate, endDate),
+        pageSize: HC_PAGE_SIZE,
+        pageToken,
+      });
+      all.push(...result.records);
+      pageToken = result.pageToken;
+      pages += 1;
+      if (pages >= HC_MAX_PAGES && pageToken) {
+        console.log(
+          `[HC] ${recordType}: hit ${HC_MAX_PAGES}-page safety cap with pageToken still set — records may be TRUNCATED`,
+        );
+        break;
+      }
+    } while (pageToken);
   } catch (err) {
-    console.log(`[HC] ${recordType} unavailable —`, err.message);
-    return { data: [], error: err.message };
+    // A rate-limit or failure on page N must not discard pages 1..N-1: return the partial
+    // accumulation with the error, never an empty set (which the old catch did).
+    console.log(`[HC] ${recordType} paged fetch failed —`, err.message);
+    return { data: all.map(mapper).filter(Boolean), error: err.message };
   }
+  // Log a sample raw record so we can verify the actual library shape.
+  if (all.length > 0) {
+    console.log(`[HC raw] ${recordType} sample:`, JSON.stringify(all[0], null, 2));
+  } else {
+    console.log(`[HC raw] ${recordType}: 0 records`);
+  }
+  console.log(`[HC] ${recordType}: ${all.length} records across ${pages} page(s)`);
+  return { data: all.map(mapper).filter(Boolean), error: null };
 }
 
 export async function fetchSleepData(startDate, endDate) {

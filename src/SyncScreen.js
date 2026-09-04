@@ -84,11 +84,14 @@ export default function SyncScreen({ token, username, onLogout }) {
   }
 
   // ── Manual sync: read from Health Connect, then push to backend ──
-  async function handleSync() {
+  // days defaults to the routine 7-day window; the deep-sync action passes 30 for a
+  // one-off backfill (recovers history that would otherwise age past the 7-day reach —
+  // records persist in on-device Health Connect, they just need the wider window once).
+  async function handleSync(days = 7) {
     setSyncing(true);
     setSyncError('');
     try {
-      const data = await fetchAllData();
+      const data = await fetchAllData(days);
       await syncHealthData(data, token);
       const steps = data.steps || [];
       const sleep = data.sleep?.length || 0;
@@ -163,13 +166,25 @@ export default function SyncScreen({ token, username, onLogout }) {
           />
         </View>
       ) : (
-        <View style={styles.btn}>
-          <Button
-            title="SYNC HEALTH CONNECT"
-            onPress={handleSync}
-            disabled={syncing}
-          />
-        </View>
+        <>
+          <View style={styles.btn}>
+            <Button
+              title="SYNC HEALTH CONNECT"
+              onPress={() => handleSync(7)}
+              disabled={syncing}
+            />
+          </View>
+          {/* One-off 30-day backfill. Routine sync stays 7d; this recovers older
+              on-device history before it ages past the 7-day reach. */}
+          <View style={styles.btn}>
+            <Button
+              title="DEEP SYNC (30d)"
+              color="#4f46e5"
+              onPress={() => handleSync(30)}
+              disabled={syncing}
+            />
+          </View>
+        </>
       )}
 
       {/* DEV: deep-sleep gate — runs validateNight() for last night */}

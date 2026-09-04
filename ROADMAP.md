@@ -75,9 +75,59 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 ## Sprint block
 
 **Branch:** `master` (trunk)
-**Closed:** 2026-08-25 (Session C: sleep-basis window validity schema)
+**Closed:** 2026-09-04 (HC HeartRate pagination fix + 30-day deep-sync backfill)
 
-### This session — one feature landed, `9ecbdad` merged as `d01dc11` (PR #35)
+### This session — two concern-split commits landed, PR #40 merged as `a7d90b6`
+Fixed the Health Connect read truncation and added a one-off backfill trigger.
+
+**The fix — `712db1b` paginate `safeFetch` via `pageToken`.** `safeFetch` (`src/healthConnect.js`)
+read `result.records` from a single `readRecords` call and never followed `result.pageToken`. The
+Android SDK default `pageSize=1000` plus default ascending order meant HeartRate — the only type
+exceeding 1000 in a multi-day window — silently kept only the oldest 1000 records, dropping the recent
+end. Every fetcher routes through `safeFetch`, so the loop there fixes all types. A mid-loop failure
+now returns accumulated partial pages + error (not an empty set); a 100-page safety cap bounds a
+pathological `pageToken` and logs if it trips. `ascendingOrder` deliberately unset — pagination, not
+order, is the completeness guarantee (`#38`).
+
+**The backfill — `77e5133` 30-day deep-sync trigger.** `SyncScreen.js` gains a distinct "Deep sync
+(30d)" button calling `fetchAllData(30)`; routine sync stays 7d. Recovers on-device history that would
+otherwise age past the 7-day reach before the fix deploys. `handleSync(days=7)` parameterised; both
+buttons pass `days` via arrow handlers so the press event can't land as `days`.
+
+**Scope fence held.** No backend edits; HR still aggregates to a daily scalar — no zones, no
+`aerobic_sessions` (still Build A/B). Self-merged on green (`placeholder guard (POSIX)`), non-schema,
+no operator hold.
+
+### Decisions / Questions
+Minted **`#38`** — all HC `readRecords` must paginate via `pageToken`; unpaginated reads truncate the
+highest-volume type at `pageSize=1000`, oldest-page-first under default ascending order (order not
+relied upon), and the prior "a re-sync backfills the gap" assumption is recorded as wrong. Minted
+**`Q21`** (OWED) — two operator-side post-deploy verifications. Number claimed at merge, `origin/master`
+re-read **#37 / Q20**. Stores changed: `DECISIONS_LOG`, `OPEN_QUESTIONS`, `BRANCHES`, `ROADMAP` (this
+block), `closeout.md`.
+
+### Branch dispositions (terminal state)
+- `claude/hca-heartrate-pagination-zn3m1i` — **merged+deleted** local and remote (PR #40 → merge
+  `a7d90b6`); `git cherry origin/master` empty; remote ref auto-deleted on merge. **Rowed in
+  `BRANCHES.md`** — `#38` cites `a7d90b6`, so the `Q6`/`#31` cited-⇒-must-row floor applies.
+- `feat/hrv-node-dump` · `fix/hrv-capture-regression` — pre-existing, rowed UNSTARTED, **neither touched**.
+
+### Next action
+1. **OWED to Luke (`Q21`.1) — behavioural gate.** After deploy + a Deb sync, re-run the per-activity
+   HR query. Pass = Aug 25→31 activities show non-zero `hr_recs_90min`, not just Aug 24. This is the
+   fix's acceptance test; Code cannot self-verify it (unseeable-surface rule).
+2. **OWED to Luke (`Q21`.2) — payload-size contingency.** Confirm the 30-day deep-sync POST fits the
+   backend body limit; if it 413s / times out, a future Code session chunks the backfill into weekly
+   windows.
+3. Live, operator-gated (unchanged) — calibrate `sleepBasis` thresholds and wire into readiness
+   (Phase 2). Open frontier: `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper
+   unexercised), `Q21` (this session's owed verifications).
+
+### Superseded by this session (kept for the record)
+The block below described the 2026-08-25 sleep-basis schema session (`9ecbdad` PR #35 → `d01dc11`,
+`src/sleepBasis.js`). No governance store but `ROADMAP` changed there; its notes still carry.
+
+### 2026-08-25 session (superseded) — one feature landed, `9ecbdad` merged as `d01dc11` (PR #35)
 Implemented the sleep-basis validity schema from the brief as **`src/sleepBasis.js`** — a pure,
 source-agnostic evaluator. `evaluateSleepBasis(basisWindow, observedNights)` enumerates every calendar
 night in `[start, end]`, classifies each `valid`/`invalid` with a machine `reason_code` + human

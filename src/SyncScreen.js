@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { syncHealthData } from './api';
 import { requestPermissions, fetchAllData } from './healthConnect';
-import { validateNight } from './deepSleepConfidence';
+import { validateNight, runDeepConfidence } from './deepSleepConfidence';
 
 // Last-night window: yesterday 18:00 → today 11:00 local. Wide enough to capture
 // a single overnight sleep session without spilling into the night before.
@@ -63,6 +63,11 @@ export default function SyncScreen({ token, username, onLogout }) {
   const [validating, setValidating] = useState(false);
   const [gate, setGate] = useState(null); // validateNight() diag object
   const [gateError, setGateError] = useState('');
+
+  // DEV: deep-confidence flagger (runDeepConfidence) — inspection-only, not wired.
+  const [confRunning, setConfRunning] = useState(false);
+  const [conf, setConf] = useState(null); // runDeepConfidence() result object
+  const [confError, setConfError] = useState('');
 
   // ── Health Connect requires permissions before reading ──
   async function handleGrantPermissions() {
@@ -134,6 +139,24 @@ export default function SyncScreen({ token, username, onLogout }) {
     }
   }
 
+  // ── DEV: run the deep-confidence flagger for last night and show per-segment output ──
+  // Reuses the SAME lastNightWindow() as the gate, so both read the identical night.
+  async function handleRunConfidence() {
+    setConfRunning(true);
+    setConfError('');
+    setConf(null);
+    try {
+      const { startISO, endISO } = lastNightWindow();
+      const result = await runDeepConfidence(startISO, endISO);
+      setConf(result);
+    } catch (err) {
+      console.warn('runDeepConfidence error:', err);
+      setConfError(err.message || 'runDeepConfidence failed');
+    } finally {
+      setConfRunning(false);
+    }
+  }
+
   function handleLogout() {
     Alert.alert('Sign out', 'Sign out of Health & Performance?', [
       { text: 'Cancel', style: 'cancel' },
@@ -197,6 +220,16 @@ export default function SyncScreen({ token, username, onLogout }) {
         />
       </View>
 
+      {/* DEV: deep-confidence flagger — runs runDeepConfidence() for last night */}
+      <View style={styles.btn}>
+        <Button
+          title="DEV: RUN DEEP CONFIDENCE"
+          color="#6b7280"
+          onPress={handleRunConfidence}
+          disabled={confRunning}
+        />
+      </View>
+
       {/* Requesting permissions */}
       {granting ? (
         <View style={styles.progressBox}>
@@ -221,9 +254,18 @@ export default function SyncScreen({ token, username, onLogout }) {
         </View>
       ) : null}
 
+      {/* Confidence run in progress */}
+      {confRunning ? (
+        <View style={styles.progressBox}>
+          <ActivityIndicator />
+          <Text style={styles.progressText}>Running deep confidence...</Text>
+        </View>
+      ) : null}
+
       {/* Failure (fixed) */}
       {syncError ? <Text style={styles.error}>{syncError}</Text> : null}
       {gateError ? <Text style={styles.error}>{gateError}</Text> : null}
+      {confError ? <Text style={styles.error}>{confError}</Text> : null}
 
       {/* Only the result card scrolls; the button above stays fixed. */}
       <ScrollView style={styles.cardScroll} contentContainerStyle={styles.cardScrollContent}>
@@ -272,6 +314,27 @@ export default function SyncScreen({ token, username, onLogout }) {
             </Text>
             <ResultRow t={t} label="HR samples" value={String(gate.hrSampleCount)} />
             <ResultRow t={t} label="hrMedianGapSec" value={gate.hrMedianGapSec == null ? '—' : `${gate.hrMedianGapSec}s`} />
+          </View>
+        ) : null}
+
+        {conf ? (
+          <View style={[styles.resultBox, { borderColor: t.border }]}>
+            <Text style={[styles.resultTitle, { color: t.text }]}>Deep Confidence</Text>
+            <ResultRow t={t} label="nadir" value={String(conf.nadir)} />
+            <ResultRow t={t} label="rawDeepMin" value={String(conf.rawDeepMin)} />
+            <ResultRow t={t} label="trustedDeepMin" value={String(conf.trustedDeepMin)} />
+
+            <Text style={[styles.sectionHeader, { color: t.subtext }]}>
+              SEGMENTS ({conf.segments.length})
+            </Text>
+            {conf.segments.map((s, i) => (
+              <ResultRow
+                key={i}
+                t={t}
+                label={`${s.startISO} · ${s.durMin}m`}
+                value={`hr ${s.hrMedian} · Δ${s.deltaFromNadir} · n${s.nSamples} · ${s.flag} · ${s.confidence}`}
+              />
+            ))}
           </View>
         ) : null}
       </ScrollView>

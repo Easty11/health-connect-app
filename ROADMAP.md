@@ -22,6 +22,16 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 - **Q3 — wire `runDeepConfidence` into readiness / Banister.**
   Unblocked by Q2's resolution; still gated by the threshold review
   (DECISIONS_LOG #4 — tunables uncalibrated).
+  *Companion-rooted — the "could this run backend-side?" question is settled (PR #42,
+  `src/SyncScreen.js`).* A DEV-only `SyncScreen` panel now runs `runDeepConfidence` for
+  last night and renders per-segment `flag`/`confidence` on-device — the instrument for
+  the #4 review. Deep-confidence flagging can only run companion-side: the backend
+  persists neither per-segment DEEP intervals nor per-sample HR (`health_connect_syncs`
+  is one aggregated row per (user, date); `health_connect_record_sources` is valueless
+  provenance; `_aggregate_day` discards segment/sample granularity before persist), so
+  any future backend-side deep-confidence would need a segment/sample-persistence schema
+  decision first. Inspection-only — #4's "held back" ruling is unchanged. No DECISIONS_LOG
+  number minted (GATE-FIRST instrumentation, no fork chosen — `sleepBasis` precedent).
 - **Q4 — Health Connect date-attribution root cause.**
   One-day mismatch between Health Connect and the scraper; suspected to misfile
   backfilled rows (DECISIONS_LOG #5). Highest-priority correctness fix. Root
@@ -75,9 +85,73 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 ## Sprint block
 
 **Branch:** `master` (trunk)
-**Closed:** 2026-09-04 (HC HeartRate pagination fix + 30-day deep-sync backfill)
+**Closed:** 2026-09-08 (DEV-only deep-confidence inspection panel)
 
-### This session — two concern-split commits landed, PR #40 merged as `a7d90b6`
+### This session — one feature landed, PR #42 merged as `3d8e01f`
+Added the missing on-device instrument for the `#4` deep-sleep threshold review.
+
+**The panel — `bde76a0` DEV-only deep-confidence read-out in `SyncScreen`.** A new
+`DEV: RUN DEEP CONFIDENCE` button runs the existing `runDeepConfidence` for last night
+(via the same `lastNightWindow()` the deep-sleep gate uses, so both read the identical
+night) and renders its per-segment output — `nadir`, `rawDeepMin`, `trustedDeepMin`, then
+one row per segment showing `flag`/`confidence`/`hrMedian`/`deltaFromNadir`/`nSamples`.
+Mirrors the `validateNight` gate wiring verbatim (state block, handler try/catch/finally,
+button, `ResultRow` panel).
+
+**Inspection-only — `#4` unchanged.** The flagger stays unwired from readiness/Banister; the
+panel is the instrument *for* the `#4` threshold review, not a resolution of it. The empirical
+"does it discriminate" read is operator-gated (Luke, on device, post-merge) and was explicitly
+not part of Code's done-definition.
+
+**Companion-side is architectural, not incidental.** Deep-confidence flagging needs per-segment
+DEEP intervals and per-sample HR; the backend persists neither (`health_connect_syncs` is one
+aggregated row per (user, date), `health_connect_record_sources` is valueless provenance,
+`_aggregate_day` discards segment/sample granularity before persist). The inputs exist only
+transiently on-device, where `runDeepConfidence` already reads them via
+`fetchSleepData`/`fetchHeartRateData`. Recorded as a clarifying note on ROADMAP `Q3` so
+"could this run backend-side?" is not re-litigated.
+
+**Scope fence held.** Pure additive UI surface — the feature diff is `src/SyncScreen.js` only
+(no `src/contract/` import, no `deepSleepConfidence.js`/`healthConnect.js`/wire/schema/`gen:contract`
+touch). `HANDOFF.md` carried the mandated `CHAT→CODE` receipt. Static-checked (ESM+JSX parse) on
+the non-Metro path — no debug install. Self-merged on green (`placeholder guard (POSIX)`),
+non-schema, no operator hold.
+
+### Decisions / Questions
+**None minted.** Pure GATE-FIRST instrumentation choosing no fork — the `sleepBasis` precedent
+(instrumentation landed ROADMAP-recorded, no governance store). `#4`'s "held back" ruling is
+untouched. Maxima unchanged: decisions **#38**, questions **Q21** (re-read on `origin/master` at
+close). The backend-can't-host finding lands as a clarifying note on the ROADMAP `Q3`
+readiness-wiring item — the brief's "OPEN_QUESTIONS Q3" mis-routed (that Q3 is a DONE
+Compose-break record; the wiring question lives in ROADMAP). Stores changed: `ROADMAP` (this block
++ `Q3` note), `closeout.md`.
+
+### Branch dispositions (terminal state)
+- `feat/deep-confidence-panel` — **merged+deleted** local and remote (PR #42 → merge `3d8e01f`;
+  `bde76a0` feature commit). `git cherry origin/master` empty; remote ref auto-deleted on merge.
+  **No `BRANCHES` row required** — the `Q6`/`#31` cited-⇒-must-row floor does not apply: no store
+  cites a branch-head artefact (the `Q3` note cites PR #42 + the merge SHA, both stable on master).
+  Renamed off the harness-assigned `claude/deep-confidence-panel-xih3ey` (deleted unused, carried
+  no commits) to satisfy the concern-named-branch rule (`claude/<hash>` banned for in-flight work).
+- `feat/hrv-node-dump` · `fix/hrv-capture-regression` — pre-existing, rowed UNSTARTED, **neither touched**.
+
+### Next action
+1. **OWED to Luke — the empirical discrimination read (`#4`).** On device, post-deploy: tap
+   `DEV: RUN DEEP CONFIDENCE` across several nights and read whether the per-segment
+   `flag`/`confidence` output actually discriminates real slow-wave deep from staging artifact at
+   60s HR density. This is the input the `#4` threshold review has been waiting on; Code cannot
+   self-verify it (unseeable-surface rule).
+2. **Still OWED to Luke (`Q21`) — carried from 2026-09-04.** (1) behavioural HR-coverage gate after
+   a real sync; (2) 30-day deep-sync POST body-limit. Both post-deploy, operator-side.
+3. Live, operator-gated (unchanged) — calibrate `sleepBasis` thresholds and wire into readiness
+   (Phase 2). Open frontier: `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper
+   unexercised), `Q21` (owed verifications).
+
+### Superseded by this session (kept for the record)
+The block below described the 2026-09-04 HC-pagination + 30-day-deep-sync session (`712db1b`/`77e5133`,
+PR #40 → `a7d90b6`, `#38`/`Q21`). Its notes still carry.
+
+### 2026-09-04 session (superseded) — two concern-split commits landed, PR #40 merged as `a7d90b6`
 Fixed the Health Connect read truncation and added a one-off backfill trigger.
 
 **The fix — `712db1b` paginate `safeFetch` via `pageToken`.** `safeFetch` (`src/healthConnect.js`)

@@ -661,3 +661,51 @@ fork, not a surprise. Owner: Luke to observe; a future Code session to chunk if 
 
 **Closes when:** both runs are done — the behavioural query passes (or names a residual defect) and
 the 30-day POST is confirmed to fit (or chunking lands).
+
+### Q22 — HR still lags ~6d after the #38 pagination fix: on-device truncation, H1-vs-H2 un-splittable from the repo  ·  OPEN
+**State:** OPEN — a residual defect named by Q21.1's behavioural gate (Luke's 17–19 Sep prod reads of
+`health_connect_record_sources`). The `#38` pagination fix is on master (`712db1b`, PR #40 `a7d90b6`,
+4 Sep), but for users 1 and 4 the newest `heart_rate` still sits ~6 days behind the sync that carried
+it while `exercise`/`sleep` from the same sync are current — the app's 7-day window appears to deliver
+only the OLDEST ~1–1.5 days of HR. **Related:** `#38`, Q21 (this discharges its item 1 as
+"defect named"; Q21 stays OWED on its item 2). **Minted:** 2026-09-21, on
+`claude/heart-rate-sync-lag-wk0y2o`. **Number-at-merge:** questions max re-read Q21 immediately before
+this row; takes Q22.
+
+**H3 (backend cap/filter) RULED OUT by read.** `health-app` `backend/routers/health_connect.py`
+`/sync` runs only `_reject_pre2020` (drops pre-2020-dated records) before `_capture_record_sources`;
+there is no `limit`, no `[:1000]`, no sort-and-truncate, no newest/oldest slice on `heartRate`.
+`received["heartRate"]` is counted as-posted and every HR record is captured unfiltered — the server
+persists exactly what the phone POSTs. The truncation is introduced on-device.
+
+**H1 and H2 both reproduce the observed oldest-kept shape; the repo cannot split them.**
+- H1 — the installed APK predates `712db1b` (built before 4 Sep): the old `safeFetch` did a single
+  `readRecords` with no `pageSize`/`pageToken` → SDK default `pageSize=1000`, ASCENDING order → keeps
+  the OLDEST 1000 records (≈ oldest 1–1.5 days), silently drops the recent end. (Its catch returned
+  `[]` on failure, not a partial.)
+- H2 — the current build is installed but a page read fails mid-pagination: the catch at
+  `src/healthConnect.js` L165–170 returns the oldest-first partial accumulation already fetched,
+  again dropping the recent end.
+- `app.json` is a static `version: "1.0.0"` with no build fingerprint; the phones and their logcat are
+  unseeable surfaces (CLAUDE.md unseeable-surface rule). Code cannot determine which build is deployed.
+
+**Two operator reads split H1 from H2 (owner: Luke):**
+1. Build provenance — is each phone's installed APK built from a commit ≥ `712db1b` (post-4-Sep)?
+2. One real user-1 sync's logcat. Both `[HC] HeartRate: N records across M page(s)` and
+   `[HC] HeartRate paged fetch failed —` exist ONLY in post-4-Sep code, so their presence/absence
+   reveals the build for free: neither line ⇒ old build (H1); "paged fetch failed" ⇒ H2;
+   "across M page(s)" with the newest sample still ~6 days stale ⇒ a third mechanism (re-open H3-class).
+   Cross-check: `received["heartRate"]` ≈ 1000 in the `/sync` response ⇒ single-page truncation.
+
+**Fix is common to both and ready but GATED (brief S0 = stop-and-report; picking H1/H2 is a divergence
+at the gate).** Regardless of which is active, the current code carries a latent truncation-visibility
+defect: ASCENDING order + partial-return-on-failure means any short read loses the RECENT end, silently.
+The either-way hardening (fetch HR NEWEST-first or in per-day slices so a partial loss drops the OLD
+end; surface a truncation flag in the sync payload; retry the rate-limit error with backoff) is not
+implemented here — it awaits the operator adjudication above. GUARD holds: no HR down-sampling, no new
+permissions or record types.
+
+**Closes when:** the two operator reads name H1 or H2 (or a third mechanism), the surviving fix lands
+with G1 (a simulated mid-pagination failure keeps the NEWEST data and sets the truncation flag) and G3
+(1000-record paging tests unregressed) green, and G2 confirms one real sync whose latest `heart_rate`
+is within hours of `synced_at`.

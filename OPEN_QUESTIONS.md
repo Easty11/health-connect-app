@@ -661,3 +661,53 @@ fork, not a surprise. Owner: Luke to observe; a future Code session to chunk if 
 
 **Closes when:** both runs are done — the behavioural query passes (or names a residual defect) and
 the 30-day POST is confirmed to fit (or chunking lands).
+
+### Q22 — HR lags ~6d because the #38 pagination fix has never run on a device (H1 CONFIRMED)  ·  OPEN
+**State:** OPEN — the fix is owed on a device, and the S1 diagnostics below are owed so a future lag is
+never again un-splittable from the repo. **H1 CONFIRMED (2026-09-21, operator read):**
+`dumpsys package com.anonymous.healthconnectapp` on user-1's phone reports `lastUpdateTime=2026-08-10`,
+which predates `712db1b` (4 Sep) — the installed APK was built before the pagination fix, so `#38` has
+**never executed on a device**. The ~6-day lag for users 1 and 4 (newest `heart_rate` behind the
+carrying sync while `exercise`/`sleep` are current; only the OLDEST ~1–1.5 days of HR delivered) is the
+old single-page truncation, exactly as H1 predicts. **This does NOT mean Q21.1 failed** — Q21.1's
+behavioural gate never ran, because the build it was meant to verify was never on the phone. Q21.1
+stays **OWED** (unrun), not failed; it becomes runnable only once a fingerprinted post-4-Sep build is
+installed. **Related:** `#38`, Q21 (item 1 OWED/unrun — do not mark "defect named"; Q21 also stays OWED
+on its item 2). **Minted:** 2026-09-21, on `claude/heart-rate-sync-lag-wk0y2o`. **Number-at-merge:**
+questions max re-read Q21 immediately before this row; takes Q22.
+
+**H3 (backend cap/filter) RULED OUT by read.** `health-app` `backend/routers/health_connect.py`
+`/sync` runs only `_reject_pre2020` (drops pre-2020-dated records) before `_capture_record_sources`;
+there is no `limit`, no `[:1000]`, no sort-and-truncate, no newest/oldest slice on `heartRate`.
+`received["heartRate"]` is counted as-posted and every HR record is captured unfiltered — the server
+persists exactly what the phone POSTs. The truncation is introduced on-device.
+
+**How H2 and H3 were excluded.** H3 (backend cap/filter) was ruled out by read: `health-app`
+`backend/routers/health_connect.py` `/sync` runs only `_reject_pre2020` before `_capture_record_sources`
+— no `limit`, no `[:1000]`, no sort-and-truncate on `heartRate`; the server persists exactly what the
+phone POSTs. H2 (current build, mid-pagination failure returning the oldest-first partial from
+`src/healthConnect.js` L165–170) was excluded by the build read: the current paginating build is not on
+the phone at all, so its failure path cannot be the cause. The cause is H1 — the pre-4-Sep build's
+single unpaginated `readRecords` (SDK default `pageSize=1000`, ASCENDING) keeping the OLDEST 1000
+records (≈ oldest 1–1.5 days) and dropping the recent end. What made H1/H2 un-splittable from the repo
+was the absence of any build fingerprint: `app.json` is a static `version: "1.0.0"`, and the phones and
+their logcat are unseeable surfaces. The operator's `dumpsys` read supplied the missing fingerprint.
+
+**S1 (the fix), scoped by the operator 2026-09-21 — DESIGN-GATED at G0.** The rebuild-and-ship is the
+primary fix (installs the paginating build). Ahead of it, S1 adds two diagnostics so a future lag is
+never again un-splittable:
+1. **Build fingerprint** — bake the git SHA in at build time, send it in the `/sync` payload, persist it
+   server-side. Removes the need for a `dumpsys` read next time.
+2. **Truncation flag** — per record type, the page count and whether the fetch ended on a failure, in
+   the payload and persisted server-side.
+Items 1 and 2 touch BOTH repos (HCA sends; health-app models + migrates + persists). Newest-first
+fetch and backoff retry stay **gated** — revisit only if Q21.1 fails on a fingerprinted build. GUARD
+holds: no HR down-sampling, no new permissions or record types. Single-repo rule: this session (rooted
+in HCA) writes the HCA side only; the health-app schema/endpoint changes are handed to a health-app
+Code session.
+
+**Closes when:** a fingerprinted, paginating build is installed on the phones (fingerprint visible
+server-side), the truncation diagnostics land both sides with G1 (a simulated short/partial fetch sets
+the truncation flag and, if newest-first is later added, keeps the NEWEST data) and G3 (1000-record
+paging tests unregressed) green, and Q21.1's behavioural gate finally runs and passes (latest
+`heart_rate` within hours of `synced_at`; Aug-25→31-class activities show non-zero HR).

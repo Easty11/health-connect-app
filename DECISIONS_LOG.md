@@ -1303,3 +1303,35 @@ master via **PR #40**, merge `a7d90b6`, before this governance entry.
 **Do not revisit unless:** Health Connect changes its default page size or ordering semantics, or a
 verified capture shows the loop over-fetching or non-terminating (the 100-page safety cap is a
 backstop, not an expected path — if it ever logs, that is the signal to revisit).
+
+### #39 — `feat/hrv-node-dump` instrumentation stripped; its evidence kept as the committed `nodedump.txt`  ·  active
+
+**Decision:** The `dumpTree`/`dumpActiveTree` read-only node-dump instrumentation
+(`HRVAccessibilityService.kt`, branch `feat/hrv-node-dump`, head `b66d34b`) is **stripped, not kept
+behind a flag** — operator ruling (Luke, 2026-09-21). The branch is **discarded** (not merged; head
+recoverable by SHA only until gc). The evidence it produced, `nodedump.txt`, stays on master as the
+committed artefact (`6ce4273`, 2026-08-08). Companion decision: the auth-path guard-proof test from
+the superseded `fix/hrv-capture-regression` branch was re-landed (PR #44 → `2c2a5a0`); the fix it
+guards was already on master via an unrelated lineage. Both orphan branches thereby reach terminal
+state — one by relanding its only unlanded content, one by discard.
+
+**Rationale:** the instrumentation earned its keep once — the 2026-07-13 redirect, where the dump it
+wrote proved the scraper healthy and pointed a "broken scraper" brief at the real cause. But its sole
+durable output is that node tree, now a tracked file that `#19` and `Q19` cite. Live dump code on
+master is a maintenance surface for a one-shot diagnostic whose result is already captured; the
+architecture keeps raw evidence as files, not ad-hoc instrumentation in the shipping path.
+
+**How you know:** `nodedump.txt` is on master at `6ce4273`, byte-identical to the branch's dump (blob
+`984e361`); `git grep -E 'dumpTree|dumpActiveTree' origin/master` returns only the `BRANCHES.md`
+description line; the guard-proof test is on master (`2c2a5a0`, PR #44) and runs **11/11 PASS**. The
+one loop-close not yet observable from here: `git ls-remote --heads origin` still shows
+`feat/hrv-node-dump` and `fix/hrv-capture-regression` because destructive ref-deletion pushes are
+refused **HTTP 403** by this remote session's egress proxy — their deletion is **OWED to the operator**
+(see both `BRANCHES.md` rows), after which `ls-remote` returns master only.
+
+**Number claimed at merge:** `origin/master` re-read immediately before this close-out — decision max
+`### #38`, question max `Q21`. This entry takes **#39**. No new question minted.
+
+**Do not revisit unless:** a future on-device diagnostic genuinely needs live node-tree dumping — in
+which case reintroduce it as a gated, tested capability, not ad-hoc instrumentation, and do not assume
+`b66d34b` is still recoverable once gc has run.

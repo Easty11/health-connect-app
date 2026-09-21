@@ -84,10 +84,61 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
-**Branch:** `master` (trunk)
-**Closed:** 2026-09-08 (DEV-only deep-confidence inspection panel)
+**Branch:** `gov/close-branch-rows` → master (trunk)
+**Closed:** 2026-09-21 (two UNSTARTED branch rows closed — auth-path test relanded, node-dump stripped)
 
-### This session — one feature landed, PR #42 merged as `3d8e01f`
+### This session — auth-path test relanded (PR #44 → `2c2a5a0`); both orphan branch rows closed
+Cleared the two long-standing UNSTARTED rows in `BRANCHES.md`. The governing brief was written
+against a **stale view of master** — verified against the tree first (chat's claims are hypotheses),
+and most of it was already done:
+
+- **`fix/hrv-capture-regression` — DONE.** The fix it guards (the `HRVCapture?.…` guards decoupling
+  the auth/POST path from the scraper native module) was **already on master** via an unrelated
+  lineage (no merge-base; `git cherry` all `+`, so patch-id could not see it). The only unlanded
+  content was the guard-proof **test**, re-landed verbatim — `scripts/auth-path-sim.mjs` byte-identical
+  to `b7621c4` (blob `5cbbdd2`) + the `test:auth-path` script — via PR #44 → `2c2a5a0`. **11/11 PASS**
+  against master, negative control included; no `CaptureSource`/`CaptureContext` dependency, so the
+  row's barrier-vs-trigger question resolves to **trigger** (independent of the #8 D2 firewall gap).
+- **`feat/hrv-node-dump` — DONE → discarded** (`b66d34b`, recoverable by SHA until gc). Operator
+  ruling: **STRIP**. Master carries no `dumpTree`/`dumpActiveTree`; the evidence the branch produced
+  (`nodedump.txt`) is already committed on master (`6ce4273`, 2026-08-08). Row RETAINED under
+  `Q6`/#31 — `#19` and `Q19` cite `nodedump.txt`.
+- **The brief's Part B was already done.** `nodedump.txt` was committed to master by the operator on
+  2026-08-08 (`6ce4273`, "privacy objection withdrawn"); no new commit needed, no go/no-go outstanding.
+
+### Decisions / Questions
+Minted **`#39`** — node-dump instrumentation stripped, its evidence kept as the committed
+`nodedump.txt`; companion note that the auth-path test relanded (PR #44). Number claimed at merge
+against a re-read `#38` / `Q21`. No new question. Stores changed: `DECISIONS_LOG`, `BRANCHES`,
+`ROADMAP` (this block), `closeout.md`.
+
+### Branch dispositions (terminal state)
+- `test/hrv-auth-path-sim` — **merged+deleted** local and remote (PR #44 → merge `2c2a5a0`; test
+  commit `a057b90`). Remote ref auto-deleted by GitHub on merge; local deleted. **No `BRANCHES` row
+  required** — no store cites a branch-head artefact (the rows cite the merge SHA on master).
+- `gov/close-branch-rows` — this close-out; merged+deleted on green.
+- `feat/hrv-node-dump` · `fix/hrv-capture-regression` — **DONE**, rowed in `BRANCHES.md`; substantive
+  disposition complete (discarded / relanded). **Remote-ref deletion OWED to the operator** — a
+  `git push --delete` is refused **HTTP 403** by this remote session's egress proxy (destructive ref
+  ops are blocked; create/push/merge are not), so the two remote refs still exist. `git ls-remote
+  --heads origin` returns master-only once the operator deletes them.
+
+### Next action
+1. **OWED to operator — delete the two stale remote refs.** From a local clone (or the GitHub
+   "Delete branch" button): `git push origin --delete feat/hrv-node-dump fix/hrv-capture-regression`.
+   This is the last step of the brief's "Done when" (`ls-remote` → master only); it cannot run from a
+   remote Code session (egress-403 on destructive ref ops).
+2. **Still OWED to Luke (`Q21`) — carried.** (1) behavioural HR-coverage gate after a real sync;
+   (2) 30-day deep-sync POST body-limit. Both post-deploy, operator-side.
+3. Live, operator-gated (unchanged) — calibrate `sleepBasis` thresholds and wire into readiness
+   (Phase 2). Open frontier: `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper
+   unexercised), `Q21` (owed verifications).
+
+### Superseded by this session (kept for the record)
+The block below described the 2026-09-08 DEV-only deep-confidence panel session (PR #42 → `3d8e01f`).
+Its notes still carry.
+
+### 2026-09-08 session (superseded) — one feature landed, PR #42 merged as `3d8e01f`
 Added the missing on-device instrument for the `#4` deep-sleep threshold review.
 
 **The panel — `bde76a0` DEV-only deep-confidence read-out in `SyncScreen`.** A new
@@ -133,8 +184,6 @@ Compose-break record; the wiring question lives in ROADMAP). Stores changed: `RO
   cites a branch-head artefact (the `Q3` note cites PR #42 + the merge SHA, both stable on master).
   Renamed off the harness-assigned `claude/deep-confidence-panel-xih3ey` (deleted unused, carried
   no commits) to satisfy the concern-named-branch rule (`claude/<hash>` banned for in-flight work).
-- `feat/hrv-node-dump` · `fix/hrv-capture-regression` — pre-existing, rowed UNSTARTED, **neither touched**.
-
 ### Next action
 1. **OWED to Luke — the empirical discrimination read (`#4`).** On device, post-deploy: tap
    `DEV: RUN DEEP CONFIDENCE` across several nights and read whether the per-segment
@@ -184,8 +233,6 @@ block), `closeout.md`.
 - `claude/hca-heartrate-pagination-zn3m1i` — **merged+deleted** local and remote (PR #40 → merge
   `a7d90b6`); `git cherry origin/master` empty; remote ref auto-deleted on merge. **Rowed in
   `BRANCHES.md`** — `#38` cites `a7d90b6`, so the `Q6`/`#31` cited-⇒-must-row floor applies.
-- `feat/hrv-node-dump` · `fix/hrv-capture-regression` — pre-existing, rowed UNSTARTED, **neither touched**.
-
 ### Next action
 1. **OWED to Luke (`Q21`.1) — behavioural gate.** After deploy + a Deb sync, re-run the per-activity
    HR query. Pass = Aug 25→31 activities show non-zero `hr_recs_90min`, not just Aug 24. This is the
@@ -235,8 +282,6 @@ and `closeout.md` only — no `DECISIONS_LOG`, `OPEN_QUESTIONS`, `FEEDBACK`, or 
   `d01dc11`). `git cherry origin/master` empty; remote ref auto-deleted on merge. **No `BRANCHES` row
   required** — the Q6/#31 cited-⇒-must-row floor does not apply: no store cites an artefact produced on
   this branch.
-- `feat/hrv-node-dump` · `fix/hrv-capture-regression` — pre-existing, rowed UNSTARTED, **neither touched**.
-
 ### Next action
 1. **DONE 2026-08-30 — `#18`'s owed Postgres check ran** (operator, `health-app-DB`): zero null
    `source_package` across all 58,325 rows (steps 84/0, heart_rate 58,013/0, sleep 146/0, exercise
@@ -317,8 +362,6 @@ and it is the entire distance between "emitter verified" and `#18` fully closed.
 ### Branch dispositions (terminal state)
 - `chore/store-omnibus` — **merged+deleted** (`1edfdf8`), rowed in `BRANCHES.md`.
 - `fix/aggregatesteps-sourcepackage` — **merged+deleted** (`10651cb`), rowed in `BRANCHES.md`.
-- `feat/hrv-node-dump` · `fix/hrv-capture-regression` — pre-existing, rowed, **neither touched**.
-
 ### Next action
 **Run `#18`'s owed Postgres check.** One Railway dashboard query: non-null `source_package` on
 steps-type rows in `health_connect_record_sources`, after one post-deploy sync has carried the
@@ -373,9 +416,6 @@ stores, not here. Number claimed at merge, `origin/master` re-read #34 / Q16. St
 ### Branch dispositions (terminal state)
 - `feat/exercise-metadata-forward` — **merged+deleted** local and remote via PR #26 (`d569adf`);
   `git ls-remote` empty. No `BRANCHES.md` row required (no store cites a branch-produced artefact).
-- `feat/hrv-node-dump` **UNSTARTED** · `fix/hrv-capture-regression` **UNSTARTED** — pre-existing,
-  rowed in `BRANCHES.md`, neither touched this session.
-
 ### Device / environment state (not repo state — carry between sessions)
 - Phone **SM_S921B** now runs a **release build carrying `[HC payload summary]`**, installed via
   `npm run android` this session. Committed source matches the installed build — no drift.

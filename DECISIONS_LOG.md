@@ -1344,3 +1344,43 @@ read `+`. After `git fetch --unshallow`: merge-base `8c63856`, and `git cherry o
 shows `fb3310e` `-` (patch-equivalent, already on master) with the other four `+`. The fix landed **by
 patch-equivalence**, not an unrelated lineage; the row's original "1 `-`" reading was **correct**, not
 stale. No number minted — this corrects #39 in place.
+
+### #40 — Sync diagnostics: build fingerprint + per-stream fetch telemetry, fail-closed generation
+
+**Decision:** The `/health-connect/sync` payload carries two additive top-level keys — `client` (build
+fingerprint: `gitSha` from `git describe --always --dirty`, `builtAt`, `appVersion`, `platform`) and
+`fetchMeta` (per stream: `received`, `oldestAt`, `newestAt`, `pages`, `truncated`, `endedOnFailure`).
+The fingerprint is generated at bundle time into a gitignored `src/buildInfo.js` and is **fail-closed**:
+no fallback string, a missing file fails the bundle; the hook is `metro.config.js` (loaded for every
+bundle entry point). Pagination + telemetry live in a pure, node-importable `src/fetchMeta.js` that the
+app and the sim share. The backend persists these one-row-per-POST in a new `health_connect_sync_events`
+table (JSONB `fetch_meta`, first-class **nullable** `git_sha`), spec'd for a health-app session
+(`docs/health-app-sync-events-spec.md`). Newest-first fetch and backoff retry are designed but GATED.
+
+**Rationale:** H1 (Q22) — the ~6-day HR lag was the pre-4-Sep unpaginated build never running the `#38`
+fix — was un-splittable from the repo because no build fingerprint existed and phones/logcat are
+unseeable, so splitting it cost a device `dumpsys` read. A server-side fingerprint makes "which build
+wrote this sync" a query (NULL `git_sha` = old build). `fetchMeta.truncated` makes a silent short read
+visible instead of the backend accepting a stale series. Fail-closed generation guarantees a real build
+always carries a real fingerprint — a missed generation fails loudly, never ships a stale/empty one. New
+table not columns-on-`health_connect_syncs`: the fingerprint is per-POST and that table is uq(user,date)
+(a POST fans out to many dates). Newest-first/backoff stay gated because the confirmed cause is H1 (the
+rebuild fixes it); they are revisited only if Q21.1 fails on a fingerprinted build.
+
+**Status:** HCA side LANDED on master (`8c154c8`, PR #48). Backend persistence + migration OWED
+(health-app session; schema migration = HOLD). APK rebuild OWED, sequenced AFTER the backend deploy.
+
+**How you know:** `scripts/fetch-meta-sim.mjs` (`test:fetch-meta`) **22/22 PASS** — a clean >1000-record
+fetch returns the full window (`truncated:false`); a mid-pagination failure and a page-cap both set
+`truncated:true` and keep the partial; range is epoch-ordered. `node scripts/gen-build-info.mjs` writes a
+real fingerprint (`git describe` → `6fd8b3e-dirty`); `git check-ignore src/buildInfo.js` confirms it is
+gitignored. `node --check` clean on all touched JS. Design ratified by the operator 2026-09-21 (rulings
+1a/2/3 + four amendments).
+
+**Number claimed at merge:** `origin/master` re-read immediately before this close-out — decision max
+`### #39`, question max `Q22`. This entry takes **#40**. No new question minted (Q22 carries the
+workstream).
+
+**Do not revisit unless:** Q21.1 fails on a fingerprinted build (then implement the gated
+newest-first/backoff), or a new HR-lag appears with a non-null `git_sha` and `heartRate.truncated:false`
+(a third mechanism — re-open the H3-class read).

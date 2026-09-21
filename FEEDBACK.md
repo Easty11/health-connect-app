@@ -22,6 +22,36 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-09-21 — an artefact commit that satisfies a row's open disposition must update the row  [ritual]
+**Friction:** `6ce4273` (2026-08-08) committed `nodedump.txt`, resolving the `feat/hrv-node-dump`
+row's explicitly-open "commit/gitignore/delete disposition" — but the row itself was never touched.
+It kept reading "nodedump.txt itself remains untracked … disposition is open". Six weeks later a
+brief was written against that stale row and treated Part B (commit nodedump.txt) and a privacy
+go/no-go as live, when both were already settled on master.
+**Cost:** A whole session spent verifying that most of a brief was already done; a near-miss where
+the stale row could have driven a redundant commit or a needless privacy escalation.
+**Fix:** When a commit satisfies a disposition a store row calls open, close that row in the **same**
+commit (or the session's close-out). A row is a claim about master; an artefact landing that changes
+the claim and leaves the row is a silent divergence — the repo-is-truth loop only holds if the row
+moves with the artefact.
+
+### 2026-09-21 — a shallow remote clone makes merge-base/cherry lie  [env]
+**Friction:** The remote session's checkout was a shallow clone (`.git/shallow` present;
+`git rev-parse --is-shallow-repository` → `true`). `git merge-base origin/master 7888067` returned
+empty and `git cherry` showed every commit `+`, which was read as "unrelated lineage, fix reached
+master some other way". After `git fetch --unshallow`: merge-base `8c63856`, `fb3310e` `-` — the fix
+was on master by ordinary patch-equivalence all along.
+**Cost:** Two store records (`#39`, a `BRANCHES` row) landed with a wrong lineage claim, needing this
+repair PR. Also: `git push --delete` of a remote ref is refused **HTTP 403** in the remote session
+(egress proxy blocks destructive ref ops), so both branch deletions had to be handed back as operator
+steps.
+**Fix:** In a remote session, run `git rev-parse --is-shallow-repository` before trusting any
+history-spanning read (`merge-base`, `cherry`, `log --all`, ancestry) — `git fetch --unshallow`
+first if it says `true`. And plan branch/ref **deletions as operator steps up front**: the remote
+session cannot push a delete.
+
+---
+
 ### 2026-08-17 — governance that is a code change's rationale lands with that branch  [ritual]
 **Friction:** Two standing rules pointed opposite ways. **Governance batching** says at most one
 `gov(...)` commit per session, at close-out, never interleaved with feature work. **Number-at-merge**

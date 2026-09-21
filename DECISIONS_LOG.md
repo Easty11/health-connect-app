@@ -1312,8 +1312,9 @@ behind a flag** — operator ruling (Luke, 2026-09-21). The branch is **discarde
 recoverable by SHA only until gc). The evidence it produced, `nodedump.txt`, stays on master as the
 committed artefact (`6ce4273`, 2026-08-08). Companion decision: the auth-path guard-proof test from
 the superseded `fix/hrv-capture-regression` branch was re-landed (PR #44 → `2c2a5a0`); the fix it
-guards was already on master via an unrelated lineage. Both orphan branches thereby reach terminal
-state — one by relanding its only unlanded content, one by discard.
+guards (`fb3310e`) was already on master **by patch-equivalence** (`git cherry origin/master
+7888067` shows `fb3310e` `-`; shared merge-base `8c63856`). Both orphan branches thereby reach
+terminal state — one by relanding its only unlanded content, one by discard.
 
 **Rationale:** the instrumentation earned its keep once — the 2026-07-13 redirect, where the dump it
 wrote proved the scraper healthy and pointed a "broken scraper" brief at the real cause. But its sole
@@ -1323,11 +1324,10 @@ architecture keeps raw evidence as files, not ad-hoc instrumentation in the ship
 
 **How you know:** `nodedump.txt` is on master at `6ce4273`, byte-identical to the branch's dump (blob
 `984e361`); `git grep -E 'dumpTree|dumpActiveTree' origin/master` returns only the `BRANCHES.md`
-description line; the guard-proof test is on master (`2c2a5a0`, PR #44) and runs **11/11 PASS**. The
-one loop-close not yet observable from here: `git ls-remote --heads origin` still shows
-`feat/hrv-node-dump` and `fix/hrv-capture-regression` because destructive ref-deletion pushes are
-refused **HTTP 403** by this remote session's egress proxy — their deletion is **OWED to the operator**
-(see both `BRANCHES.md` rows), after which `ls-remote` returns master only.
+description line; the guard-proof test is on master (`2c2a5a0`, PR #44) and runs **11/11 PASS**. Both
+orphan remote refs were deleted by the operator 2026-09-21 from a local clone (the 2026-09-21 remote
+session could not: destructive ref-deletion pushes are refused **HTTP 403** by its egress proxy), so
+`git ls-remote --heads origin` now returns **master only** — every loop-close observed.
 
 **Number claimed at merge:** `origin/master` re-read immediately before this close-out — decision max
 `### #38`, question max `Q21`. This entry takes **#39**. No new question minted.
@@ -1335,3 +1335,12 @@ refused **HTTP 403** by this remote session's egress proxy — their deletion is
 **Do not revisit unless:** a future on-device diagnostic genuinely needs live node-tree dumping — in
 which case reintroduce it as a gated, tested capability, not ad-hoc instrumentation, and do not assume
 `b66d34b` is still recoverable once gc has run.
+
+**Correction (2026-09-21, same session):** an earlier form of this entry (and the `fix/hrv-capture-regression`
+`BRANCHES.md` row) said the fix reached master "via an unrelated lineage" with "no merge-base" — that
+was a **shallow-clone artifact** of the remote session's checkout (`git rev-parse --is-shallow-repository`
+→ `true`; `.git/shallow` present), where truncated history hides the merge-base and makes every commit
+read `+`. After `git fetch --unshallow`: merge-base `8c63856`, and `git cherry origin/master 7888067`
+shows `fb3310e` `-` (patch-equivalent, already on master) with the other four `+`. The fix landed **by
+patch-equivalence**, not an unrelated lineage; the row's original "1 `-`" reading was **correct**, not
+stale. No number minted — this corrects #39 in place.

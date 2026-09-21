@@ -42,16 +42,16 @@ max **#39**, questions max **Q21**.
 its `nodedump.txt` citations verified intact), `Q20` (HC HRV mapper unexercised), `Q21`
 (OWED — two operator-side post-deploy verifications).
 
-**Single clearest next action — OWED to operator:** delete the two stale remote refs. This
-remote session cannot (a `git push --delete` is refused **HTTP 403** by the egress proxy,
-which blocks destructive ref ops; create/push/merge are not affected). From a local clone,
-or via the GitHub "Delete branch" button:
+**Single clearest next action — none outstanding on this workstream.** The two orphan remote
+refs were deleted by the operator 2026-09-21 from a local clone; `git ls-remote --heads origin`
+returns **master only** — the brief's "Done when" is fully satisfied.
 
-```
-git push origin --delete feat/hrv-node-dump fix/hrv-capture-regression
-```
-
-After that, `git ls-remote --heads origin` returns master only and the brief's "Done when"
-is fully satisfied. The branch content is already terminal on both sides — this is the
-mechanical loop-close only; nothing recoverable is lost by deleting the refs (`b66d34b`
-recoverable by SHA until gc if ever needed).
+**Repair follow-up (2026-09-21, same day):** a governance-only PR (`gov/repair-closeout-records`)
+corrected two records from this close-out. (1) The lineage claim was wrong: this session's checkout
+was a **shallow clone**, so `merge-base`/`cherry` misread the fix as reaching master "via an unrelated
+lineage". After `git fetch --unshallow`: merge-base `8c63856`, `fb3310e` `-` — the fix landed **by
+patch-equivalence**, and the row's original "1 `-`" was correct. `#39` amended in place (no number
+minted); the `fix/hrv-capture-regression` row corrected. (2) Both BRANCHES OWED loops closed to "—".
+(3) `Q19`'s `nodedump.txt:285` quote fixed (`"Bedtime 22:12"` → `"Bedtime 22:39"`). (4) Two FEEDBACK
+entries (stale-row-misdirected-a-brief; check shallow state + plan deletes as operator steps in a
+remote session).

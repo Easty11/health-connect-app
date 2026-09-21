@@ -597,7 +597,7 @@ clock string, and a value that is wrong by twelve hours but well-formed is exact
 gate on form does not catch. The defect is at the scrape, so the fix is at the scrape.
 
 **One thing is inferred, and a fix must not skip it.** Every confirmed live string on file is
-24-hour — `"Bedtime 22:12"`, `"Bedtime22:39"` (`nodedump.txt:285`, `:24`). **The 12-hour
+24-hour — `"Bedtime 22:39"`, `"Bedtime22:39"` (`nodedump.txt:285`, `:24`). **The 12-hour
 rendering has not been observed**; it is read off the regex, not off a device. That the regex
 would silently truncate such a string is proved by the code; that Samsung Health emits one on a
 12-hour-locale phone is not, and per the verify-before-you-build invariant it should be captured

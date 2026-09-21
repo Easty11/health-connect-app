@@ -73,7 +73,14 @@ export async function syncHealthData(data, token) {
   // a regression. This line stays under the cap so the wire contract remains inspectable,
   // in particular the workout metadata now forwarded (see DECISIONS_LOG #35).
   const w0 = data.workouts?.[0] ?? null;
+  const fm = data.fetchMeta ?? {};
   console.log('[HC payload summary]', JSON.stringify({
+    // Build fingerprint + per-stream truncation, kept under logcat's ~4 KB cap so
+    // the wire contract stays inspectable on-device (Q22).
+    client: data.client ?? null,
+    truncated: Object.fromEntries(
+      Object.entries(fm).map(([k, v]) => [k, { truncated: !!v.truncated, pages: v.pages, newestAt: v.newestAt }]),
+    ),
     counts: {
       sleep: data.sleep?.length ?? 0,
       hrv: data.hrv?.length ?? 0,

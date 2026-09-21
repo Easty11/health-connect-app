@@ -663,8 +663,13 @@ fork, not a surprise. Owner: Luke to observe; a future Code session to chunk if 
 the 30-day POST is confirmed to fit (or chunking lands).
 
 ### Q22 — HR lags ~6d because the #38 pagination fix has never run on a device (H1 CONFIRMED)  ·  OPEN
-**State:** OPEN — the fix is owed on a device, and the S1 diagnostics below are owed so a future lag is
-never again un-splittable from the repo. **H1 CONFIRMED (2026-09-21, operator read):**
+**State:** OPEN — the fix is owed on a device. **Progress (2026-09-21, `8c154c8` / PR #48):** the S1
+diagnostics HCA side LANDED — `client` build fingerprint + per-stream `fetchMeta`, fail-closed
+generation via `metro.config.js`, G1+G3 sim `test:fetch-meta` 22/22 PASS (see `#40`). Still OWED:
+(a) the health-app `health_connect_sync_events` migration + persistence
+(`docs/health-app-sync-events-spec.md` — a health-app session; schema migration = HOLD), then
+(b) the APK rebuild — **backend first**, since the fingerprint has nowhere to land until the table is
+live. **H1 CONFIRMED (2026-09-21, operator read):**
 `dumpsys package com.anonymous.healthconnectapp` on user-1's phone reports `lastUpdateTime=2026-08-10`,
 which predates `712db1b` (4 Sep) — the installed APK was built before the pagination fix, so `#38` has
 **never executed on a device**. The ~6-day lag for users 1 and 4 (newest `heart_rate` behind the

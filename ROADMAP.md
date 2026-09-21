@@ -84,10 +84,46 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
-**Branch:** `gov/close-branch-rows` → master (trunk)
-**Closed:** 2026-09-21 (two UNSTARTED branch rows closed — auth-path test relanded, node-dump stripped)
+**Branch:** `gov/heartrate-s1-closeout` → master (trunk)  ·  prior `claude/heart-rate-sync-lag-wk0y2o` (S0+S1, PRs #47/#48, merged+deleted)
+**Closed:** 2026-09-21 (heart-rate ~6-day-lag: H1 confirmed, S1 diagnostics HCA side landed)
 
-### This session — auth-path test relanded (PR #44 → `2c2a5a0`); both orphan branch rows closed
+### This session — heart-rate ~6-day-lag adjudicated to H1; S1 diagnostics landed (HCA side)
+The brief's ~6-day HR lag was adjudicated end-to-end and the first half of the fix shipped:
+- **H3 ruled out** by a read of health-app `/health-connect/sync` (no cap/filter on `heartRate` before
+  `_capture_record_sources`). **H1 confirmed** by the operator's `dumpsys` read
+  (`lastUpdateTime=2026-08-10`, predating the `#38` fix `712db1b`) — the pagination fix has **never run
+  on a device**, so `Q21.1` is OWED/unrun, not failed.
+- **S0 report + H1 correction** — PR #47 → `80fb10e` (`Q22` minted, then reframed to H1-confirmed).
+- **S1 diagnostics, HCA side** — PR #48 → `a0cd282` (commit `8c154c8`). `client` build fingerprint
+  (fail-closed generation via `metro.config.js`) + per-stream `fetchMeta` on the `/sync` payload; pure
+  `src/fetchMeta.js` shared by app and sim; `test:fetch-meta` **22/22 PASS**.
+- **Health-app spec** — `docs/health-app-sync-events-spec.md` (new `health_connect_sync_events` table;
+  for a health-app session; migration = HOLD).
+
+### Decisions / Questions
+Minted **`#40`** — sync diagnostics (fingerprint + `fetchMeta`, fail-closed generation, new backend
+table). **`Q22`** carried OPEN with a progress note (HCA side landed; backend + rebuild owed). `Q21`
+stays OWED (item-1 gate is unrun-pending, not failed). Number claimed at merge against re-read `#39` /
+`Q22`.
+
+### Branch dispositions (terminal state)
+- `claude/heart-rate-sync-lag-wk0y2o` — **merged+deleted** (PRs #47, #48; `git cherry origin/master`
+  empty). Remote auto-deleted on merge; local deletable. No `BRANCHES` row required (stores cite merge
+  SHAs on master).
+- `gov/heartrate-s1-closeout` — this close-out; merged+deleted on green.
+
+### Next action
+1. **OWED — health-app backend (do FIRST).** Implement `docs/health-app-sync-events-spec.md` in a
+   health-app session: new `health_connect_sync_events` table + persistence in `sync()`. Schema
+   migration = HOLD (operator sign-off); deploy before any HCA rebuild.
+2. **OWED — HCA APK rebuild**, AFTER (1). The paginating, fingerprinted build installs on the phones;
+   `git_sha` then arrives non-null and `heartRate.truncated`/`newestAt` become live signals.
+3. **Then `Q21.1` runs** (operator): a real sync's latest `heart_rate` within hours of `synced_at`
+   closes `Q22`. Newest-first / backoff revisited only if it fails.
+4. Carried, unchanged: `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper unexercised),
+   `Q21` (owed verifications incl. 30-day deep-sync body limit).
+
+### 2026-09-21 (earlier) session — auth-path test relanded (PR #44 → `2c2a5a0`); both orphan branch rows closed
 Cleared the two long-standing UNSTARTED rows in `BRANCHES.md`. The governing brief was written
 against a **stale view of master** — verified against the tree first (chat's claims are hypotheses),
 and most of it was already done:

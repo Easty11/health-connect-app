@@ -7,6 +7,11 @@ import {
   openHealthConnectSettings,
   readRecords,
 } from 'react-native-health-connect';
+import { paginate, streamMeta, HC_PAGE_SIZE, HC_MAX_PAGES } from './fetchMeta';
+// Build fingerprint (Q22 item 1). Generated, gitignored, fail-closed: if the
+// generation step did not run, this import fails the bundle rather than shipping
+// a stale fingerprint. No fallback (see scripts/gen-build-info.mjs).
+import { gitSha, builtAt, appVersion } from './buildInfo';
 
 export { openHealthConnectSettings };
 
@@ -128,54 +133,46 @@ export const requestPermissions = async () => {
 
 // ── individual fetchers, each isolated so one failure doesn't stop others ──
 
-// Health Connect mirrors the Android SDK default pageSize=1000 and returns a pageToken
-// once a type exceeds one page. Default order is ASCENDING, so an unpaginated single read
-// silently keeps only the OLDEST 1000 records and drops the recent end — HeartRate is the
-// only type that exceeds 1000 in a multi-day window, so it alone truncates. Every fetcher
-// routes through safeFetch, so following pageToken here is the completeness guarantee for
-// all of them. Order is not relied upon; full pagination makes it irrelevant. (DECISIONS_LOG.)
-const HC_PAGE_SIZE = 1000;
-// Safety cap against a pathological non-terminating pageToken. 100 pages ≈ 100k records,
-// far beyond any real window (a 30-day HeartRate window is tens of pages), so it never trips
-// in practice — but if HC ever misbehaves it bounds the loop and logs loudly rather than
-// spinning forever. Tripping it re-introduces truncation, hence the error-level log.
-const HC_MAX_PAGES = 100;
+// Pagination + truncation telemetry now live in the pure, node-importable core
+// `./fetchMeta` (paginate/streamMeta, HC_PAGE_SIZE/HC_MAX_PAGES), so the same
+// logic the app runs is what the fetch-meta sim exercises. Default order is
+// ASCENDING, so a short read keeps the OLDEST records and drops the recent end —
+// the silent truncation `fetchMeta` makes visible per stream. (DECISIONS_LOG #38.)
 
 async function safeFetch(recordType, startDate, endDate, mapper) {
-  const all = [];
-  let pageToken;
-  let pages = 0;
-  try {
-    do {
-      const result = await readRecords(recordType, {
-        timeRangeFilter: toTimeRange(startDate, endDate),
-        pageSize: HC_PAGE_SIZE,
-        pageToken,
-      });
-      all.push(...result.records);
-      pageToken = result.pageToken;
-      pages += 1;
-      if (pages >= HC_MAX_PAGES && pageToken) {
-        console.log(
-          `[HC] ${recordType}: hit ${HC_MAX_PAGES}-page safety cap with pageToken still set — records may be TRUNCATED`,
-        );
-        break;
-      }
-    } while (pageToken);
-  } catch (err) {
-    // A rate-limit or failure on page N must not discard pages 1..N-1: return the partial
-    // accumulation with the error, never an empty set (which the old catch did).
-    console.log(`[HC] ${recordType} paged fetch failed —`, err.message);
-    return { data: all.map(mapper).filter(Boolean), error: err.message };
+  const reader = ({ timeRangeFilter, pageSize, pageToken }) =>
+    readRecords(recordType, { timeRangeFilter, pageSize, pageToken });
+
+  const { records, pages, truncated, endedOnFailure, error } = await paginate(
+    reader,
+    toTimeRange(startDate, endDate),
+  );
+
+  if (endedOnFailure) {
+    // A rate-limit or failure on page N does not discard pages 1..N-1 — the
+    // partial is returned with the error, never an empty set (the old catch's bug).
+    console.log(`[HC] ${recordType} paged fetch failed —`, error);
+  }
+  if (truncated && !endedOnFailure) {
+    console.log(
+      `[HC] ${recordType}: hit ${HC_MAX_PAGES}-page safety cap with pageToken still set — records TRUNCATED`,
+    );
   }
   // Log a sample raw record so we can verify the actual library shape.
-  if (all.length > 0) {
-    console.log(`[HC raw] ${recordType} sample:`, JSON.stringify(all[0], null, 2));
+  if (records.length > 0) {
+    console.log(`[HC raw] ${recordType} sample:`, JSON.stringify(records[0], null, 2));
   } else {
     console.log(`[HC raw] ${recordType}: 0 records`);
   }
-  console.log(`[HC] ${recordType}: ${all.length} records across ${pages} page(s)`);
-  return { data: all.map(mapper).filter(Boolean), error: null };
+  console.log(
+    `[HC] ${recordType}: ${records.length} records across ${pages} page(s)` +
+      (truncated ? ' (TRUNCATED)' : ''),
+  );
+  return {
+    data: records.map(mapper).filter(Boolean),
+    error,
+    pageInfo: { pages, truncated, endedOnFailure },
+  };
 }
 
 export async function fetchSleepData(startDate, endDate) {
@@ -327,14 +324,30 @@ export async function fetchAllData(days = 7) {
     .filter((r) => r.error)
     .map((r) => r.error);
 
+  // Per-stream fetch telemetry (Q22 item 2): received count, oldest/newest
+  // timestamp of what was POSTED, page count, and whether the fetch truncated.
+  // Timestamps are taken from the mapped payload arrays, so oldestAt/newestAt
+  // describe exactly the range the backend receives.
+  const fetchMeta = {
+    sleep: streamMeta(sleepRes.data.map((r) => r.startTime), sleepRes.pageInfo),
+    hrv: streamMeta(hrvRes.data.map((r) => r.time), hrvRes.pageInfo),
+    heartRate: streamMeta(heartRate.map((r) => r.time), hrRes.pageInfo),
+    steps: streamMeta(steps.map((r) => r.date), stepsRes.pageInfo),
+    workouts: streamMeta(workoutsRes.data.map((r) => r.startTime), workoutsRes.pageInfo),
+  };
+
   return {
     syncedAt: new Date().toISOString(),
     periodDays: days,
+    // Build fingerprint — lets the backend tell which build wrote a sync without
+    // a device-side dumpsys read (Q22 item 1).
+    client: { gitSha, builtAt, appVersion, platform: 'android' },
     sleep: sleepRes.data,
     hrv: hrvRes.data,
     heartRate,
     steps,
     workouts: workoutsRes.data,
+    fetchMeta,
     errors,
   };
 }

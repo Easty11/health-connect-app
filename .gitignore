@@ -39,6 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 
+# generated build fingerprint — regenerated on every bundle, never committed (Q22)
+src/buildInfo.js
+
 *.zip
 dump.xml
 

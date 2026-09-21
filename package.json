@@ -18,7 +18,9 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "gen:contract": "node scripts/gen-contract.mjs",
-    "test:auth-path": "node scripts/auth-path-sim.mjs"
+    "gen:build-info": "node scripts/gen-build-info.mjs",
+    "test:auth-path": "node scripts/auth-path-sim.mjs",
+    "test:fetch-meta": "node scripts/fetch-meta-sim.mjs"
   },
   "private": true
 }

@@ -1,42 +1,42 @@
 ## Commits this session
 
 ```
-bff49c7 Merge pull request #52 from Easty11/feat/steps-aggregate
-e001397 feat(healthConnect): read Steps via HC daily aggregate; raw path as fallback (#42)
-d282fe9 feat(healthConnect): Steps daily-aggregate mapping core + sims (#42)
+1eb2de4 Merge pull request #54 from Easty11/feat/steps-origin-priority
+be4089a feat(healthConnect): read Steps per-origin, select by priority (#43)
+717cb11 feat(stepsAggregate): per-day step selection by writer priority + sims (#43)
 ```
-Plus this close-out commit (`gov/steps-aggregate-closeout`): `#42`, `Q22` S3 append, `FEEDBACK`,
-`ROADMAP` sprint block, `closeout.md`.
+Plus this close-out commit (`gov/steps-origin-priority-closeout`): `#43`, `Q22` S4 append, `ROADMAP`
+sprint block, `closeout.md`.
 
 ## PENDING reconciliation
 
-No `;cc` pending-commit queue was carried into this session — it opened from a self-contained brief
-(ANCHOR/OBJECTIVE/VERIFY/STEPS/GATES), not a chat close-out. All work landed:
+No `;cc` pending-commit queue carried in — the session opened from a self-contained brief. All work landed:
 
-- **Steps via HC daily aggregate (`#42`, OBJECTIVE)** — LANDED `bff49c7` (PR #52). Aggregate read with the
-  raw+`#41`-sliced path retained as fallback; payload item shape unchanged (`{date,count,sourcePackage}` +
-  optional `dataOrigins`).
-- **S0/G0 report** — ratified by the operator (time format Z-suffixed not naive; item field `count`; premise
-  at stated confidence; branch `feat/steps-aggregate`) + the bucket-alignment addition.
-- **Governance (`#42`, `Q22` S3, `FEEDBACK`)** — in this close-out commit.
-- **G2 (operator, post-merge)** — OWED; unrun. Not a defect — it is a device-side verification only the
-  operator can run.
+- **Per-day Steps selection by writer priority (`#43`, OBJECTIVE)** — LANDED `1eb2de4` (PR #54). One
+  aggregate per origin (`dataOriginFilter`), each day's count from the highest-priority writer with data,
+  never summed. Raw+`#41`-sliced path retained as the only fallback.
+- **S0/G0 report** — ratified (reader shape, `fetchStepsWithFallback` contract change, edge-cases) plus the
+  S5(h) fallback refinement (discovery-fail + all-empty → raw fallback).
+- **Governance (`#43`, `Q22` S4)** — in this close-out commit.
+- **G2 (operator, post-merge)** — OWED; unrun. Device-side verification only the operator can run.
 
 ## Cold-resume handoff
 
-**Sprint:** `#42` landed (HCA side) — Steps now read via `aggregateGroupByPeriod(DAYS)` so Garmin's
-zero-count `StepsRecord`s (which throw in the SDK's raw deserialisation) are never deserialised; raw path
-kept only as fallback with `fetchMeta.steps.mode` = `aggregate` | `raw-fallback`+`aggregateError`. Sims
-31/31; `test:fetch-meta`/`test:auth-path` unregressed; governance-guard green. Self-merged on green (PR #52).
+**Sprint:** `#43` landed (HCA side) — Steps read one aggregate per origin (`dataOriginFilter`, passthrough
+verified in the 3.5.3 bridge) and selected per day from `STEP_ORIGIN_PRIORITY` (Garmin, then Samsung
+Health), never summed — fixing `#42`'s cross-writer summing (10 Sep 10507 → 20594). Per-origin failure
+isolated into `fetchMeta.steps.originErrors`; raw fallback only when nothing usable was read. Sims 61/61
+(33 `#42` unregressed + 28 new); `test:fetch-meta`/`test:auth-path` unregressed; governance-guard green.
+Self-merged on green (PR #54).
 
-**Store maxima:** decisions `#42`, questions `Q22` (OPEN — Steps arm S3 added, closes on a G2 pass).
+**Store maxima:** decisions `#43`, questions `Q22` (OPEN — Steps arm S4 added, closes on a G2 pass).
 
-**Open questions carried:** `Q22` (Steps arm closes on G2 `mode='aggregate'` with 10 & 22 Sep populated;
-HR arm still OWED on the health-app `health_connect_sync_events` migration), `Q18` (scraper canary), `Q19`
-(12-hour clock), `Q20` (HC HRV mapper unexercised), `Q21` (owed verifications).
+**Open questions carried:** `Q22` (Steps arm closes when G2 shows 11 Sep = 15589 and 10 Sep matches Garmin
+Connect, `selection='priority'`, `originErrors` empty; open sub-point: priority list should be
+operator-settable; HR arm still OWED on the health-app migration), `Q18`, `Q19`, `Q20`, `Q21`.
 
-**Single clearest next action:** operator **G2** — rebuild `npm run android` on a clean tree, install, DEEP
-SYNC 30d **with Garmin's zero-count records still in HC** (they are the fixture; do not delete first). Read
-the newest `health_connect_sync_events` row: expect `steps.mode='aggregate'`, `failedDays` absent, `error`
-null; `health_connect_syncs` non-null steps for 2026-09-10 and 2026-09-22. If `mode='raw-fallback'`, paste
-`aggregateError` — HC's aggregate also chokes and the plan reverts to delete-and-revoke.
+**Single clearest next action:** operator **G2** — rebuild `npm run android`, deep sync 30d, read the newest
+`health_connect_sync_events` row + `health_connect_syncs` for 10/11/22 Sep. Pass: 10 Sep ≈ Garmin Connect's
+own figure (not 20594, not 10507), 11 Sep = 15589, 22 Sep = the watch's count; `fetchMeta.steps.selection=
+'priority'`, `originErrors` empty. **Report `fetchMeta.steps.origins` keys** — to match against "Easty's
+S24" on the HC screen.

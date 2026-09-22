@@ -84,6 +84,53 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `feat/steps-origin-priority` → master (trunk)  ·  created from master `a87ce8f`; gov close-out on `gov/steps-origin-priority-closeout`
+**Closed:** 2026-09-22 (Steps selected per-day from the highest-priority writer — HCA side landed, PR #54)
+
+### This session — Steps per-day from the highest-priority writer with data; never summed (`#43`, PR #54 → `1eb2de4`)
+`#42`'s single aggregate over all origins SUMMED writers on days both Samsung Health and Garmin counted the
+same steps (10 Sep 10507 → 20594; 11 Sep 15589 → 18438) — its `#42` G2 read disproved the assumed HC
+priority-dedup. Fixed HCA-side by reading one aggregate per origin and selecting by priority, concern-split:
+- **`717cb11` feat(stepsAggregate):** `STEP_ORIGIN_PRIORITY` (Garmin, then Samsung Health; unlisted after,
+  first-seen; `OWN_PACKAGE` never ranks); `selectByPriority` (per-day count from the first origin with data
+  — never summed; item `{date,count,sourcePackage,dataOrigins}`, own excluded); `unionDataOrigins`;
+  `assembleOriginSelection` (isolates a single origin's failure into `originErrors`, throws → raw fallback
+  only when nothing usable was read). `fetchStepsWithFallback` contract → `aggregate()` resolves
+  `{items,origins,originErrors}`; success meta gains additive `origins`/`originErrors`/`selection:'priority'`.
+- **`be4089a` feat(healthConnect):** `fetchStepsAggregate` runs one unfiltered discovery read + one
+  `dataOriginFilter:[origin]` read per origin in parallel (each caught), feeds `assembleOriginSelection`.
+- **gov (this close-out commit, `gov/steps-origin-priority-closeout`):** `#43`, `Q22` S4 append, `ROADMAP`, `closeout.md` — governance batched out of the feature PR.
+`test:steps-aggregate` **61/61 PASS** (33 `#42` unregressed + 28 new); `test:fetch-meta`/`test:auth-path`
+unregressed; `node --check` clean. `dataOriginFilter` passthrough verified against the 3.5.3 Kotlin bridge.
+Backend-safe: item field names unchanged, `dataOrigins` retained by `WriterIdentity` `extra="allow"`.
+Self-merged on green (`placeholder guard (POSIX)`).
+
+### Decisions / Questions
+Minted **`#43`** — per-day selection by writer priority, never summed. **`Q22`** carried OPEN with an S4
+append (mechanism passed but summed; now per-origin; closes on a G2 pass showing 11 Sep = 15589 and 10 Sep
+matching Garmin Connect; open sub-point: priority list should be operator-settable). Number claimed at merge
+against a re-read `#42` / `Q22`. Operator ratified the S0 report (reader shape, contract change, edge-cases)
+and the S5(h) fallback refinement, 2026-09-22.
+
+### Branch dispositions (terminal state)
+- `feat/steps-origin-priority` — **merged+deleted** local and remote (PR #54 → merge `1eb2de4`; remote ref
+  auto-deleted on merge, local deleted). No `BRANCHES` row — stores cite merge/commit SHAs.
+- `gov/steps-origin-priority-closeout` — the gov close-out branch; merges this turn via its own PR.
+- `claude/kind-thompson-q3u5ae` (harness-assigned) — no commits vs `origin/master`; left for the harness.
+
+### Next action
+1. **OWED — operator G2 (post-merge).** Rebuild `npm run android`, deep sync 30d, read the newest
+   `health_connect_sync_events` row and `health_connect_syncs` for 10, 11, 22 Sep. **Pass:** 10 Sep ≈
+   Garmin Connect's own figure (not 20594, not 10507), 11 Sep = 15589, 22 Sep = the watch's count;
+   `fetchMeta.steps.selection='priority'`, `originErrors` empty. **Report `fetchMeta.steps.origins` keys**
+   back to chat — match against "Easty's S24" on the HC screen. Closes Q22's Steps arm.
+2. **Still OWED (`#40` / Q22 HR arm)** — backend `health_connect_sync_events` table + persistence
+   (health-app session; migration = HOLD), then the fingerprinted rebuild; `Q21.1` runs after.
+3. Carried, unchanged — `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper unexercised),
+   `Q21` (owed verifications).
+
+### Superseded by this session (kept for the record)
+
 **Branch:** `feat/steps-aggregate` → master (trunk)  ·  created from master `c9522d1`; gov close-out on `gov/steps-aggregate-closeout`; harness branch `claude/kind-thompson-q3u5ae` left untouched (no commits vs master)
 **Closed:** 2026-09-22 (Steps read via HC daily aggregate — HCA side landed, PR #52)
 

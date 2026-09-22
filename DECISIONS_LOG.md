@@ -1488,3 +1488,56 @@ question max `Q22`. This entry takes **#42**. No new question minted (Q22 carrie
 records — the plan reverts to delete-and-revoke, and `aggregateError` is read), or a source-attribution
 defect surfaces where aggregate mode's lean `sourcePackage` pick trips the backend's F1 dedup on a
 multi-origin day (then F1 is taught to read the carried `dataOrigins` set).
+
+### #43 — Steps taken per day from the highest-priority writer with data; never summed across writers
+
+**Decision:** Steps are read with ONE `aggregateGroupByPeriod` per origin (`dataOriginFilter:[origin]`)
+over the local-day window, not a single aggregate over all origins. Per local day the count is taken from
+the highest-priority writer that has data — never a sum. `src/stepsAggregate.js` gains:
+`STEP_ORIGIN_PRIORITY = ['com.garmin.android.apps.connectmobile', 'com.sec.android.app.shealth']`
+(unlisted origins rank after the list in first-seen/discovery order; `OWN_PACKAGE` never ranks);
+`selectByPriority(perOrigin, priority)` (per-day pick + `{date,count,sourcePackage,dataOrigins}` item,
+own excluded from dataOrigins); `unionDataOrigins` (first-seen union of the unfiltered discovery read);
+`assembleOriginSelection` (assembles the selection from the caught per-origin + discovery reads, isolates
+a single origin's failure into `originErrors`, throws only when nothing usable was read). `healthConnect.js`
+`fetchStepsAggregate` runs the discovery read + per-origin reads in parallel (each caught) and feeds
+`assembleOriginSelection`. `fetchStepsWithFallback`'s contract changes: `aggregate()` now resolves to
+`{items, origins, originErrors}`; the aggregate-success `fetchMeta.steps` gains additive `origins`,
+`originErrors`, `selection:'priority'`. Raw+`#41`-sliced path retained as the ONLY fallback, taken only
+when every origin call throws OR the discovery call throws and no listed origin returned data.
+
+**Rationale:** `#42` read a single aggregate over all origins on the belief that HC's `COUNT_TOTAL` applied
+the operator's source priority (dedup across writers). The `#42` G2 read disproved it: `COUNT_TOTAL`
+**summed** Samsung Health and Garmin on days both counted the same steps (10 Sep 10507 → 20594; 11 Sep
+15589 → 18438). The mechanism assumed in `#42` was wrong. `dataOriginFilter` is honoured by the 3.5.3
+bridge (`ReactStepsRecord.getAggregateGroupByPeriodRequest` → `convertJsToDataOriginSet`, verified), so a
+per-origin read gives each writer's own daily total, and priority selection takes the fuller record
+(Garmin: watch worn when the phone isn't) without ever summing. Per-origin failure is isolated so one
+writer's bad read does not lose the others; raw fallback is reserved for a genuinely empty/failed read so
+an empty steps array is never POSTed when a writer may have had data.
+
+**Empirical premise (recorded at confidence):** the summing is **Certain** — the `#42` G2 device read
+returned the summed totals above and `steps.selection` was the single-aggregate path. Garmin as a
+contributing writer is **Likely** (per `#42`: `health_connect_record_sources` 9–13 Sep shows Garmin +
+Samsung Health; the summed pairs are consistent with two writers each counting ~the same day).
+
+**Status:** HCA side LANDED on master (PR #54, this session, `feat/steps-origin-priority`). Device
+confirmation is OWED — operator G2, post-merge 30d deep sync.
+
+**How you know:** `scripts/steps-aggregate-sim.mjs` (`test:steps-aggregate`) **61/61 PASS** against the
+real core + real `streamMeta` — two origins with same-day data → priority origin's count alone (10507, not
+21014) with both in `dataOrigins`; priority origin absent → next origin; unlisted-only → first-seen order;
+a listed origin outranks an earlier-seen unlisted one; `OWN_PACKAGE` never wins and never appears in
+`dataOrigins`, own-only day yields no item; one origin throws → others selected, `originErrors` set, no
+fallback; every origin throws → raw fallback; discovery throws + all listed empty → raw fallback naming
+discovery, but discovery throws with data present → no fallback. `#42`'s 33 assertions unregressed.
+`test:fetch-meta`/`test:auth-path` unregressed; `node --check` clean; governance-guard green.
+`dataOriginFilter` passthrough verified against the 3.5.3 Kotlin bridge. Decision ratified by the operator
+this session (reader shape, contract change, edge-cases, and the S5(h) fallback refinement).
+
+**Number claimed at merge:** `origin/master` re-read immediately before landing — decision max `### #42`,
+question max `Q22`. This entry takes **#43**. No new question minted (Q22 carries the Steps workstream).
+
+**Do not revisit unless:** G2 still shows a summed total on a two-writer day (then the per-origin filter is
+not isolating writers as the bridge read implied — re-open the mechanism), or the priority list needs to
+become operator-settable rather than a code constant (Q22 S4 sub-point).

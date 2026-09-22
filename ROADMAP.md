@@ -84,6 +84,58 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `feat/background-permission-button` → master (trunk)  ·  created from master `5feba03`; gov close-out on `gov/background-permission-closeout`; harness branch `claude/clever-franklin-5364uj` left untouched (no commits vs master)
+**Closed:** 2026-09-22 (background permission requestable on an already-permitted install — HCA side landed, PR #58)
+
+### This session — background permission requestable on an already-permitted install (`#45`, PR #58 → `2b1d5ac`)
+`#44` gated background-sync registration on `BackgroundAccessPermission` but only requested it inside the
+first-run grant flow, whose button hides once base permissions exist — so on the operator's already-permitted
+phone the permission was never requested and background sync stayed "off (permission off)" with no in-app fix.
+Fixed HCA-side, two concern-split commits:
+- **`e387717` feat(sync):** `healthConnect.requestBackgroundPermission()` requests ONLY
+  `[{accessType:'read', recordType:'BackgroundAccessPermission'}]` (3.5.3 accepts a single-item array), returns
+  the granted-list membership after. New pure `src/backgroundPermission.js` — `shouldShowEnableBackground`
+  (base granted && background missing) + `runEnableBackground` (request → register only on grant), reusing
+  `hasBackgroundPermission` from `syncRunner` read-only (explicit `.js` so plain-node ESM resolves it).
+  `background-permission-sim.mjs`.
+- **`9eef46d` feat(sync):** "Enable background sync" button under the status line, shown only in the
+  base-granted/background-missing gap; on tap runs the source-bound `runEnableBackground` (→
+  `requestBackgroundPermission` + `ensureBackgroundSyncRegistered`), refreshes the status on grant, shows
+  "off (denied — check Health Connect app permissions)" on denial, hides once granted. Additive only.
+- **gov (this close-out commit, `gov/background-permission-closeout`):** `#45`, `ROADMAP`, `closeout.md`.
+`test:background-permission` **10/10 PASS** against the real `src/backgroundPermission.js`; `test:background-sync`/
+`test:auth-path`/`test:fetch-meta`/`test:steps-aggregate` unregressed; `node --check` clean; governance-guard
+(`placeholder guard (POSIX)`) green on PR #58. GUARD held: `syncRunner`, the background task body, and the
+interval untouched. `npm run android` NOT run on Code's side (no Android SDK) — the real tap is operator G2.
+Self-merged on green.
+
+### Decisions / Questions
+Minted **`#45`** — background permission requestable on an already-permitted install (dedicated single-permission
+request + button). No new question (a bug-fix follow-on to `#44`; `Q23` carries the trigger-persistence
+follow-up). Number claimed at merge against a re-read `#44` / `Q23`. Cross-ref `#44` (the registration gate
+this makes reachable).
+
+### Branch dispositions (terminal state)
+- `feat/background-permission-button` — **merged+deleted** local and remote (PR #58 → merge `2b1d5ac`; remote
+  ref auto-deleted on merge, local deleted; `git cherry origin/master` empty). No `BRANCHES` row — stores cite
+  merge/commit SHAs.
+- `gov/background-permission-closeout` — the gov close-out branch; merges this turn via its own PR.
+- `claude/clever-franklin-5364uj` (harness-assigned) — untouched; no commits vs `origin/master`. Left for the harness.
+
+### Next action
+1. **OWED — operator G2.** Rebuild `npm run android`, open the app, tap **Enable background sync**, accept the
+   prompt. **Pass:** status flips to "Background sync: on". If the prompt never appears and the result is
+   denied, HC's background-read feature is unavailable on this device/HC version — report it; it changes the
+   plan (off-phone alternatives named in `#44`), not the code.
+2. **Then #44's G2 (multi-day).** With background on, set the app Unrestricted (Samsung Settings → Battery),
+   do NOT open the app for 48h, read `health_connect_sync_events` — ≥6 rows over 48h with the new `git_sha`
+   and no manual opens.
+3. **OWED — health-app `Q23`.** Persist `client.trigger` (add a `trigger` column; migration = HOLD).
+4. Carried, unchanged — `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper unexercised),
+   `Q21` (owed verifications).
+
+### Superseded by this session (kept for the record)
+
 **Branch:** `feat/background-sync` → master (trunk)  ·  created from master `78ff971`; gov close-out on `gov/background-sync-closeout`; harness branch `claude/clever-franklin-5364uj` left untouched (it IS master `78ff971`, no commits vs master)
 **Closed:** 2026-09-22 (scheduled background HC sync — HCA side landed, PR #56)
 

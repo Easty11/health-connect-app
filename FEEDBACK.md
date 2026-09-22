@@ -22,6 +22,15 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-09-22 — this repo is bare workflow: `app.json` permissions never reach the build  [env]
+**Friction:** `android/` is committed and built directly; there is no `expo prebuild` in the build path,
+so `app.json` `android.permissions` and plugin config are inert. `#44` added the background permission to
+`app.json` only, so the built APK never declared it — the OS showed no background toggle and `#45`'s Enable
+button had nothing to grant. Cost two device round-trips to surface the real cause.
+**Cost:** two operator rebuild-and-test cycles chasing a permission that was never in the manifest.
+**Fix:** manifest edits go in `android/app/src/main/AndroidManifest.xml`; `app.json` is kept in sync only
+as the source of truth for the day prebuild is ever run. Recorded in CLAUDE.md § Environment and `#46`.
+
 ### 2026-09-22 — global expo-cli is deprecated; `npm run android` is the only supported build path  [env]
 **Friction:** the global `expo-cli` is deprecated and dies AFTER a successful release build by trying to
 start a dev server, which reads as a build failure when the build actually succeeded.

@@ -1661,3 +1661,41 @@ carries the remaining trigger-persistence follow-up).
 **Do not revisit unless:** G2 shows the prompt never appears and the permission cannot be granted in-app
 (then HC's background-read feature is unavailable on the device/HC version — the schedule cannot live on the
 phone via Health Connect, and the off-phone alternatives named in `#44` become the fork).
+
+### #46 — Background permission declared in the native manifest (this repo builds from committed `android/`)
+
+**Decision:** `READ_HEALTH_DATA_IN_BACKGROUND` is declared in
+`android/app/src/main/AndroidManifest.xml`, beside the eleven existing `health.READ_*` permissions.
+`app.json` keeps the permission too (harmless; correct if prebuild is ever run) but is not the source that
+reaches the build. Manifest line only — no prebuild introduced, no other native change.
+
+**Rationale:** this repo is bare workflow — `android/` is committed and compiled directly, and there is NO
+`expo prebuild` step in `package.json` or the build path. So `app.json` `android.permissions` (where `#44`
+added the background permission) and the `react-native-health-connect` plugin config never reach the build.
+The installed APK therefore never declared `READ_HEALTH_DATA_IN_BACKGROUND`, which is why the OS showed no
+background toggle and `#45`'s "Enable background sync" button had nothing to grant. The manifest is the only
+declaration site that this build path reads.
+
+**Empirical premise (recorded at confidence):** the manifest listed the eleven `health.READ_*` permissions
+and NOT the background one — **Certain**, from the tree (`android/app/src/main/AndroidManifest.xml` before
+this change). No prebuild step exists — **Certain**, from `package.json` scripts (no `prebuild`; the build is
+`expo run:android --variant release` against the committed `android/`). That the OS All-permissions screen
+will now list the background item — **Likely**, pending G2 (the operator's on-device read).
+
+**Status:** LANDED on master (PR #60 → merge `fd50198`, `fix/manifest-background-permission`). Device
+verification OWED — operator G2 (rebuild; the OS "All permissions" screen lists a background/health item; tap
+Enable background sync; status flips to on).
+
+**How you know:** manifest well-formed after the edit — `xmllint --noout` and `python xml.dom.minidom.parse`
+both pass; 12 `health.READ_*` permissions present. Governance-guard (`placeholder guard (POSIX)`) green on
+PR #60. `npm run android` NOT run on Code's side (no Android SDK) — the rebuild + on-device read is
+operator G2. Cross-ref `#44` (added the permission to `app.json`, which this makes effective) and `#45`
+(the in-app request/button, which had nothing to grant until this).
+
+**Number claimed at merge:** `origin/master` re-read immediately before landing — decision max `### #45`,
+question max `Q23`. This entry takes **#46**. No new question minted.
+
+**Do not revisit unless:** a prebuild step is introduced (then `app.json` becomes the source of truth and the
+manifest declaration is regenerated from it — keep the two in sync until then), or G2 shows the OS still lists
+no background item with the manifest declaring it (then the permission name or HC version is wrong — re-check
+against the installed HC provider).

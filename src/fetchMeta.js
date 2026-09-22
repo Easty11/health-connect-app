@@ -92,5 +92,138 @@ export function streamMeta(times, pageInfo) {
     pages: pageInfo.pages,
     truncated: pageInfo.truncated,
     endedOnFailure: pageInfo.endedOnFailure,
+    // Carried from the fetch so an on-device failure is observable in the
+    // payload (a release APK emits no ReactNativeJS logcat). Defaults keep the
+    // pre-slicing pageInfo callers (and the older sim assertions) working.
+    error: pageInfo.error ?? null,
+    // Populated by paginateWithSlicing: days the slice-resume could not read,
+    // and whether the slicing path ran at all.
+    failedDays: pageInfo.failedDays ?? [],
+    sliced: pageInfo.sliced ?? false,
+  };
+}
+
+// The last-good-record anchor for the slice resume. Interval records (Steps,
+// SleepSession, HeartRate, ExerciseSession) carry `startTime`; instantaneous
+// records (HRV, RestingHeartRate, OxygenSaturation, RespiratoryRate) carry
+// `time`. The seam runs for every stream, so anchor on either.
+function recordStart(r) {
+  return r?.startTime ?? r?.time ?? null;
+}
+
+// Seam-dedup key. Prefer the stable Health Connect record id; when absent, the
+// whole record serialised — a re-fetch of the same physical record is
+// byte-identical (including metadata.lastModifiedTime), so this dedups the
+// re-covered record exactly and never merges two genuinely distinct records.
+function seamKey(r) {
+  const id = r?.metadata?.id;
+  return JSON.stringify([
+    r?.startTime ?? null,
+    r?.endTime ?? null,
+    id != null ? id : JSON.stringify(r),
+  ]);
+}
+
+// Split [startISO, endISO) into UTC-day slices. The first slice may begin
+// mid-day (it resumes from the last good record's timestamp) and the last may
+// end mid-day (the window end); interior slices are whole UTC days.
+function utcDaySlices(startISO, endISO) {
+  const slices = [];
+  let cursor = Date.parse(startISO);
+  const end = Date.parse(endISO);
+  if (Number.isNaN(cursor) || Number.isNaN(end) || cursor >= end) return slices;
+  while (cursor < end) {
+    const d = new Date(cursor);
+    const nextMidnight = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1);
+    const sliceEnd = Math.min(nextMidnight, end);
+    slices.push({
+      day: new Date(cursor).toISOString().slice(0, 10),
+      startTime: new Date(cursor).toISOString(),
+      endTime: new Date(sliceEnd).toISOString(),
+    });
+    cursor = sliceEnd;
+  }
+  return slices;
+}
+
+/**
+ * paginate() with a slice-on-failure resume, so a single poison page cannot
+ * lose the rest of the window (the deterministic Steps 30d deep-sync failure,
+ * Q22). Wraps paginate() and never changes its behaviour on a clean fetch.
+ *
+ * On `endedOnFailure` from the initial paged fetch, resume from the last good
+ * record (or the whole window if none accumulated) in per-day UTC slices, each
+ * a fresh paginate() call. A slice that itself fails is recorded in
+ * `failedDays` and skipped; successful slices are appended. No retry, no
+ * backoff, no newest-first — a poison page is deterministic, so slicing pins
+ * the unreadable day rather than re-hitting it.
+ *
+ * Returns paginate()'s shape plus:
+ *   - failedDays: [{ day: 'YYYY-MM-DD', error }]  (days the resume could not read)
+ *   - sliced: whether the slicing path ran
+ * Semantics: endedOnFailure = the INITIAL paged fetch threw; truncated = any
+ * failedDays remain OR a page cap was hit; error = the first failure.
+ */
+export async function paginateWithSlicing(reader, timeRangeFilter, opts = {}) {
+  const initial = await paginate(reader, timeRangeFilter, opts);
+
+  if (!initial.endedOnFailure) {
+    // Clean (or cap-truncated) fetch: paginate()'s output verbatim, plus the
+    // two additive fields. No slicing.
+    return { ...initial, failedDays: [], sliced: false };
+  }
+
+  // ── slice-on-failure resume ──
+  const windowEndISO = timeRangeFilter?.endTime ?? null;
+
+  // Resume anchor: the newest good record's timestamp, else the window start.
+  let resumeStartISO = timeRangeFilter?.startTime ?? null;
+  let maxMs = -Infinity;
+  for (const r of initial.records) {
+    const t = recordStart(r);
+    const ms = t == null ? NaN : Date.parse(t);
+    if (!Number.isNaN(ms) && ms > maxMs) { maxMs = ms; resumeStartISO = t; }
+  }
+
+  const slices = windowEndISO ? utcDaySlices(resumeStartISO, windowEndISO) : [];
+
+  const records = [...initial.records];
+  const seen = new Set(records.map(seamKey));
+  const failedDays = [];
+  let pages = initial.pages;
+  let cappedHit = false;
+
+  for (const slice of slices) {
+    const sliceResult = await paginate(
+      reader,
+      { ...timeRangeFilter, startTime: slice.startTime, endTime: slice.endTime },
+      opts,
+    );
+    pages += sliceResult.pages;
+
+    if (sliceResult.endedOnFailure) {
+      // Unreadable day: name it, drop its partial, keep going.
+      failedDays.push({ day: slice.day, error: sliceResult.error });
+      continue;
+    }
+    if (sliceResult.truncated) cappedHit = true; // page cap inside a slice
+
+    // Append in fetch order (ascending), deduping the seam re-cover.
+    for (const r of sliceResult.records) {
+      const key = seamKey(r);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      records.push(r);
+    }
+  }
+
+  return {
+    records,
+    pages,
+    truncated: failedDays.length > 0 || cappedHit,
+    endedOnFailure: initial.endedOnFailure,
+    error: initial.error,
+    failedDays,
+    sliced: true,
   };
 }

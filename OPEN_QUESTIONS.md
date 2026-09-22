@@ -716,3 +716,14 @@ server-side), the truncation diagnostics land both sides with G1 (a simulated sh
 the truncation flag and, if newest-first is later added, keeps the NEWEST data) and G3 (1000-record
 paging tests unregressed) green, and Q21.1's behavioural gate finally runs and passes (latest
 `heart_rate` within hours of `synced_at`; Aug-25→31-class activities show non-zero HR).
+
+**S2 (2026-09-22, `feat/paged-fetch-slicing` / `#41`) — poison-page slice resume LANDED (HCA side).**
+Steps 30d deep sync fails at the 8–12 Sep span, which coincides with phone-written (ring out of action)
+step records ~3× denser than ring-written. Root cause unknown until `failedDays.error` is read. The fix
+(`#41`) keeps ascending `paginate`, and on failure resumes from the last good record in per-day UTC
+slices, recording and skipping any day it still cannot read (`fetchMeta.<stream>.sliced` /
+`failedDays[]`). **Closes when** the day and error are known — operator G2 reads the newest
+`health_connect_sync_events` row after a 30d DEEP SYNC rebuild: `steps.sliced=true`, `steps.failedDays`
+names ≤1 day with an error string, and `health_connect_syncs` carries non-null steps for 2026-09-11 /
+2026-09-12 (Samsung Health 9343 / 7947) — and the named day is either fixed or accepted as a 1-day loss.
+Report the `failedDays.error` string back to chat; it decides the follow-up.

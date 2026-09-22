@@ -9,7 +9,14 @@ import {
   aggregateGroupByPeriod,
 } from 'react-native-health-connect';
 import { paginateWithSlicing, streamMeta, HC_PAGE_SIZE, HC_MAX_PAGES } from './fetchMeta';
-import { localDayFilter, fetchStepsWithFallback } from './stepsAggregate';
+import {
+  localDayFilter,
+  fetchStepsWithFallback,
+  assembleOriginSelection,
+  unionDataOrigins,
+  STEP_ORIGIN_PRIORITY,
+  OWN_PACKAGE,
+} from './stepsAggregate';
 // Build fingerprint (Q22 item 1). Generated, gitignored, fail-closed: if the
 // generation step did not run, this import fails the bundle rather than shipping
 // a stale fingerprint. No fallback (see scripts/gen-build-info.mjs).
@@ -212,22 +219,53 @@ function heartRateMapper(r) {
 }
 
 /**
- * Steps via HC daily aggregate (#42), with the raw path retained as the ONLY
- * fallback. aggregateGroupByPeriod(DAYS) reads COUNT_TOTAL per LOCAL day, so
- * Garmin's zero-count StepsRecords — which throw in the SDK's RAW deserialisation
- * ("count must not be less than 1, currently 0") before the app can see or filter
- * them — are never deserialised individually. HC applies the operator's HC source
- * priority to COUNT_TOTAL. On ANY aggregate throw, falls back to the existing
- * raw+#41-sliced path. Returns { steps, meta } (meta.mode 'aggregate' |
- * 'raw-fallback'). The pure branch/mapping logic lives in ./stepsAggregate (sim).
+ * Steps via HC daily aggregate (#42), per-writer-priority (#43), with the raw
+ * path retained as the ONLY fallback. aggregateGroupByPeriod(DAYS) reads
+ * COUNT_TOTAL per LOCAL day, so Garmin's zero-count StepsRecords — which throw in
+ * the SDK's RAW deserialisation ("count must not be less than 1, currently 0")
+ * before the app can see or filter them — are never deserialised individually.
+ *
+ * #42 assumed HC's COUNT_TOTAL over all origins applied source priority; G2 showed
+ * it SUMMED writers on days both counted the same steps. #43 instead runs one
+ * aggregate per origin (dataOriginFilter) and takes each day's count from the
+ * highest-priority origin with data — never a sum. One unfiltered "discovery" read
+ * finds origins beyond STEP_ORIGIN_PRIORITY; reads run in parallel; a single
+ * origin's failure is isolated into fetchMeta.steps.originErrors. Falls back to the
+ * raw+#41-sliced path only when the read got nothing usable (every origin failed,
+ * or discovery failed and no listed origin returned data). Returns { steps, meta }
+ * (meta.mode 'aggregate' | 'raw-fallback'). Pure logic lives in ./stepsAggregate.
  */
 async function fetchStepsAggregate(startDate, endDate) {
+  const timeRangeFilter = localDayFilter(startDate, endDate);
+  const timeRangeSlicer = { period: 'DAYS', length: 1 };
+  const readOrigin = (dataOriginFilter) => aggregateGroupByPeriod({
+    recordType: 'Steps',
+    timeRangeFilter,
+    timeRangeSlicer,
+    ...(dataOriginFilter ? { dataOriginFilter } : {}),
+  });
+
   const result = await fetchStepsWithFallback({
-    aggregate: () => aggregateGroupByPeriod({
-      recordType: 'Steps',
-      timeRangeFilter: localDayFilter(startDate, endDate),
-      timeRangeSlicer: { period: 'DAYS', length: 1 },
-    }),
+    aggregate: async () => {
+      // Discovery: one unfiltered read to find origins beyond the priority list.
+      // Best-effort — its failure only means no extra origins this run.
+      let discoveryResult;
+      let discovered = [];
+      try {
+        discovered = unionDataOrigins(await readOrigin(null));
+        discoveryResult = { origins: discovered };
+      } catch (e) {
+        discoveryResult = { error: e?.message ?? String(e) };
+      }
+      // Priority list ∪ discovered, never our own package. Per-origin reads run in
+      // parallel; each origin's failure is caught and isolated (not a whole-read fail).
+      const queried = [...new Set([...STEP_ORIGIN_PRIORITY, ...discovered])]
+        .filter((o) => o !== OWN_PACKAGE);
+      const originResults = await Promise.all(queried.map((origin) => readOrigin([origin])
+        .then((buckets) => ({ origin, buckets }))
+        .catch((e) => ({ origin, error: e?.message ?? String(e) }))));
+      return assembleOriginSelection({ originResults, discoveryResult, priority: STEP_ORIGIN_PRIORITY });
+    },
     // Fallback: the unchanged raw path (safeFetch -> stepsMapper -> aggregateSteps),
     // incl. #41 slice-resume. Kept as fallback only (invariant: raw path retained).
     rawFetch: async () => {
@@ -236,10 +274,16 @@ async function fetchStepsAggregate(startDate, endDate) {
     },
     streamMeta,
   });
+
   if (result.meta.mode === 'raw-fallback') {
-    console.log('[HC] Steps: aggregate threw, used raw fallback —', result.meta.aggregateError);
+    console.log('[HC] Steps: aggregate read nothing usable, used raw fallback —', result.meta.aggregateError);
   } else {
-    console.log(`[HC] Steps: aggregate ${result.steps.length} day(s)`);
+    const errs = Object.keys(result.meta.originErrors ?? {});
+    console.log(
+      `[HC] Steps: priority aggregate ${result.steps.length} day(s) across origins ` +
+        `${JSON.stringify(Object.keys(result.meta.origins ?? {}))}` +
+        (errs.length ? ` (originErrors: ${JSON.stringify(errs)})` : ''),
+    );
   }
   return result;
 }

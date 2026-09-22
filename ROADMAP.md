@@ -84,6 +84,48 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `fix/manifest-background-permission` → master (trunk)  ·  created from master `6ba2e3a`; gov close-out on `gov/manifest-background-closeout`; harness branch `claude/clever-franklin-5364uj` left untouched (no commits vs master)
+**Closed:** 2026-09-22 (background permission declared in the native manifest — landed, PR #60)
+
+### This session — background permission declared in the native manifest (`#46`, PR #60 → `fd50198`)
+The real root cause behind `#44`/`#45`'s operator-side failure: this repo builds from the committed `android/`
+folder with NO `expo prebuild`, so `app.json` `android.permissions` (where `#44` added the background
+permission) never reached the build — the APK never declared it, the OS showed no background toggle, and
+`#45`'s Enable button had nothing to grant.
+- **`434df23` fix(android):** add `<uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND"/>`
+  beside the eleven `health.READ_*` permissions in `android/app/src/main/AndroidManifest.xml`. `app.json` left
+  as-is (correct if prebuild is ever run). Manifest line only (GUARD).
+- **gov (this close-out commit, `gov/manifest-background-closeout`):** `#46`, `FEEDBACK` (bare-workflow build
+  shape), `CLAUDE.md` § Environment (manifest is the declaration site), `ROADMAP`, `closeout.md`.
+Manifest well-formed (`xmllint --noout` + `python xml.dom`); 12 `health.READ_*` present; governance-guard
+(`placeholder guard (POSIX)`) green on PR #60. `npm run android` NOT run on Code's side (no Android SDK) —
+the rebuild + on-device read is operator G2. Self-merged on green.
+
+### Decisions / Questions
+Minted **`#46`** — background permission declared in the native manifest (this repo builds from committed
+`android/`; `app.json` is inert without prebuild). No new question. Number claimed at merge against a re-read
+`#45` / `Q23`. Cross-ref `#44` (added the permission to `app.json`) and `#45` (the in-app request/button).
+
+### Branch dispositions (terminal state)
+- `fix/manifest-background-permission` — **merged+deleted** local and remote (PR #60 → merge `fd50198`; remote
+  ref auto-deleted on merge, local deleted; `git cherry origin/master` empty). No `BRANCHES` row — stores cite
+  merge/commit SHAs.
+- `gov/manifest-background-closeout` — the gov close-out branch; merges this turn via its own PR.
+- `claude/clever-franklin-5364uj` (harness-assigned) — untouched; no commits vs `origin/master`. Left for the harness.
+
+### Next action
+1. **OWED — operator G2.** Rebuild `npm run android`, install. The OS "All permissions" screen for the app now
+   lists a background/health item. Tap **Enable background sync** (`#45`) → status flips to "Background sync:
+   on". This is the fix that makes `#44`/`#45` actually work on the device.
+2. **Then #44's G2 (multi-day).** With background on, set the app Unrestricted (Samsung Settings → Battery),
+   do NOT open the app for 48h, read `health_connect_sync_events` — ≥6 rows over 48h with the new `git_sha`
+   and no manual opens.
+3. **OWED — health-app `Q23`.** Persist `client.trigger` (add a `trigger` column; migration = HOLD).
+4. Carried, unchanged — `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper unexercised),
+   `Q21` (owed verifications).
+
+### Superseded by this session (kept for the record)
+
 **Branch:** `feat/background-permission-button` → master (trunk)  ·  created from master `5feba03`; gov close-out on `gov/background-permission-closeout`; harness branch `claude/clever-franklin-5364uj` left untouched (no commits vs master)
 **Closed:** 2026-09-22 (background permission requestable on an already-permitted install — HCA side landed, PR #58)
 

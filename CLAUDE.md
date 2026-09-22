@@ -244,6 +244,12 @@ code-state defects (PENDING until resolved into a decision or a fix), and
   continuation, no `head`/`tail`, no inline `*` globbing the way bash does.
 - For DB queries, **write a Python script to a file** via
   `Out-File -Encoding utf8` and run it — don't fight inline quoting.
+- **Bare workflow — `android/` is committed and built directly.** There is no
+  `expo prebuild` step in the build path, so `app.json` `android.permissions` and
+  the `react-native-health-connect` plugin config **do not reach the build**.
+  Native manifest edits (permissions, services) go in
+  `android/app/src/main/AndroidManifest.xml`; keep `app.json` in sync as the
+  source of truth for the day prebuild is ever run (`#46`).
 
 ---
 

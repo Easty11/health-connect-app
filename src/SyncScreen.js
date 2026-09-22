@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
   ActivityIndicator, StyleSheet, useColorScheme, Alert, Button,
 } from 'react-native';
+import { getGrantedPermissions } from 'react-native-health-connect';
 import { syncHealthData } from './api';
 import { requestPermissions, fetchAllData } from './healthConnect';
-import { runSync } from './syncRunner';
+import { runSync, hasBackgroundPermission } from './syncRunner';
+import { ensureBackgroundSyncRegistered, getLastBackgroundSync } from './backgroundSync';
 import { validateNight, runDeepConfidence } from './deepSleepConfidence';
 
 // Last-night window: yesterday 18:00 → today 11:00 local. Wide enough to capture
@@ -70,6 +72,27 @@ export default function SyncScreen({ token, username, onLogout }) {
   const [conf, setConf] = useState(null); // runDeepConfidence() result object
   const [confError, setConfError] = useState('');
 
+  // Background-sync status line (S5). `on` reflects the live background HC grant —
+  // the same gate registration uses — and `lastBg` is the timestamp runSync writes
+  // to local storage after each background run.
+  const [bgStatus, setBgStatus] = useState({ on: false, reason: 'checking' });
+  const [lastBg, setLastBg] = useState(null);
+
+  const refreshBackgroundStatus = useCallback(async () => {
+    setLastBg(await getLastBackgroundSync());
+    try {
+      const granted = await getGrantedPermissions();
+      setBgStatus(hasBackgroundPermission(granted)
+        ? { on: true, reason: null }
+        : { on: false, reason: 'permission off' });
+    } catch (e) {
+      setBgStatus({ on: false, reason: 'HC unavailable' });
+    }
+  }, []);
+
+  // Refresh on mount and whenever a grant flips permissionsGranted.
+  useEffect(() => { refreshBackgroundStatus(); }, [refreshBackgroundStatus, permissionsGranted]);
+
   // ── Health Connect requires permissions before reading ──
   async function handleGrantPermissions() {
     setGranting(true);
@@ -78,6 +101,10 @@ export default function SyncScreen({ token, username, onLogout }) {
       const granted = await requestPermissions();
       if (granted && granted.length > 0) {
         setPermissionsGranted(true);
+        // Register the background task now, so a same-session first grant does not
+        // wait for the next app launch. Idempotent and self-gating on the permission.
+        await ensureBackgroundSyncRegistered();
+        await refreshBackgroundStatus();
       } else {
         setSyncError('Permissions not granted. Tap Grant Permissions to try again.');
       }
@@ -224,6 +251,16 @@ export default function SyncScreen({ token, username, onLogout }) {
           </View>
         </>
       )}
+
+      {/* Background sync status (S5) — one status line + last background sync time */}
+      <View style={styles.bgStatus}>
+        <Text style={[styles.bgStatusText, { color: t.subtext }]}>
+          Background sync: {bgStatus.on ? 'on' : `off (${bgStatus.reason})`}
+        </Text>
+        <Text style={[styles.bgStatusText, { color: t.subtext }]}>
+          Last background sync: {lastBg ? new Date(lastBg).toLocaleString() : '—'}
+        </Text>
+      </View>
 
       {/* DEV: deep-sleep gate — runs validateNight() for last night */}
       <View style={styles.btn}>
@@ -372,6 +409,10 @@ const styles = StyleSheet.create({
 
   // Button wrapper — matches App.js "Test HRV Extraction" (s.btn)
   btn: { marginBottom: 12 },
+
+  // Background-sync status line (S5)
+  bgStatus: { marginBottom: 12 },
+  bgStatusText: { fontSize: 12, textAlign: 'center' },
 
   // Progress — matches App.js extracting box
   progressBox: { marginTop: 16, alignItems: 'center' },

@@ -662,7 +662,7 @@ fork, not a surprise. Owner: Luke to observe; a future Code session to chunk if 
 **Closes when:** both runs are done — the behavioural query passes (or names a residual defect) and
 the 30-day POST is confirmed to fit (or chunking lands).
 
-### Q22 — HR lags ~6d because the #38 pagination fix has never run on a device (H1 CONFIRMED)  ·  OPEN
+### Q22 — HR lags ~6d because the #38 pagination fix has never run on a device (H1 CONFIRMED)  ·  DONE → #44
 **State:** OPEN — the fix is owed on a device. **Progress (2026-09-21, `8c154c8` / PR #48):** the S1
 diagnostics HCA side LANDED — `client` build fingerprint + per-stream `fetchMeta`, fail-closed
 generation via `metro.config.js`, G1+G3 sim `test:fetch-meta` 22/22 PASS (see `#40`). Still OWED:
@@ -750,3 +750,44 @@ Health), never a sum. **Closes when** G2 shows 11 Sep = 15589 and 10 Sep matches
 figure (not 20594, not 10507), with `fetchMeta.steps.selection='priority'` and `originErrors` empty; report
 `fetchMeta.steps.origins` keys to match against the HC screen's writer list. **Open sub-point:** the
 priority list is a code constant; it should eventually be operator-settable.
+
+**CLOSE (2026-09-22, `#44`) — both arms verified on operator-pasted prod reads.** The two arms are
+now closed against Railway reads the operator pasted in chat on 2026-09-21/22 (an unseeable surface
+Code cannot self-verify; recorded as operator evidence, not a Code claim):
+- **HR arm.** `#38` ran on a device via the `4b8cc8f`-era fingerprinted sync (`pages: 6`), and the
+  follow-on 30-day backfill read `truncated: false`; HR `record_sources` show 400–520/day across
+  25–31 Aug — the recent-end HR the pre-4-Sep single-page truncation was dropping now arrives.
+  `Q21.1`'s session-level read (`hr_avg` on `aerobic_sessions`) is NOT satisfiable by HC ingest
+  stage 1, which is zoneless by design; that check moves to **health-app Q159** (stage 2), now
+  unblocked — it is not a residual of this arm.
+- **Steps arm.** `#42`/`#43` verified against Garmin Connect day-for-day 9–13 Sep
+  (7193 / 11849 / 9793 / 6951 / 7684), `selection='priority'`, `originErrors` empty. The earlier
+  15589 raw figure was a multi-day record credited to its start date, not a true single-day count.
+The `#44` background-sync work builds on this closed baseline: the paginating, priority-selecting
+build is what the scheduled task now runs unattended. The **operator-settable priority list**
+sub-point is NOT closed by this — it carries forward as a `#43` "do not revisit unless" clause, not
+a Q22 residual.
+
+### Q23 — `client.trigger` is accepted but not persisted; `health_connect_sync_events` has no trigger column  ·  OWED
+**State:** OWED — settled, loop-close named (a health-app session adds the column + persists the
+field), not yet run. **Minted:** 2026-09-22, on `gov/background-sync-closeout` (`#44`).
+**Number-at-merge:** questions max re-read `Q22` immediately before this row; takes `Q23`.
+
+`#44` stamps `client.trigger` (`'manual'` | `'background'`) into the `/sync` payload's `client`
+block so a sync's provenance is on the wire. Verified against health-app master (`4f13349`):
+`ClientInfo` is `ConfigDict(extra="allow")` (`backend/routers/health_connect.py`), so the field is
+**accepted, never a 422** — but the `health_connect_sync_events` INSERT writes only named columns
+(`git_sha`, `built_at`, `app_version`, `platform`, `period_days`, `fetch_meta`); there is **no
+`trigger` column and no raw-`client` JSON column** (the only JSON column, `fetch_meta`, holds
+`fetchMeta`, not `client`). So `client.trigger` lands transiently in `payload.client.model_extra`
+and is dropped — it reaches no persisted row.
+
+Consequence for `#44`'s acceptance (G2): the pass condition is **cadence-based**, not trigger-tagged
+— ≥6 `health_connect_sync_events` rows over 48h carrying the new build's `git_sha` with **no manual
+app opens** (with no manual opens, every row is a background sync). `synced_at` cadence + `git_sha`
++ `fetch_meta IS NOT NULL` are all persisted and sufficient.
+
+**Closes when** a health-app session adds a `trigger` column to `health_connect_sync_events` and
+persists `payload.client.model_extra.get('trigger')` (schema migration = HOLD there; no HCA change —
+the field already ships). Then G2 can select on `trigger='background'` directly. Low urgency: the
+cadence-based read already proves the objective; the column only sharpens the evidence.

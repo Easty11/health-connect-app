@@ -1541,3 +1541,71 @@ question max `Q22`. This entry takes **#43**. No new question minted (Q22 carrie
 **Do not revisit unless:** G2 still shows a summed total on a two-writer day (then the per-origin filter is
 not isolating writers as the bridge read implied — re-open the mechanism), or the priority list needs to
 become operator-settable rather than a code constant (Q22 S4 sub-point).
+
+### #44 — Background HC sync via Expo background task; `runSync` extracted headless; `client.trigger` records manual vs background
+
+**Decision:** A periodic Expo background task (`expo-background-task`, SDK 56) runs the SAME 7-day sync as
+the manual button, unattended, at a 6-hour (`minimumInterval: 360`) cadence. The sync is extracted from
+`SyncScreen` into a pure, dependency-injected `src/syncRunner.js` — `runSync({days, trigger, getToken,
+fetchAllData, syncHealthData, setLastSync})` reads the token (V5 path), fetches the HC window, stamps
+`client.trigger` (`'manual'` | `'background'`) beside the build fingerprint (`#40`), POSTs, and NEVER throws
+(returns `{ok, received, data, meta, error}`). The stamp lives in `runSync`, not `fetchAllData`, so
+`healthConnect.js` and `api.js` are untouched (the only payload change is `client.trigger`).
+`src/backgroundSync.js` defines the task `hc-background-sync` at module scope (Expo requirement), returns
+`BackgroundTaskResult.Success`/`Failed`, and is wrapped so nothing in the body can throw.
+`ensureBackgroundSyncRegistered()` is idempotent and gates registration on a live `getGrantedPermissions()`
+read — it never registers without the `BackgroundAccessPermission`; called from `Root` on app start after
+login and from `SyncScreen` after a fresh grant. `app.json` gains
+`android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND` in both permission lists; `requestPermissions`
+requests `BackgroundAccessPermission`. Deps: `expo-background-task` + `expo-task-manager` at `~56.0.27`. The
+manual button is unchanged; the 30-day deep-sync button is untouched. Battery-optimisation exemption is an
+operator step (recorded, not coded). Backend acceptance is cadence-based (Q23), not trigger-tagged, because
+the trigger is accepted but not yet persisted server-side.
+
+**Rationale:** Sync fired only on app open; the operator opens the app only to sync, so backend HC freshness
+was unbounded (health-app `#316` planner labels a record's staleness from the sync record). Health Connect
+provides `READ_HEALTH_DATA_IN_BACKGROUND` + WorkManager as the documented path, and
+react-native-health-connect 3.5.3 exposes the `BackgroundAccessPermission`. Extracting `runSync` as a pure
+DI module (not a static import of `api.js`/`healthConnect.js`, which drag in axios/NativeModules/AsyncStorage
+and cannot be imported outside Metro) is what lets the same code run headless AND be exercised by a plain-node
+sim — the `fetchMeta.js`/`stepsAggregate.js` source-binding discipline. Gating on a granted-list read rather
+than a feature-status call is forced by 3.5.3, which exposes only `getSdkStatus` (no per-feature
+availability); absence of the permission from the granted list is the availability signal (request it, treat
+denial as unavailable).
+
+**Empirical premise (recorded at confidence):** `expo-background-task` is the SDK 56 scheduler and its
+`minimumInterval` is in MINUTES with a 15-minute floor — **Certain**, read from the 56.0.27 tarball's
+`BackgroundTask.types.d.ts` (`expo-task-manager ~56.0.27` is a direct dependency; the task is defined via
+`TaskManager.defineTask`). `BackgroundAccessPermission` is accepted by `requestPermission` and returned by
+`getGrantedPermissions`, and 3.5.3 exposes no per-feature availability call — **Certain**, read from the
+react-native-health-connect 3.5.3 typings (`types/index.d.ts`, `index.d.ts`, `constants.d.ts`). The backend
+accepts `client.trigger` without a 422 but does not persist it — **Certain**, read from health-app master
+`4f13349` (`ClientInfo` `extra="allow"`; the `health_connect_sync_events` INSERT writes only named columns,
+no `trigger` column, no raw-`client` JSON). WorkManager deferral of the exact fire time to a
+maintenance window (unlocked/charging) is **Likely** — the documented Android behaviour, to be confirmed by
+G2's row cadence.
+
+**Status:** HCA side LANDED on master (PR #56 → merge `a1484ca`, `feat/background-sync`). Device
+verification is OWED — operator G2, post-merge, multi-day (rebuild + install, grant the permission, set the
+app Unrestricted in Samsung battery settings, then do not open the app for 48h).
+
+**How you know:** `scripts/background-sync-sim.mjs` (`test:background-sync`) **19/19 PASS** against the real
+`src/syncRunner.js` — the ok path stamps `trigger` and returns the summed `received`; a POST failure returns
+`{ok:false}` with no throw; a missing token returns `ok:false` with NO fetch and NO POST; `trigger`
+propagates into `client` for both values with the build fingerprint preserved beside it; registration is
+`false` without `BackgroundAccessPermission` and `true` with it. `test:auth-path` / `test:fetch-meta` /
+`test:steps-aggregate` unregressed; `node --check` clean on every touched file; governance-guard
+(`placeholder guard (POSIX)`) green on PR #56. The Expo and health-connect API facts are read from the
+published 56.0.27 / 3.5.3 tarballs (cited above). `npm run android` was NOT run on Code's side — no Android
+SDK in the session (the real build + install is operator G2). Ratified by the operator this session: branch
+`feat/background-sync`, the `runSync` DI + return-shape refinements, the cadence-based G2, and the Q23
+health-app follow-up.
+
+**Number claimed at merge:** `origin/master` re-read immediately before landing — decision max `### #43`,
+question max `Q22`. This entry takes **#44**. `Q22` closed → `#44` (both arms, on operator-pasted prod
+reads); `Q23` minted (OWED — the health-app `trigger` column follow-up).
+
+**Do not revisit unless:** G2 shows zero background rows over 48h with no manual opens (then the task never
+fired — read battery-optimisation state and HC feature status from the phone before re-designing), or the
+schedule needs to move off the phone (a native WorkManager module or a server-side trigger — a different
+brief; explicitly out of scope here).

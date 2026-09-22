@@ -7,7 +7,7 @@ import {
   openHealthConnectSettings,
   readRecords,
 } from 'react-native-health-connect';
-import { paginate, streamMeta, HC_PAGE_SIZE, HC_MAX_PAGES } from './fetchMeta';
+import { paginateWithSlicing, streamMeta, HC_PAGE_SIZE, HC_MAX_PAGES } from './fetchMeta';
 // Build fingerprint (Q22 item 1). Generated, gitignored, fail-closed: if the
 // generation step did not run, this import fails the bundle rather than shipping
 // a stale fingerprint. No fallback (see scripts/gen-build-info.mjs).
@@ -143,15 +143,19 @@ async function safeFetch(recordType, startDate, endDate, mapper) {
   const reader = ({ timeRangeFilter, pageSize, pageToken }) =>
     readRecords(recordType, { timeRangeFilter, pageSize, pageToken });
 
-  const { records, pages, truncated, endedOnFailure, error } = await paginate(
-    reader,
-    toTimeRange(startDate, endDate),
-  );
+  const { records, pages, truncated, endedOnFailure, error, failedDays, sliced } =
+    await paginateWithSlicing(reader, toTimeRange(startDate, endDate));
 
   if (endedOnFailure) {
     // A rate-limit or failure on page N does not discard pages 1..N-1 — the
     // partial is returned with the error, never an empty set (the old catch's bug).
     console.log(`[HC] ${recordType} paged fetch failed —`, error);
+  }
+  if (sliced) {
+    // The initial paged fetch failed; the window was recovered in per-day
+    // slices. failedDays names any day still unreadable (carried in the payload —
+    // a release APK emits no ReactNativeJS logcat).
+    console.log(`[HC] ${recordType}: sliced — failedDays=${JSON.stringify(failedDays)}`);
   }
   if (truncated && !endedOnFailure) {
     console.log(
@@ -170,8 +174,8 @@ async function safeFetch(recordType, startDate, endDate, mapper) {
   );
   return {
     data: records.map(mapper).filter(Boolean),
-    error,
-    pageInfo: { pages, truncated, endedOnFailure },
+    error, // stays beside pageInfo — fetchAllData's errors[] reads r.error
+    pageInfo: { pages, truncated, endedOnFailure, error, failedDays, sliced },
   };
 }
 

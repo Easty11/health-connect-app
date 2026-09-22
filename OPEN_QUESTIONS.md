@@ -740,3 +740,13 @@ delete-and-revoke. **Caveat:** the backend's F1 dedup reads a single `sourcePack
 mode cannot rank multiple origins (`COUNT_TOTAL` is one deduped total); `#42` carries the full `dataOrigins`
 set for when F1 learns to read it. Garmin (priority source) is the sole or first origin on the days that
 matter, so this is low-risk in practice.
+
+**S4 (2026-09-22, `feat/steps-origin-priority` / `#43`) — mechanism passed but totals summed; now selected per origin.**
+`#42` G2 passed the mechanism (`mode='aggregate'`, no failures, 22 Sep populated) but the totals were
+SUMMED across writers (10 Sep 10507 → 20594; 11 Sep 15589 → 18438) — HC's `COUNT_TOTAL` over all origins
+does not apply source priority. `#43` reads one aggregate per origin (`dataOriginFilter`) and selects each
+day's count from the highest-priority writer with data (`STEP_ORIGIN_PRIORITY` = Garmin, then Samsung
+Health), never a sum. **Closes when** G2 shows 11 Sep = 15589 and 10 Sep matches Garmin Connect's own
+figure (not 20594, not 10507), with `fetchMeta.steps.selection='priority'` and `originErrors` empty; report
+`fetchMeta.steps.origins` keys to match against the HC screen's writer list. **Open sub-point:** the
+priority list is a code constant; it should eventually be operator-settable.

@@ -84,6 +84,72 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `feat/background-sync` → master (trunk)  ·  created from master `78ff971`; gov close-out on `gov/background-sync-closeout`; harness branch `claude/clever-franklin-5364uj` left untouched (it IS master `78ff971`, no commits vs master)
+**Closed:** 2026-09-22 (scheduled background HC sync — HCA side landed, PR #56)
+
+### This session — scheduled background HC sync; `runSync` extracted headless; `client.trigger` stamped (`#44`, PR #56 → `a1484ca`)
+Sync fired only when the operator opened the app, and they open it only to sync — so backend HC freshness
+was unbounded. Fixed HCA-side by scheduling the same 7-day sync via an Expo SDK 56 background task, three
+concern-split commits:
+- **`cae12f2` feat(sync):** pure DI core `src/syncRunner.js` — `runSync({days, trigger, getToken,
+  fetchAllData, syncHealthData, setLastSync})` reads the token (V5), fetches, stamps `client.trigger`
+  (`'manual'`|`'background'`) beside the `#40` fingerprint, POSTs; never throws (`{ok, received, data, meta,
+  error}`); missing token → no fetch. Stamp in `runSync`, not `fetchAllData`, so `healthConnect.js`/`api.js`
+  untouched. `SyncScreen.handleSync` calls it (`trigger:'manual'`), UI byte-for-byte. `background-sync-sim.mjs`.
+- **`924333f` feat(sync):** `src/backgroundSync.js` module-scope `TaskManager.defineTask('hc-background-sync')`
+  running `runSync({trigger:'background'})` → `BackgroundTaskResult.Success`/`Failed`, wrapped so it can't
+  throw; `registerTaskAsync` at `minimumInterval:360`; `ensureBackgroundSyncRegistered()` idempotent, gates
+  on a live `getGrantedPermissions()` read. `Root` registers on app start after login. `app.json`
+  `READ_HEALTH_DATA_IN_BACKGROUND` in both lists; `requestPermissions` requests `BackgroundAccessPermission`.
+  Deps `expo-background-task`/`expo-task-manager` `~56.0.27`.
+- **`fea0a2b` feat(sync):** one status line "Background sync: on / off (reason)" + "Last background sync"
+  time; registers on a same-session first grant. Additive only.
+- **gov (this close-out commit, `gov/background-sync-closeout`):** `#44`, `Q22` CLOSE (both arms), `Q23`
+  minted, `ROADMAP`, `closeout.md` — governance batched out of the feature PR.
+`test:background-sync` **19/19 PASS** against the real `src/syncRunner.js`; `test:auth-path`/`test:fetch-meta`/
+`test:steps-aggregate` unregressed; `node --check` clean; governance-guard (`placeholder guard (POSIX)`)
+green on PR #56. `expo-background-task` = SDK 56 scheduler + `minimumInterval` minutes/15-min-floor verified
+against the 56.0.27 tarball; `BackgroundAccessPermission` + no-feature-status verified against the
+react-native-health-connect 3.5.3 typings. Backend-safe: `client.trigger` rides `ClientInfo` `extra="allow"`
+(health-app `#321`), no 422; persistence into a column is the `Q23` health-app follow-up. `npm run android`
+NOT run on Code's side (no Android SDK) — real build+install is operator G2. Self-merged on green.
+
+### Decisions / Questions
+Minted **`#44`** — background HC sync via Expo background task; `runSync` extracted headless; `client.trigger`
+records manual vs background. **`Q22` CLOSED → `#44`** (both arms, on operator-pasted prod reads 21–22 Sep:
+HR `#38` on device `pages:6` + 30d backfill `truncated:false`, `record_sources` 400–520/day 25–31 Aug;
+Steps `#42`/`#43` day-for-day vs Garmin Connect 9–13 Sep). **`Q23` minted (OWED)** — `client.trigger` is
+accepted but not persisted (`health_connect_sync_events` has no `trigger` column); a health-app session adds
+it (migration = HOLD). Number claimed at merge against a re-read `#43` / `Q22`. Operator ratified the S0/G0
+report (V1–V7, file layout), the `runSync` DI + return-shape refinements, the cadence-based G2, and the
+`Q23` follow-up, 2026-09-22. **Cross-repo note:** `Q22`'s HR-arm close moves `Q21.1`'s session-level
+`hr_avg` read to **health-app Q159** (HC ingest stage 2, zoneful) — now unblocked.
+
+### Branch dispositions (terminal state)
+- `feat/background-sync` — **merged+deleted** local and remote (PR #56 → merge `a1484ca`; remote ref
+  auto-deleted on merge, local deleted; `git cherry origin/master` empty). No `BRANCHES` row — stores cite
+  merge/commit SHAs.
+- `gov/background-sync-closeout` — the gov close-out branch; merges this turn via its own PR.
+- `claude/clever-franklin-5364uj` (harness-assigned) — **untouched**; it points at master `78ff971`, carries
+  no commits vs `origin/master` (`git cherry` empty). Left for the harness.
+
+### Next action
+1. **OWED — operator G2 (post-merge, multi-day).** Rebuild `npm run android`, install, grant the new
+   background permission when prompted, set the app to **Unrestricted** in Samsung Settings → Battery, then
+   do NOT open the app for 48h. Read
+   `SELECT synced_at, git_sha, fetch_meta IS NOT NULL AS has_meta FROM health_connect_sync_events ORDER BY id DESC LIMIT 12;`.
+   **Pass:** ≥6 rows over 48h with the new build's `git_sha` and no manual opens (each such row is a
+   background sync). **Partial:** rows only after unlock/charging → WorkManager deferral, acceptable.
+   **Fail:** zero background rows → report battery-optimisation state + HC feature status from the phone.
+2. **OWED — health-app `Q23`.** Add a `trigger` column to `health_connect_sync_events` + persist
+   `payload.client.model_extra.get('trigger')` (schema migration = HOLD). Then G2 selects on
+   `trigger='background'` directly. Low urgency — the cadence read already proves the objective.
+3. **Cross-repo — health-app Q159 (HC ingest stage 2) unblocked** by the `Q22` HR-arm close; not an HCA task.
+4. Carried, unchanged — `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper unexercised),
+   `Q21` (owed verifications).
+
+### Superseded by this session (kept for the record)
+
 **Branch:** `feat/steps-origin-priority` → master (trunk)  ·  created from master `a87ce8f`; gov close-out on `gov/steps-origin-priority-closeout`
 **Closed:** 2026-09-22 (Steps selected per-day from the highest-priority writer — HCA side landed, PR #54)
 

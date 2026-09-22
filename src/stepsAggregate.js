@@ -16,6 +16,18 @@
 // never be named the source of a day it only read.
 export const OWN_PACKAGE = 'com.anonymous.healthconnectapp';
 
+// Per-day step-writer priority (#43). Each day's count is taken from the FIRST
+// origin in this list that has data that day — never a sum across writers (the
+// #42 defect: HC's COUNT_TOTAL over all origins summed Samsung + Garmin on days
+// both counted the same steps). Garmin first: the watch is worn when the phone
+// isn't, so it is the fuller record; Samsung Health (phone/ring) is the fill-in.
+// An origin not listed here ranks AFTER every listed origin, in first-seen
+// (discovery) order. OWN_PACKAGE never ranks (see selectByPriority).
+export const STEP_ORIGIN_PRIORITY = [
+  'com.garmin.android.apps.connectmobile',
+  'com.sec.android.app.shealth',
+];
+
 /**
  * Build the aggregateGroupByPeriod timeRangeFilter for a [startDate, endDate]
  * span, snapped to LOCAL day boundaries and emitted as Z-suffixed UTC instants.
@@ -54,6 +66,10 @@ export function localDayFilter(startDate, endDate) {
  *   single origin  -> that package
  *   multiple       -> the first origin that is not our own package (lean, #42)
  *   none           -> null
+ * SUPERSEDED in the aggregate path by selectByPriority (#43), which ranks origins
+ * by STEP_ORIGIN_PRIORITY across per-origin reads instead of guessing from one
+ * summed bucket's origin set. Retained: still used by bucketToItem (single-origin
+ * per-origin buckets → that origin) and covered by its own sim assertions.
  * Aggregate mode CANNOT rank origins by step count (COUNT_TOTAL is one deduped
  * total), so this lean pick is arbitrary among multiple origins; the full set
  * travels as `dataOrigins` (V4: backend per-item model is extra="allow"). The
@@ -105,33 +121,153 @@ export function bucketsToItems(buckets) {
 }
 
 /**
+ * Union of the dataOrigins seen across an unfiltered aggregateGroupByPeriod
+ * result, in first-seen order (the discovery call, #43). Used to find origins
+ * beyond STEP_ORIGIN_PRIORITY that also wrote steps in the window.
+ */
+export function unionDataOrigins(buckets) {
+  const seen = [];
+  for (const b of Array.isArray(buckets) ? buckets : []) {
+    const origins = Array.isArray(b?.result?.dataOrigins) ? b.result.dataOrigins : [];
+    for (const o of origins) {
+      if (o != null && !seen.includes(o)) seen.push(o);
+    }
+  }
+  return seen;
+}
+
+/**
+ * Per-day selection by writer priority (#43). `perOrigin` is a Map<origin,
+ * buckets[]> — one aggregateGroupByPeriod result per origin (each read with
+ * dataOriginFilter:[origin], so its buckets carry only that origin's steps).
+ * Map insertion order IS the discovery order, which decides the first-seen
+ * ranking of unlisted origins.
+ *
+ * For each local day, the count is taken from the FIRST origin (by rank) that
+ * has a bucket with COUNT_TOTAL > 0 that day — never a sum across origins. Rank:
+ * an origin in `priority` ranks by its index there; an unlisted origin ranks
+ * after all listed ones, by its first-seen position. OWN_PACKAGE never ranks and
+ * is dropped entirely (the app only reads; it must never be named a step source).
+ *
+ * Emits the #42 item shape { date, count, sourcePackage:<winning origin>,
+ * dataOrigins:<every ranking origin with data that day, by rank> }, ascending by
+ * date. dataOrigins excludes OWN_PACKAGE for the same reason it never wins.
+ */
+export function selectByPriority(perOrigin, priority) {
+  const listed = Array.isArray(priority) ? priority : [];
+  // Ranking universe: listed origins first (in priority order), then the
+  // remaining perOrigin keys in insertion/discovery order. OWN_PACKAGE excluded.
+  const keys = perOrigin instanceof Map ? [...perOrigin.keys()] : [];
+  const unlisted = keys.filter((o) => o !== OWN_PACKAGE && !listed.includes(o));
+  const rankOf = (o) => {
+    const i = listed.indexOf(o);
+    return i !== -1 ? i : listed.length + unlisted.indexOf(o);
+  };
+
+  // date -> Map<origin, count>  (only origins with COUNT_TOTAL > 0 that day)
+  const byDay = new Map();
+  for (const [origin, buckets] of perOrigin instanceof Map ? perOrigin : []) {
+    if (origin === OWN_PACKAGE) continue;
+    for (const b of Array.isArray(buckets) ? buckets : []) {
+      const item = bucketToItem(b); // null on 0/absent count; extracts date+count
+      if (!item) continue;
+      if (!byDay.has(item.date)) byDay.set(item.date, new Map());
+      byDay.get(item.date).set(origin, item.count);
+    }
+  }
+
+  const items = [];
+  for (const date of [...byDay.keys()].sort()) {
+    const perOriginCounts = byDay.get(date);
+    const candidates = [...perOriginCounts.keys()].sort((a, b) => rankOf(a) - rankOf(b));
+    const winner = candidates[0];
+    items.push({
+      date,
+      count: perOriginCounts.get(winner),
+      sourcePackage: winner,
+      dataOrigins: candidates,
+    });
+  }
+  return items;
+}
+
+/**
+ * Assemble the priority selection from the (already caught) per-origin reads and
+ * the discovery read, deciding when to hand off to the raw fallback (#43). Pure
+ * and node-importable so the fallback decision is source-bound (sim S5 d/e/h).
+ *
+ *   originResults: [{ origin, buckets } | { origin, error }]   (the filtered reads)
+ *   discoveryResult: { origins: string[] } | { error }         (the unfiltered read)
+ *   priority: STEP_ORIGIN_PRIORITY
+ *
+ * Returns { items, origins:{[origin]: bucketsWithData}, originErrors:{[origin]:
+ * message} }. A single origin failing is isolated (recorded in originErrors, that
+ * origin treated as no data). THROWS — so fetchStepsWithFallback falls back to raw
+ * — only when the read got nothing usable: every filtered call threw, OR the
+ * discovery call threw AND no listed origin returned any data (that run may have
+ * missed an unlisted writer, so POSTing an empty steps array would be wrong).
+ */
+export function assembleOriginSelection({ originResults, discoveryResult, priority }) {
+  const results = Array.isArray(originResults) ? originResults : [];
+  const perOrigin = new Map();
+  const originErrors = {};
+  let anySuccess = false;
+  for (const r of results) {
+    if (r?.error != null) { originErrors[r.origin] = r.error; continue; }
+    anySuccess = true;
+    perOrigin.set(r.origin, Array.isArray(r.buckets) ? r.buckets : []);
+  }
+
+  const discoveryFailed = discoveryResult?.error != null;
+  if (discoveryFailed) originErrors._discovery = discoveryResult.error;
+
+  const items = selectByPriority(perOrigin, priority);
+
+  if (results.length > 0 && !anySuccess) {
+    throw new Error(`all ${results.length} Steps origin aggregate call(s) failed: ${JSON.stringify(originErrors)}`);
+  }
+  if (discoveryFailed && items.length === 0) {
+    throw new Error(`Steps discovery aggregate call failed (${discoveryResult.error}) and no listed origin returned data`);
+  }
+
+  const origins = {};
+  for (const [o, buckets] of perOrigin) {
+    origins[o] = buckets.filter((b) => bucketToItem(b) != null).length;
+  }
+  return { items, origins, originErrors };
+}
+
+/**
  * Orchestrate the aggregate read with a raw-path fallback. Pure and injectable —
  * so the sim exercises the real branch logic, source-bound like paginate's
- * reader. healthConnect.js injects the RN aggregateGroupByPeriod, the existing
- * raw safeFetch+aggregateSteps path (kept as the ONLY fallback, #42), and the
- * real streamMeta.
+ * reader. healthConnect.js injects the RN per-origin aggregate (via
+ * assembleOriginSelection), the existing raw safeFetch+aggregateSteps path (kept
+ * as the ONLY fallback, #42), and the real streamMeta.
  *
  * deps:
- *   aggregate() -> Promise<buckets[]>            (may throw — the Garmin poison record)
- *   rawFetch()  -> Promise<{ steps, pageInfo }>  (raw path incl. #41 slice-resume)
+ *   aggregate() -> Promise<{ items, origins, originErrors }>  (#43; may throw ->
+ *                  raw fallback when the whole read got nothing usable)
+ *   rawFetch()  -> Promise<{ steps, pageInfo }>               (raw path incl. #41 slice-resume)
  *   streamMeta(dates, pageInfo) -> per-stream meta entry
  *
- * Returns { steps, meta }. On success meta.mode='aggregate'; when aggregate()
- * throws, the raw path runs and meta = raw path's streamMeta + mode:'raw-fallback'
- * + aggregateError:<message>. Additive fields only — nothing renamed. No log here
- * (pure); the caller logs the fallback, mirroring fetchMeta.js/healthConnect.js.
+ * Returns { steps, meta }. On success meta.mode='aggregate' with additive
+ * origins/originErrors/selection:'priority'; when aggregate() throws, the raw path
+ * runs and meta = raw path's streamMeta + mode:'raw-fallback' + aggregateError.
+ * Additive fields only — nothing renamed. No log here (pure); the caller logs.
  */
 export async function fetchStepsWithFallback({ aggregate, rawFetch, streamMeta }) {
   try {
-    const buckets = await aggregate();
-    const steps = bucketsToItems(buckets);
+    const { items, origins, originErrors } = await aggregate();
     const meta = {
-      ...streamMeta(steps.map((s) => s.date), {
+      ...streamMeta(items.map((s) => s.date), {
         pages: 1, truncated: false, endedOnFailure: false, error: null,
       }),
       mode: 'aggregate',
+      origins,
+      originErrors,
+      selection: 'priority',
     };
-    return { steps, meta };
+    return { steps: items, meta };
   } catch (aggErr) {
     const aggregateError = aggErr?.message ?? String(aggErr);
     const { steps, pageInfo } = await rawFetch();

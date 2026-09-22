@@ -6,8 +6,10 @@ import {
   getGrantedPermissions,
   openHealthConnectSettings,
   readRecords,
+  aggregateGroupByPeriod,
 } from 'react-native-health-connect';
 import { paginateWithSlicing, streamMeta, HC_PAGE_SIZE, HC_MAX_PAGES } from './fetchMeta';
+import { localDayFilter, fetchStepsWithFallback } from './stepsAggregate';
 // Build fingerprint (Q22 item 1). Generated, gitignored, fail-closed: if the
 // generation step did not run, this import fails the bundle rather than shipping
 // a stale fingerprint. No fallback (see scripts/gen-build-info.mjs).
@@ -209,8 +211,42 @@ function heartRateMapper(r) {
   return (r.samples ?? []).map((s) => ({ time: s.time, bpm: s.beatsPerMinute, sourcePackage }));
 }
 
+/**
+ * Steps via HC daily aggregate (#42), with the raw path retained as the ONLY
+ * fallback. aggregateGroupByPeriod(DAYS) reads COUNT_TOTAL per LOCAL day, so
+ * Garmin's zero-count StepsRecords — which throw in the SDK's RAW deserialisation
+ * ("count must not be less than 1, currently 0") before the app can see or filter
+ * them — are never deserialised individually. HC applies the operator's HC source
+ * priority to COUNT_TOTAL. On ANY aggregate throw, falls back to the existing
+ * raw+#41-sliced path. Returns { steps, meta } (meta.mode 'aggregate' |
+ * 'raw-fallback'). The pure branch/mapping logic lives in ./stepsAggregate (sim).
+ */
+async function fetchStepsAggregate(startDate, endDate) {
+  const result = await fetchStepsWithFallback({
+    aggregate: () => aggregateGroupByPeriod({
+      recordType: 'Steps',
+      timeRangeFilter: localDayFilter(startDate, endDate),
+      timeRangeSlicer: { period: 'DAYS', length: 1 },
+    }),
+    // Fallback: the unchanged raw path (safeFetch -> stepsMapper -> aggregateSteps),
+    // incl. #41 slice-resume. Kept as fallback only (invariant: raw path retained).
+    rawFetch: async () => {
+      const raw = await safeFetch('Steps', startDate, endDate, stepsMapper);
+      return { steps: aggregateSteps(raw), pageInfo: raw.pageInfo };
+    },
+    streamMeta,
+  });
+  if (result.meta.mode === 'raw-fallback') {
+    console.log('[HC] Steps: aggregate threw, used raw fallback —', result.meta.aggregateError);
+  } else {
+    console.log(`[HC] Steps: aggregate ${result.steps.length} day(s)`);
+  }
+  return result;
+}
+
 export async function fetchStepsData(startDate, endDate) {
-  return aggregateSteps(await safeFetch('Steps', startDate, endDate, stepsMapper));
+  const { steps } = await fetchStepsAggregate(startDate, endDate);
+  return steps;
 }
 
 function stepsMapper(r) {
@@ -303,7 +339,7 @@ export async function fetchAllData(days = 7) {
   const end = new Date();
   const start = daysAgo(days);
 
-  const [sleepRes, hrvRes, hrRes, stepsRes, workoutsRes] = await Promise.all([
+  const [sleepRes, hrvRes, hrRes, stepsAgg, workoutsRes] = await Promise.all([
     safeFetch('SleepSession', start, end, (r) => ({
       startTime: r.startTime,
       endTime: r.endTime,
@@ -317,16 +353,22 @@ export async function fetchAllData(days = 7) {
       sourcePackage: r.metadata?.dataOrigin ?? null,
     })),
     safeFetch('HeartRate', start, end, heartRateMapper),
-    safeFetch('Steps', start, end, stepsMapper),
+    // Steps read via HC daily aggregate (#42) with the raw path as fallback.
+    fetchStepsAggregate(start, end),
     safeFetch('ExerciseSession', start, end, workoutMapper),
   ]);
 
   const heartRate = hrRes.data.flat();
-  const steps = aggregateSteps(stepsRes);
+  const steps = stepsAgg.steps;
 
-  const errors = [sleepRes, hrvRes, hrRes, stepsRes, workoutsRes]
+  // Steps no longer flows through safeFetch. Its error surfaces only on
+  // raw-fallback where the raw path itself errored, carried in stepsAgg.meta.error
+  // — appended so errors[] keeps its prior meaning (a real partial, not the
+  // handled aggregate throw, which is telemetry in fetchMeta.steps.aggregateError).
+  const errors = [sleepRes, hrvRes, hrRes, workoutsRes]
     .filter((r) => r.error)
     .map((r) => r.error);
+  if (stepsAgg.meta.error) errors.push(stepsAgg.meta.error);
 
   // Per-stream fetch telemetry (Q22 item 2): received count, oldest/newest
   // timestamp of what was POSTED, page count, and whether the fetch truncated.
@@ -336,7 +378,7 @@ export async function fetchAllData(days = 7) {
     sleep: streamMeta(sleepRes.data.map((r) => r.startTime), sleepRes.pageInfo),
     hrv: streamMeta(hrvRes.data.map((r) => r.time), hrvRes.pageInfo),
     heartRate: streamMeta(heartRate.map((r) => r.time), hrRes.pageInfo),
-    steps: streamMeta(steps.map((r) => r.date), stepsRes.pageInfo),
+    steps: stepsAgg.meta,
     workouts: streamMeta(workoutsRes.data.map((r) => r.startTime), workoutsRes.pageInfo),
   };
 

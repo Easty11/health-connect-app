@@ -1609,3 +1609,55 @@ reads); `Q23` minted (OWED — the health-app `trigger` column follow-up).
 fired — read battery-optimisation state and HC feature status from the phone before re-designing), or the
 schedule needs to move off the phone (a native WorkManager module or a server-side trigger — a different
 brief; explicitly out of scope here).
+
+### #45 — Background permission requestable on an already-permitted install
+
+**Decision:** A dedicated single-permission request + a dedicated button let an install that already holds
+the base `READ_*` set grant the background-read permission. `healthConnect.requestBackgroundPermission()`
+requests only `[{accessType:'read', recordType:'BackgroundAccessPermission'}]` and returns whether
+`getGrantedPermissions()` then includes it. `src/backgroundPermission.js` (pure, node-importable) holds the
+decision logic: `shouldShowEnableBackground({basePermissionsGranted, granted})` (base granted AND background
+missing) and `runEnableBackground({requestBackground, register})` (request, then register only on a grant).
+`SyncScreen` shows an "Enable background sync" button under the status line exactly when base permissions are
+granted but background is not; on tap it runs `runEnableBackground` wired to `requestBackgroundPermission` +
+`ensureBackgroundSyncRegistered`, refreshes the status line on a grant, and on a denial sets the status to
+"off (denied — check Health Connect app permissions)". The button hides once granted. `syncRunner`, the
+background task body, and the 6h interval are untouched.
+
+**Rationale:** `#44` gated background-sync registration on `BackgroundAccessPermission` but only requested it
+inside the first-run grant flow, whose button is gated on the base `READ_*` set being MISSING
+(`!permissionsGranted`, which flips true the moment `requestPermissions()` returns any granted permission,
+independent of the background one). On an install that already had base permissions — the operator's phone —
+that button never shows, so the background permission was never requested and background sync stayed
+"off (permission off)" with no in-app path to fix it. Health Connect's own app-permissions screen showed no
+background toggle on that device (operator-reported 22 Sep), so a dedicated in-app request is the only path.
+Requesting the permission alone (rather than re-running the full array) is what surfaces the incremental
+prompt on an already-permitted install.
+
+**Empirical premise (recorded at confidence):** `requestPermission` accepts a single-item array in 3.5.3 —
+**Certain**, from the typings (`requestPermission(permissions: (...)[])`). The base-permissions button hides
+once base perms exist regardless of the background permission — **Certain**, from `SyncScreen` (`!permissions
+Granted`, set true on any non-empty grant). Whether the OS actually shows a background-permission prompt on
+this device/HC version — **unverified from Code** (unseeable surface): G2 confirms it. If the prompt never
+appears and the result is denied, HC's background-read feature is unavailable on this device/HC version — a
+plan change, not a code change.
+
+**Status:** HCA side LANDED on master (PR #58 → merge `2b1d5ac`, `feat/background-permission-button`). Device
+verification is OWED — operator G2 (rebuild, open app, tap Enable background sync, accept the prompt; pass =
+status flips to "Background sync: on").
+
+**How you know:** `scripts/background-permission-sim.mjs` (`test:background-permission`) **10/10 PASS**
+against the real `src/backgroundPermission.js` — the button is hidden before base permissions exist and once
+background is granted, SHOWN only in the base-granted/background-missing gap; a grant runs registration
+exactly once; a denial runs it zero times. `test:background-sync` / `test:auth-path` / `test:fetch-meta` /
+`test:steps-aggregate` unregressed; `node --check` clean; governance-guard (`placeholder guard (POSIX)`)
+green on PR #58. `npm run android` NOT run on Code's side (no Android SDK) — the real build + tap is
+operator G2. Cross-ref `#44` (the registration gate this makes reachable).
+
+**Number claimed at merge:** `origin/master` re-read immediately before landing — decision max `### #44`,
+question max `Q23`. This entry takes **#45**. No new question minted (a bug-fix follow-on to `#44`; `Q23`
+carries the remaining trigger-persistence follow-up).
+
+**Do not revisit unless:** G2 shows the prompt never appears and the permission cannot be granted in-app
+(then HC's background-read feature is unavailable on the device/HC version — the schedule cannot live on the
+phone via Health Connect, and the off-phone alternatives named in `#44` become the fork).

@@ -21,7 +21,8 @@
     "gen:build-info": "node scripts/gen-build-info.mjs",
     "test:auth-path": "node scripts/auth-path-sim.mjs",
     "test:fetch-meta": "node scripts/fetch-meta-sim.mjs",
-    "test:steps-aggregate": "node scripts/steps-aggregate-sim.mjs"
+    "test:steps-aggregate": "node scripts/steps-aggregate-sim.mjs",
+    "test:background-sync": "node scripts/background-sync-sim.mjs"
   },
   "private": true
 }

@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { syncHealthData } from './api';
 import { requestPermissions, fetchAllData } from './healthConnect';
+import { runSync } from './syncRunner';
 import { validateNight, runDeepConfidence } from './deepSleepConfidence';
 
 // Last-night window: yesterday 18:00 → today 11:00 local. Wide enough to capture
@@ -96,8 +97,22 @@ export default function SyncScreen({ token, username, onLogout }) {
     setSyncing(true);
     setSyncError('');
     try {
-      const data = await fetchAllData(days);
-      await syncHealthData(data, token);
+      // Same sync as the background task, via the shared headless core — only the
+      // trigger differs (S1). runSync never throws; it returns { ok, data, error },
+      // and the UI below is derived from `data` exactly as before (byte-for-byte).
+      // Token source is unchanged: Root guarantees the `token` prop before this mounts.
+      const { ok, data, error } = await runSync({
+        days,
+        trigger: 'manual',
+        getToken: async () => token,
+        fetchAllData,
+        syncHealthData,
+      });
+      if (!ok || !data) {
+        console.warn('Sync error:', error);
+        setSyncError(error || 'Sync failed');
+        return;
+      }
       const steps = data.steps || [];
       const sleep = data.sleep?.length || 0;
       const hrv = data.hrv?.length || 0;

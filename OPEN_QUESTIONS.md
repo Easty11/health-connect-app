@@ -727,3 +727,16 @@ slices, recording and skipping any day it still cannot read (`fetchMeta.<stream>
 names ≤1 day with an error string, and `health_connect_syncs` carries non-null steps for 2026-09-11 /
 2026-09-12 (Samsung Health 9343 / 7947) — and the named day is either fixed or accepted as a 1-day loss.
 Report the `failedDays.error` string back to chat; it decides the follow-up.
+
+**S3 (2026-09-22, `feat/steps-aggregate` / `#42`) — Steps cause known; routed via HC aggregate (HCA side LANDED).**
+Steps cause known: zero-count Garmin records throw in SDK deserialisation (`count must not be less than 1,
+currently 0` — Certain from the prod `failedDays` message; Garmin the Likely writer, xDrip #4351). `#42`
+routes Steps via `aggregateGroupByPeriod(DAYS)`, which reads `COUNT_TOTAL` per local day and never
+deserialises the poison record; the raw+`#41`-sliced path is retained only as fallback (`fetchMeta.steps.mode`
+`aggregate`|`raw-fallback` + `aggregateError`). **Closes when** G2 shows `steps.mode='aggregate'`,
+`failedDays` absent, `error` null, and `health_connect_syncs` non-null steps for 2026-09-10 and 2026-09-22.
+If `mode='raw-fallback'`, paste `aggregateError` — HC's aggregate also chokes and the plan reverts to
+delete-and-revoke. **Caveat:** the backend's F1 dedup reads a single `sourcePackage` string, and aggregate
+mode cannot rank multiple origins (`COUNT_TOTAL` is one deduped total); `#42` carries the full `dataOrigins`
+set for when F1 learns to read it. Garmin (priority source) is the sole or first origin on the days that
+matter, so this is low-risk in practice.

@@ -21,6 +21,9 @@ import {
 // generation step did not run, this import fails the bundle rather than shipping
 // a stale fingerprint. No fallback (see scripts/gen-build-info.mjs).
 import { gitSha, builtAt, appVersion } from './buildInfo';
+// Read-only import of the background-permission predicate (#44). Not a modification
+// of syncRunner — reused so the "is it granted" check is defined once.
+import { hasBackgroundPermission } from './syncRunner';
 
 export { openHealthConnectSettings };
 
@@ -143,6 +146,33 @@ export const requestPermissions = async () => {
       console.log('Could not open Health Connect:', linkErr);
     }
     return [];
+  }
+};
+
+/**
+ * Request ONLY the background-read permission (#45). On an already-permitted install
+ * the first-run grant flow never shows (it is gated on the base READ_* set being
+ * missing), so `requestPermissions()`'s array — which already includes the background
+ * permission (#44) — is never re-run and background sync stays gated off. This is the
+ * dedicated, single-permission request the "Enable background sync" button calls.
+ *
+ * requestPermission accepts a single-item array in 3.5.3. Returns whether the
+ * permission is granted AFTER the request (read back from getGrantedPermissions),
+ * not what requestPermission echoes — a denied special permission is the case that
+ * matters, and the granted-list read is the same signal registration gates on.
+ */
+export const requestBackgroundPermission = async () => {
+  try {
+    await initialize();
+    // Small delay to let the client settle after initialisation (mirrors requestPermissions).
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await requestPermission([{ accessType: 'read', recordType: 'BackgroundAccessPermission' }]);
+    const granted = await getGrantedPermissions();
+    console.log('requestBackgroundPermission granted after:', JSON.stringify(granted));
+    return hasBackgroundPermission(granted);
+  } catch (e) {
+    console.error('requestBackgroundPermission error:', e?.message, e?.stack);
+    return false;
   }
 };
 

@@ -1,48 +1,43 @@
-## Commits this session
+# closeout.md — health-connect-app
 
+## Commits this session
 ```
-a0cd282 Merge pull request #48 from Easty11/claude/heart-rate-sync-lag-wk0y2o
-8c154c8 feat: sync build fingerprint + per-stream fetch telemetry (Q22 S1, HCA side)
-80fb10e Merge pull request #47 from Easty11/claude/heart-rate-sync-lag-wk0y2o
-6fd8b3e docs: record H1 confirmed + scope S1 (design-gated); correct Q22 and Q21.1 state
-17956f6 docs: S0 adjudication of the heart-rate ~6-day-lag brief (report only)
+414caa5 Merge pull request #50 from Easty11/feat/paged-fetch-slicing
+5c91367 gov: log #41 (poison-page slice resume), append Q22 S2, add release-logcat FEEDBACK
+d7e92f9 feat(healthConnect): wire safeFetch to paginateWithSlicing; surface slice telemetry
+9f6b555 feat(fetchMeta): slice-on-failure resume so a poison page can't lose the window
 ```
-Plus this close-out commit on `gov/heartrate-s1-closeout` (governance: `DECISIONS_LOG.md` `#40`,
-`OPEN_QUESTIONS.md` `Q22` progress, `ROADMAP.md` sprint block, `FEEDBACK.md`, `closeout.md`).
+All on `feat/paged-fetch-slicing` (created from master `4b8cc8f`), merged to master via PR #50.
+The `gov: session close-out` commit for this handoff lands separately (its own PR).
 
 ## PENDING reconciliation
-
-No `;cc` pending-commit queue was handed in — the session input was the heart-rate ~6-day-lag brief
-(S0 = stop-and-report), then two operator turns (H1 confirmation + ratified S1 scope). Reconciled
-against the tree:
-
-- **S0 adjudication → DONE** (`17956f6`, PR #47). H3 ruled out by read of health-app
-  `/health-connect/sync`; H1/H2 shown un-splittable from the repo; `Q22` minted.
-- **H1 confirmation → DONE** (`6fd8b3e`, PR #47). Operator `dumpsys` read (`lastUpdateTime=2026-08-10`
-  predates `#38` `712db1b`): the pagination fix has never run on a device. `Q22` reframed to
-  H1-confirmed; `Q21.1` corrected to OWED/unrun (not failed).
-- **S1 diagnostics, HCA side → DONE** (`8c154c8`, PR #48). `client` fingerprint + per-stream
-  `fetchMeta` on the `/sync` payload; fail-closed `src/buildInfo.js` generated via `metro.config.js`;
-  pure `src/fetchMeta.js`; `test:fetch-meta` 22/22 PASS. `#40` minted.
-- **Health-app spec → DONE (written, handed off)** — `docs/health-app-sync-events-spec.md`. NOT
-  implemented here (single-repo rule; that repo's session owns it).
-- **Backend persistence + APK rebuild → OWED**, sequenced backend-first (see next action).
+No `;cc` pending-commit queue was carried into this session — the input was the ratified
+`feat/paged-fetch-slicing` brief, not a chat close-out. Nothing provisional outstanding from a prior
+chat close-out. Deliverables of this session, each landed:
+- **S1 error plumbing** — `error` into `streamMeta`/`pageInfo` → `9f6b555` / `d7e92f9`.
+- **S2 slice-on-failure** — `paginateWithSlicing()` → `9f6b555`.
+- **S3 wiring** — `safeFetch()` → `paginateWithSlicing`, `failedDays`/`sliced` surfaced → `d7e92f9`.
+- **S4 sim** — 6 new cases (a–f), 56/56 PASS → `9f6b555`.
+- **LOG** — `#41`, `Q22` S2 append, `FEEDBACK` → `5c91367`.
+- **S5 buildInfo** — deliberately NOT committed (gitignored, real-build only). Confirmed absent.
 
 ## Cold-resume handoff
+**Current sprint state.** `#41` (poison-page per-day slice resume) landed HCA-side, PR #50 → `414caa5`.
+`paginateWithSlicing()` recovers a paged fetch past a poison page by resuming from the last good record
+in per-day UTC slices, naming any still-unreadable day in `fetchMeta.<stream>.failedDays`. Additive
+`fetchMeta` fields only (`error`/`failedDays`/`sliced`); backend `FetchMetaEntry` is `extra="allow"`
+(health-app `#321`), so no contract/schema change. `test:fetch-meta` 56/56 PASS.
 
-**Sprint state:** heart-rate ~6-day-lag adjudicated to **H1 confirmed** (the `#38` pagination fix never
-ran on a device — the installed APK predates it). S1 diagnostics **HCA side landed** (`8c154c8`, PR #48):
-a fail-closed build fingerprint and per-stream truncation telemetry now ride the `/sync` payload, so a
-future lag is self-diagnosing server-side. Decisions max **#40**, questions max **Q22**.
+**Maxima at close** (re-read `origin/master`): decisions `#41`, questions `Q22` (OPEN).
 
-**Open questions:** `Q22` (OPEN — HCA side landed; health-app persistence + APK rebuild owed),
-`Q21` (OWED — item-1 HR-coverage gate now unrun-pending on a fingerprinted build; item-2 30-day
-deep-sync body limit), `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper unexercised).
+**Open questions.** `Q22` OPEN — Steps arm now instrumented; closes when the operator reads
+`failedDays.error` from a device sync and either fixes the day or accepts a 1-day loss. HR arm still
+OWED (backend table + fingerprinted rebuild, then `Q21.1`). Carried: `Q18`, `Q19`, `Q20`, `Q21`.
 
-**Single clearest next action — health-app backend, FIRST.** Implement
-`docs/health-app-sync-events-spec.md` in a health-app session: new `health_connect_sync_events` table
-(JSONB `fetch_meta`, first-class nullable `git_sha`) + persistence in `sync()`. Schema migration =
-HOLD (operator sign-off). Deploy it **before** the HCA APK rebuild — the fingerprint has nowhere to
-land until the table is live. Then rebuild/install the paginating, fingerprinted APK; then `Q21.1`
-finally runs (latest `heart_rate` within hours of `synced_at`) and, on pass, closes `Q22`.
-Newest-first fetch and backoff retry stay gated unless `Q21.1` fails on a fingerprinted build.
+**Branches.** `feat/paged-fetch-slicing` merged+deleted. Harness branch `claude/nifty-bardeen-7sqv08`
+left untouched per operator ruling (no unmerged commits; not in limbo).
+
+**Single clearest next action.** Operator G2: rebuild (`npm run android`), install, tap DEEP SYNC (30d),
+read the newest `health_connect_sync_events` row (`steps.sliced=true`, `steps.failedDays`, non-null steps
+for 2026-09-11 / 2026-09-12) and **report the `failedDays.error` string back to chat** — it decides
+whether the poison day gets fixed or accepted.

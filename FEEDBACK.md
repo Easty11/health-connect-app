@@ -22,6 +22,17 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-09-22 — a release APK emits no ReactNativeJS logcat; on-device errors must ride the payload  [code]
+**Friction:** the Steps 30d deep sync failed deterministically at page 3 (twice, identical `fetch_meta`),
+but *why* was unobservable — the release build produces no JS logcat, and the phone/logcat are unseeable
+surfaces. The failure could only be split once the error string was carried in the sync payload.
+**Cost:** an entire diagnostic cycle spent establishing that the error was on the phone and invisible,
+before any fix could target it.
+**Fix:** telemetry that stays on the phone is not telemetry. On-device fetch errors are carried in
+`fetchMeta` (`error`, `failedDays`, `sliced` — `#41`) so a failure is a server-side query, not a
+device-attach session. Default this pattern: any new on-device failure mode gets a payload-visible
+signal, never a logcat-only one.
+
 ### 2026-09-21 — an artefact commit that satisfies a row's open disposition must update the row  [ritual]
 **Friction:** `6ce4273` (2026-08-08) committed `nodedump.txt`, resolving the `feat/hrv-node-dump`
 row's explicitly-open "commit/gitignore/delete disposition" — but the row itself was never touched.

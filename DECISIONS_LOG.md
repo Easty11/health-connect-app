@@ -1384,3 +1384,49 @@ workstream).
 **Do not revisit unless:** Q21.1 fails on a fingerprinted build (then implement the gated
 newest-first/backoff), or a new HR-lag appears with a non-null `git_sha` and `heartRate.truncated:false`
 (a third mechanism — re-open the H3-class read).
+
+---
+
+### #41 — Paged fetch survives a poison page: error carried in fetchMeta, per-day slice resume on failure
+
+**Decision:** `src/fetchMeta.js` gains `paginateWithSlicing()`, wrapping `paginate()`. On the initial
+paged fetch throwing (`endedOnFailure`), it resumes from the last good record (`max(startTime)`, or the
+whole window if none accumulated) in **per-day UTC slices**, each a fresh `paginate()` call. A slice that
+itself fails is recorded as `{ day, error }` in `failedDays` and **skipped**; successful slices are
+appended in fetch order (ascending) and deduped across the seam by `metadata.id ?? JSON.stringify(record)`.
+`streamMeta()` and the payload `fetchMeta` gain three additive fields: `error` (first failure, string|null),
+`failedDays`, `sliced`. `safeFetch()` drives the new function and logs one `[HC] <type>: sliced —
+failedDays=[…]` line. Ascending order, `HC_PAGE_SIZE`, `HC_MAX_PAGES` and every existing `fetchMeta` field
+are unchanged. **No newest-first, no backoff, no retry.**
+
+**Rationale:** the 30d deep sync stopped **deterministically** at page 3 of Steps (twice, identical
+`fetch_meta`), losing 11–12 Sep. A poison page is deterministic, so a retry/backoff would re-hit it and a
+newest-first reorder would only move which end is lost — slicing instead **pins the unreadable day** and
+recovers every other day. The release APK emits no ReactNativeJS logcat, so an on-device fetch error is
+only observable if carried in the payload; `error`/`failedDays` make it a server-side query. The seam key
+uses `JSON.stringify(record)` (not a Steps-only field like `count`) because the slice path runs for every
+stream — HeartRate carries a `samples` array, SleepSession none — and a re-fetch is byte-identical
+(including `metadata.lastModifiedTime`), so this dedups the re-covered record exactly and never merges two
+distinct records. This **supersedes** the gated newest-first/backoff option designed in `#40` / Q22.
+
+**Status:** HCA side LANDED on master (this branch, `feat/paged-fetch-slicing`). Device confirmation of
+the recovery (steps.sliced / steps.failedDays, 11–12 Sep steps present) is OWED — operator G2, post-merge
+30d DEEP SYNC rebuild.
+
+**How you know:** `scripts/fetch-meta-sim.mjs` (`test:fetch-meta`) **56/56 PASS** against the real
+`src/fetchMeta.js` — page-3 failure recovers the window via slices (`sliced:true`, `failedDays:[]`,
+`truncated:false`); a poison day is named in `failedDays` and skipped while other days recover
+(`truncated:true`); a page-1 failure slices the whole window; a clean 5-page reader is byte-identical to
+`paginate()` plus `sliced:false`/`failedDays:[]`; the seam re-cover appears exactly once; `streamMeta`
+surfaces the new fields and defaults them when absent. `node --check` clean on all touched JS. Seam-key
+and branch rulings ratified by the operator 2026-09-22 (rulings 1/2/3 on the S0 report). Backend safety:
+health-app `FetchMetaEntry` is `extra="allow"` and `sync()` persists `model_dump()` verbatim (health-app
+`#321`), so the additive fields land with no contract or schema change — chat-confirmed against health-app
+master before the brief.
+
+**Number claimed at merge:** `origin/master` re-read immediately before landing — decision max `### #40`,
+question max `Q22`. This entry takes **#41**. No new question minted (Q22 carries the workstream).
+
+**Do not revisit unless:** the device G2 read shows `failedDays` naming >1 day, or a day that a per-day
+slice still cannot read (then the failure is sub-daily and slicing granularity is re-opened), or Q21.1
+fails on a fingerprinted build (then the gated newest-first/backoff from `#40` returns).

@@ -112,6 +112,12 @@ const PERMISSIONS = [
   { accessType: 'read', recordType: 'RespiratoryRate' },
   { accessType: 'read', recordType: 'ExerciseSession' },
   { accessType: 'read', recordType: 'Weight' },
+  // Background read access (#44) — lets the periodic sync task read HC while the app
+  // is not in the foreground. react-native-health-connect 3.5.3 accepts this special
+  // recordType in requestPermission and returns it from getGrantedPermissions; 3.5.3
+  // exposes no per-feature availability call, so we request it and treat a denial
+  // (its absence from the granted list) as "background unavailable" (V4 fallback).
+  { accessType: 'read', recordType: 'BackgroundAccessPermission' },
 ];
 
 export const requestPermissions = async () => {

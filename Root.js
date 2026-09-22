@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import App from './App';
 import SyncScreen from './src/SyncScreen';
+import { ensureBackgroundSyncRegistered } from './src/backgroundSync';
 
 // Shared auth state lives here and is passed down to both screens.
 // TOKEN_KEY matches the key api.js's axios interceptor reads.
@@ -47,6 +48,17 @@ export default function Root() {
     setUsername(null);
     setTab('scraper');
   };
+
+  // Register the periodic background sync once we have a token (app start after
+  // login). ensureBackgroundSyncRegistered re-reads the LIVE Health Connect grant, so
+  // a cold start with the background permission already granted registers with no
+  // screen interaction; it no-ops (idempotent) when unregistered already, and never
+  // registers — nor throws — without the permission. A same-session first grant is
+  // covered by SyncScreen after the grant dialog.
+  useEffect(() => {
+    if (!token) return;
+    ensureBackgroundSyncRegistered();
+  }, [token]);
 
   // A 401 anywhere clears the token (in api.js) and emits "AuthExpired" —
   // drop back to the login screen.

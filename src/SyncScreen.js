@@ -5,8 +5,9 @@ import {
 } from 'react-native';
 import { getGrantedPermissions } from 'react-native-health-connect';
 import { syncHealthData } from './api';
-import { requestPermissions, fetchAllData } from './healthConnect';
+import { requestPermissions, requestBackgroundPermission, fetchAllData } from './healthConnect';
 import { runSync, hasBackgroundPermission } from './syncRunner';
+import { runEnableBackground } from './backgroundPermission';
 import { ensureBackgroundSyncRegistered, getLastBackgroundSync } from './backgroundSync';
 import { validateNight, runDeepConfidence } from './deepSleepConfidence';
 
@@ -77,6 +78,7 @@ export default function SyncScreen({ token, username, onLogout }) {
   // to local storage after each background run.
   const [bgStatus, setBgStatus] = useState({ on: false, reason: 'checking' });
   const [lastBg, setLastBg] = useState(null);
+  const [enablingBg, setEnablingBg] = useState(false); // Enable-background-sync tap in flight
 
   const refreshBackgroundStatus = useCallback(async () => {
     setLastBg(await getLastBackgroundSync());
@@ -92,6 +94,31 @@ export default function SyncScreen({ token, username, onLogout }) {
 
   // Refresh on mount and whenever a grant flips permissionsGranted.
   useEffect(() => { refreshBackgroundStatus(); }, [refreshBackgroundStatus, permissionsGranted]);
+
+  // ── Enable background sync on an already-permitted install (#45) ──
+  // Requests the background permission alone, then registers on a grant. On denial the
+  // status names where to fix it (Health Connect app permissions) rather than silently
+  // re-reading "permission off". Uses the source-bound runEnableBackground so the tested
+  // branch is the one that runs.
+  async function handleEnableBackground() {
+    setEnablingBg(true);
+    try {
+      const { granted } = await runEnableBackground({
+        requestBackground: requestBackgroundPermission,
+        register: ensureBackgroundSyncRegistered,
+      });
+      if (granted) {
+        await refreshBackgroundStatus();
+      } else {
+        setLastBg(await getLastBackgroundSync());
+        setBgStatus({ on: false, reason: 'denied — check Health Connect app permissions' });
+      }
+    } catch (e) {
+      setBgStatus({ on: false, reason: 'denied — check Health Connect app permissions' });
+    } finally {
+      setEnablingBg(false);
+    }
+  }
 
   // ── Health Connect requires permissions before reading ──
   async function handleGrantPermissions() {
@@ -261,6 +288,18 @@ export default function SyncScreen({ token, username, onLogout }) {
           Last background sync: {lastBg ? new Date(lastBg).toLocaleString() : '—'}
         </Text>
       </View>
+
+      {/* Enable-background-sync (#45): shown only when base perms are granted but the
+          background permission is not (bgStatus.on is hasBackgroundPermission). */}
+      {permissionsGranted && !bgStatus.on ? (
+        <View style={styles.btn}>
+          <Button
+            title="Enable background sync"
+            onPress={handleEnableBackground}
+            disabled={enablingBg}
+          />
+        </View>
+      ) : null}
 
       {/* DEV: deep-sleep gate — runs validateNight() for last night */}
       <View style={styles.btn}>

@@ -22,6 +22,13 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-09-22 — global expo-cli is deprecated; `npm run android` is the only supported build path  [env]
+**Friction:** the global `expo-cli` is deprecated and dies AFTER a successful release build by trying to
+start a dev server, which reads as a build failure when the build actually succeeded.
+**Cost:** a false "build failed" read on a build that had already produced the APK.
+**Fix:** use `npm run android` (the local Expo CLI) for release builds — it is the only supported build
+path here. Never invoke the global `expo`/`expo-cli` for a build.
+
 ### 2026-09-22 — a release APK emits no ReactNativeJS logcat; on-device errors must ride the payload  [code]
 **Friction:** the Steps 30d deep sync failed deterministically at page 3 (twice, identical `fetch_meta`),
 but *why* was unobservable — the release build produces no JS logcat, and the phone/logcat are unseeable

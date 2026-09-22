@@ -84,6 +84,59 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `feat/steps-aggregate` → master (trunk)  ·  created from master `c9522d1`; gov close-out on `gov/steps-aggregate-closeout`; harness branch `claude/kind-thompson-q3u5ae` left untouched (no commits vs master)
+**Closed:** 2026-09-22 (Steps read via HC daily aggregate — HCA side landed, PR #52)
+
+### This session — Steps read via HC daily aggregate; raw+sliced path kept as fallback (`#42`, PR #52 → `bff49c7`)
+Garmin (chosen priority step source) writes zero-count `StepsRecord`s; the HC SDK throws on those in RAW
+deserialisation (`count must not be less than 1, currently 0` — Certain from the prod `failedDays` message;
+Garmin the Likely writer, xDrip #4351) before the app can see or filter them, and `#41` slicing only bounds
+the loss to the day. Fixed HCA-side by reading Steps via `aggregateGroupByPeriod(DAYS)`, concern-split:
+- **`d282fe9` feat(healthConnect):** new pure `src/stepsAggregate.js` — `localDayFilter` (Z-suffixed UTC
+  instants at LOCAL day edges; the 3.5.3 bridge's `getTimeRangeFilterLocal` does
+  `Instant.parse().atZone(systemDefault).toLocalDateTime()`, requires the Z, buckets step from `startTime`),
+  `pickSourcePackage` (single → that package; multiple → first non-own origin), `bucketToItem`/`bucketsToItems`
+  (map to the UNCHANGED `{date,count,sourcePackage}` item + optional `dataOrigins`, skip 0/absent count),
+  `fetchStepsWithFallback` (injectable orchestrator). `scripts/steps-aggregate-sim.mjs` (`test:steps-aggregate`).
+- **`e001397` feat(healthConnect):** `fetchStepsAggregate` injects RN `aggregateGroupByPeriod` + the unchanged
+  raw path into the orchestrator; `fetchStepsData` and the `fetchAllData` Steps branch route through it.
+  `fetchMeta.steps` gains `mode:'aggregate'` | `mode:'raw-fallback'`+`aggregateError` (additive). Raw
+  `stepsMapper`/`aggregateSteps`/`majorityWriter` untouched (the fallback); no `api.js` POST-shape change.
+- **gov (this close-out commit, `gov/steps-aggregate-closeout`):** `#42`, `Q22` S3 append, `FEEDBACK`
+  (deprecated global expo-cli), `ROADMAP`, `closeout.md` — governance batched out of the feature PR.
+`test:steps-aggregate` **31/31 PASS** against the real core + real `streamMeta`; `test:fetch-meta` /
+`test:auth-path` unregressed; `node --check` clean. Backend-safe: health-app `WriterIdentity` (per-item base
+of `StepsRecord`) is `extra="allow"`, so the extra `dataOrigins` field is retained, never a 422 (verified
+against health-app master) — self-merged on green (`placeholder guard (POSIX)`).
+
+### Decisions / Questions
+Minted **`#42`** — Steps via HC daily aggregate, raw+sliced path retained as fallback. **`Q22`** carried
+OPEN with an S3 progress + G2 close condition (Steps arm). Number claimed at merge against a re-read `#41` /
+`Q22`. Operator ratified the S0 report (time format = Z-suffixed, not naive; item field is `count`; premise
+provenance at stated confidence; branch `feat/steps-aggregate`) + the bucket-alignment addition, 2026-09-22.
+Stores changed: `DECISIONS_LOG`, `OPEN_QUESTIONS`, `FEEDBACK`, `ROADMAP` (this block), `closeout.md`.
+
+### Branch dispositions (terminal state)
+- `feat/steps-aggregate` — **merged+deleted** local and remote (PR #52 → merge `bff49c7`; remote ref
+  auto-deleted on merge, local deleted). No `BRANCHES` row required — stores cite merge/commit SHAs.
+- `gov/steps-aggregate-closeout` — the gov close-out branch; merges this turn via its own PR (pattern of
+  `gov/paged-fetch-closeout` #51). Terminal on that merge.
+- `claude/kind-thompson-q3u5ae` (harness-assigned) — no commits vs `origin/master` (`git cherry` empty),
+  not in limbo; left for the harness to reap.
+
+### Next action
+1. **OWED — operator G2 (post-merge).** Rebuild `npm run android` on a clean tree, install, DEEP SYNC 30d
+   **with Garmin's zero-count records still in HC** (they are the fixture — do not delete them first). Read
+   the newest `health_connect_sync_events` row: expect `steps.mode='aggregate'`, `failedDays` absent, `error`
+   null; `health_connect_syncs` non-null steps for 2026-09-10 and 2026-09-22. If `mode='raw-fallback'`, paste
+   `aggregateError` — HC's aggregate also chokes and the plan reverts to delete-and-revoke. Closes Q22's Steps arm.
+2. **Still OWED (`#40` / Q22 HR arm)** — backend `health_connect_sync_events` table + persistence (health-app
+   session; migration = HOLD), then the fingerprinted rebuild; `Q21.1` behavioural gate runs after.
+3. Carried, unchanged — `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper unexercised),
+   `Q21` (owed verifications).
+
+### Superseded by this session (kept for the record)
+
 **Branch:** `feat/paged-fetch-slicing` → master (trunk)  ·  created from master `4b8cc8f`; harness branch `claude/nifty-bardeen-7sqv08` left untouched (operator ruling)
 **Closed:** 2026-09-22 (poison-page slice resume — HCA side landed, PR #50)
 

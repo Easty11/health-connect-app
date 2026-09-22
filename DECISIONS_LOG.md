@@ -1430,3 +1430,61 @@ question max `Q22`. This entry takes **#41**. No new question minted (Q22 carrie
 **Do not revisit unless:** the device G2 read shows `failedDays` naming >1 day, or a day that a per-day
 slice still cannot read (then the failure is sub-daily and slicing granularity is re-opened), or Q21.1
 fails on a fingerprinted build (then the gated newest-first/backoff from `#40` returns).
+
+### #42 — Steps read via HC daily aggregate; raw+sliced path retained as fallback
+
+**Decision:** `src/healthConnect.js` reads Steps via `aggregateGroupByPeriod({ recordType:'Steps',
+timeRangeFilter:<local-day, Z-suffixed>, timeRangeSlicer:{period:'DAYS', length:1} })` instead of raw
+`readRecords`. A new pure, node-importable `src/stepsAggregate.js` holds the mapping/window/fallback core:
+`localDayFilter` (Z-suffixed UTC instants at LOCAL day edges), `pickSourcePackage` (single origin → that
+package; multiple → first non-own origin), `bucketToItem`/`bucketsToItems` (map each bucket to the
+UNCHANGED per-day item `{date, count, sourcePackage}` + optional `dataOrigins`, skip 0/absent
+`COUNT_TOTAL`), and `fetchStepsWithFallback` (injectable orchestrator). `fetchStepsData` and the
+`fetchAllData` Steps branch route through `fetchStepsAggregate`. `fetchMeta.steps` gains `mode:'aggregate'`
+(success) or `mode:'raw-fallback'` + `aggregateError` (fallback) — additive only. The raw path
+(`safeFetch → stepsMapper → aggregateSteps`, incl. `#41` slicing) is retained **only** as the fallback on
+any aggregate throw. Other streams unchanged.
+
+**Rationale:** Garmin — the chosen priority step source (watch worn when the phone isn't; revoking its
+write is not acceptable) — writes zero-count `StepsRecord`s. The HC SDK throws on those in RAW
+deserialisation (`count must not be less than 1, currently 0`) BEFORE the app sees the record, so they are
+unfilterable app-side; `#41` slicing only bounds the loss to the day, it cannot remove it.
+`aggregateGroupByPeriod` reads `COUNT_TOTAL` per local day and never deserialises the individual poison
+record, and HC applies the operator's HC source priority to the total. The time filter MUST be a
+Z-suffixed instant at LOCAL midnight: the 3.5.3 RN bridge's `getAggregateGroupByPeriodRequest` routes
+through `getTimeRangeFilterLocal`, which does `Instant.parse(startTime).atZone(ZoneId.systemDefault())
+.toLocalDateTime()` — `Instant.parse` requires the Z and throws on a naive ISO, and the SDK's period
+buckets step from `startTime`, so a mid-day or naive start breaks it. Aggregate mode cannot rank multiple
+origins by step count (`COUNT_TOTAL` is one deduped total), so `pickSourcePackage` is a lean pick and the
+full origin set travels as `dataOrigins` for when the backend's F1 learns to read it (see Q22).
+
+**Empirical premise (recorded at confidence):** the zero-count records throwing in raw deserialisation is
+**Certain** — prod `health_connect_sync_events` (22 Sep, 03:16Z) carried `steps.failedDays` for 2026-09-10
+and 2026-09-22, both with the exact SDK message `count must not be less than 1, currently 0.`. Garmin
+(`com.garmin.android.apps.connectmobile`) as the writer is **Likely, not proven** — the poison records
+never reached us so they carry no `source_package`; `health_connect_record_sources` for 9–13 Sep shows
+Garmin as the only writer besides Samsung Health and `unknown`, and xDrip discussion #4351 reports the
+identical exception with Garmin Connect writing steps. G2 tests the plan regardless of who wrote them.
+
+**Status:** HCA side LANDED on master (PR #52, this session, `feat/steps-aggregate`). Device confirmation
+is OWED — operator G2, post-merge 30d DEEP SYNC rebuild with Garmin's zero-count records still in HC.
+
+**How you know:** `scripts/steps-aggregate-sim.mjs` (`test:steps-aggregate`) **31/31 PASS** against the
+real `src/stepsAggregate.js` and the real `streamMeta` — bucket→item mapping incl. sparse and zero-count
+days skipped; `sourcePackage` single/first-non-own/own-skipped/null; aggregate-throws → raw fallback with
+`mode:'raw-fallback'` + `aggregateError`, items still produced from raw; local-day window emits Z instants
+at local-midnight edges and a naive bucket startTime maps to the correct day on a +10:00 device.
+`test:fetch-meta` and `test:auth-path` unregressed; `node --check` clean; governance-guard green. Time-filter
+ruling verified against the 3.5.3 Kotlin bridge (`getTimeRangeFilterLocal`, `ReactStepsRecord`). Backend
+safety: health-app `WriterIdentity` (per-item base of `StepsRecord`) is `model_config=ConfigDict(extra=
+"allow")`, so an extra `dataOrigins` field is retained, never a 422 (verified against health-app master,
+`backend/routers/health_connect.py`). Decision ratified by the operator this session (all four S0 gates
+cleared + the bucket-alignment addition).
+
+**Number claimed at merge:** `origin/master` re-read immediately before landing — decision max `### #41`,
+question max `Q22`. This entry takes **#42**. No new question minted (Q22 carries the Steps workstream).
+
+**Do not revisit unless:** G2 shows `steps.mode='raw-fallback'` (HC's aggregate also chokes on the
+records — the plan reverts to delete-and-revoke, and `aggregateError` is read), or a source-attribution
+defect surfaces where aggregate mode's lean `sourcePackage` pick trips the backend's F1 dedup on a
+multi-origin day (then F1 is taught to read the carried `dataOrigins` set).

@@ -84,6 +84,58 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `feat/paged-fetch-slicing` → master (trunk)  ·  created from master `4b8cc8f`; harness branch `claude/nifty-bardeen-7sqv08` left untouched (operator ruling)
+**Closed:** 2026-09-22 (poison-page slice resume — HCA side landed, PR #50)
+
+### This session — paged HC fetch survives a poison page (`#41`, PR #50 → `414caa5`)
+The Steps 30d deep sync stopped **deterministically** at page 3 (twice, identical `fetch_meta`), losing
+11–12 Sep, and the error was invisible (release APK emits no ReactNativeJS logcat). Fixed HCA-side,
+concern-split across three commits:
+- **`9f6b555` feat(fetchMeta):** `paginateWithSlicing()` wraps `paginate()` — on the initial paged fetch
+  throwing, resume from the last good record (`max(startTime)`, or the whole window if none) in per-day
+  UTC slices, each a fresh `paginate()`; a failing slice is recorded in `failedDays` and skipped,
+  successful slices appended ascending, deduped across the seam by `metadata.id ?? JSON.stringify(record)`.
+  `streamMeta` gains additive `error`/`failedDays`/`sliced`. No newest-first, no backoff, no retry.
+- **`d7e92f9` feat(healthConnect):** `safeFetch()` drives the new function; `error`/`failedDays`/`sliced`
+  flow through `pageInfo` into `fetchMeta`; one `[HC] <type>: sliced` log line added. No
+  mapper/`aggregateSteps`/`api.js` POST-shape change.
+- **`5c91367` gov:** `#41`, `Q22` S2 append, `FEEDBACK` (release-APK logcat).
+`test:fetch-meta` **56/56 PASS** (22 existing unregressed + 34 new) against the real `src/fetchMeta.js`;
+`node --check` clean. Backend-safe: health-app `FetchMetaEntry` is `extra="allow"`, `sync()` persists
+`model_dump()` verbatim (health-app `#321`), so the additive fields land with no contract/schema change —
+self-merged on green (`placeholder guard (POSIX)`).
+
+### Decisions / Questions
+Minted **`#41`** — poison-page slice resume; **supersedes** the gated newest-first/backoff designed in
+`#40`. **`Q22`** carried OPEN with an S2 progress + G2 close condition. Number claimed at merge against a
+re-read `#40` / `Q22`. Operator ratified the S0 report (seam key → `JSON.stringify(record)`; branch →
+`feat/paged-fetch-slicing`) 2026-09-22. Stores changed: `DECISIONS_LOG`, `OPEN_QUESTIONS`, `FEEDBACK`,
+`ROADMAP` (this block), `closeout.md`.
+
+### Branch dispositions (terminal state)
+- `feat/paged-fetch-slicing` — **merged+deleted** local and remote (PR #50 → merge `414caa5`; remote ref
+  auto-deleted on merge, local deleted). No `BRANCHES` row required — stores cite merge/commit SHAs on
+  master.
+- `claude/nifty-bardeen-7sqv08` (harness-assigned) — **untouched** per operator ruling; carries no
+  commits vs `origin/master` (`git cherry` empty), not in limbo. Left for the harness to reap.
+
+### Next action
+1. **OWED — operator G2 (post-merge).** Rebuild `npm run android` on a clean tree, install, tap DEEP SYNC
+   (30d), read the newest `health_connect_sync_events` row: expect `steps.sliced=true`, `steps.failedDays`
+   naming ≤1 day with an error string, non-null steps for 2026-09-11 / 2026-09-12 (Samsung Health
+   9343 / 7947), heartRate unchanged (pages ~10, `truncated:false`). **Report the `failedDays.error`
+   string back to chat — it decides the follow-up** (fix the day or accept a 1-day loss; closes Q22's
+   Steps arm).
+2. **Still OWED (`#40` / Q22 HR arm)** — backend `health_connect_sync_events` table + persistence
+   (health-app session; migration = HOLD), then the fingerprinted rebuild; `Q21.1` behavioural gate runs
+   after.
+3. Carried, unchanged — `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper unexercised),
+   `Q21` (owed verifications).
+
+### Superseded by this session (kept for the record)
+The block below described the 2026-09-21 heart-rate S1 diagnostics session (PR #48 → `8c154c8`,
+`#40` / `Q22`). Its notes still carry.
+
 **Branch:** `gov/heartrate-s1-closeout` → master (trunk)  ·  prior `claude/heart-rate-sync-lag-wk0y2o` (S0+S1, PRs #47/#48, merged+deleted)
 **Closed:** 2026-09-21 (heart-rate ~6-day-lag: H1 confirmed, S1 diagnostics HCA side landed)
 

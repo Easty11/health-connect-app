@@ -65,13 +65,20 @@ export async function getStoredToken() {
   return AsyncStorage.getItem(TOKEN_KEY);
 }
 
+// Store a token the backend handed back on a successful sync (`renewed_token`,
+// health-app #325) — the same two writes login makes (AsyncStorage + native mirror), so
+// the scraper worker and the next background run both read the fresh token.
+export async function storeToken(token) {
+  await AsyncStorage.setItem(TOKEN_KEY, token);
+  await mirrorTokenToNative(token);
+}
+
 export async function syncHealthData(data, token) {
-  console.log('Syncing data:', JSON.stringify(data, null, 2));
-  // Bounded, deterministic summary of the OUTGOING body. The full dump above is cut by
-  // logcat's ~4 KB per-message cap, so every key after `sleep` (hrv, heartRate, steps,
-  // workouts, errors) has never been observable there — a retrospective limitation, not
-  // a regression. This line stays under the cap so the wire contract remains inspectable,
-  // in particular the workout metadata now forwarded (see DECISIONS_LOG #35).
+  // Bounded, deterministic summary of the OUTGOING body — the only payload log. The
+  // full-body dump that used to precede it was removed (#47): it wrote every health
+  // record to logcat and was cut at logcat's ~4 KB per-message cap anyway. This line
+  // stays under the cap so the wire contract remains inspectable, in particular the
+  // workout metadata now forwarded (see DECISIONS_LOG #35).
   const w0 = data.workouts?.[0] ?? null;
   const fm = data.fetchMeta ?? {};
   console.log('[HC payload summary]', JSON.stringify({

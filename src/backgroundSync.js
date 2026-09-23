@@ -12,11 +12,15 @@ import { getGrantedPermissions } from 'react-native-health-connect';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { runSync, shouldRegisterBackground } from './syncRunner';
-import { getStoredToken, syncHealthData } from './api';
+import { getStoredToken, storeToken, syncHealthData } from './api';
 import { fetchAllData } from './healthConnect';
 
 export const BACKGROUND_SYNC_TASK = 'hc-background-sync';
 export const LAST_BACKGROUND_SYNC_KEY = '@hc_last_background_sync';
+// Set (ISO timestamp) when a background sync gets a 401; cleared on login (#47). Without
+// it a dead token is silent: the interceptor clears the token and every later run just
+// exits 'no auth token', while the sync-events table stops growing.
+export const NEEDS_SIGN_IN_KEY = '@hc_needs_sign_in';
 
 // 6 hours. Expo SDK 56's minimumInterval is in MINUTES with a 15-minute floor, so 360
 // is well above it. The OS treats it as a minimum delay only — WorkManager defers the
@@ -31,6 +35,15 @@ async function writeLastBackgroundSync({ trigger, at }) {
   try { await AsyncStorage.setItem(LAST_BACKGROUND_SYNC_KEY, at); } catch (_) {}
 }
 
+// Only the FIRST 401 is stamped, so "since" stays the moment sync stopped. Best-effort.
+async function writeNeedsSignIn({ at }) {
+  try {
+    if (!(await AsyncStorage.getItem(NEEDS_SIGN_IN_KEY))) {
+      await AsyncStorage.setItem(NEEDS_SIGN_IN_KEY, at);
+    }
+  } catch (_) {}
+}
+
 // Define the task at module scope. runSync never throws, but the outer try/catch is
 // the belt-and-braces guarantee the task body demands.
 TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
@@ -42,6 +55,8 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
       fetchAllData,
       syncHealthData,
       setLastSync: writeLastBackgroundSync,
+      setToken: storeToken,
+      onAuthExpired: writeNeedsSignIn,
     });
     return ok
       ? BackgroundTask.BackgroundTaskResult.Success
@@ -77,4 +92,12 @@ export async function ensureBackgroundSyncRegistered() {
 
 export async function getLastBackgroundSync() {
   try { return await AsyncStorage.getItem(LAST_BACKGROUND_SYNC_KEY); } catch (_) { return null; }
+}
+
+export async function getNeedsSignIn() {
+  try { return await AsyncStorage.getItem(NEEDS_SIGN_IN_KEY); } catch (_) { return null; }
+}
+
+export async function clearNeedsSignIn() {
+  try { await AsyncStorage.removeItem(NEEDS_SIGN_IN_KEY); } catch (_) {}
 }

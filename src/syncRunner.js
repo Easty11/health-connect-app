@@ -1,8 +1,8 @@
 // Pure, dependency-injected sync core. NO react-native / expo / axios / AsyncStorage
 // imports — so node imports it directly and scripts/background-sync-sim.mjs exercises
 // THIS code, not a reimplementation (mirrors the source-binding discipline of
-// fetchMeta.js / stepsAggregate.js). Every runtime dependency (token read, HC fetch,
-// backend POST, last-sync write) is injected at the call sites — SyncScreen.handleSync
+// fetchMeta.js / stepsAggregate.js). Every runtime dependency (token read/write, HC fetch,
+// backend POST, last-sync write, 401 flag) is injected at the call sites — SyncScreen.handleSync
 // and src/backgroundSync.js — which is what keeps api.js and healthConnect.js untouched
 // (GUARD: the only payload change is client.trigger, stamped here).
 //
@@ -57,6 +57,9 @@ function countRecords(data) {
  * @param {function} o.fetchAllData    (days) => Promise<data>     (healthConnect.fetchAllData)
  * @param {function} o.syncHealthData  (data, token) => Promise    (api.syncHealthData)
  * @param {function} [o.setLastSync]   ({trigger, at}) => Promise  (local timestamp; best-effort)
+ * @param {function} [o.setToken]      (token) => Promise          (api.storeToken) — stores the
+ *                                     `renewed_token` a successful sync returns (#47)
+ * @param {function} [o.onAuthExpired] ({trigger, at}) => Promise  called on a 401 (#47)
  * @param {function} [o.now]           () => ISO string
  * @returns {Promise<{ok:boolean, received:number, data:object|null, meta:object|null, error:string|null}>}
  */
@@ -67,6 +70,8 @@ export async function runSync({
   fetchAllData,
   syncHealthData,
   setLastSync,
+  setToken,
+  onAuthExpired,
   now = () => new Date().toISOString(),
 } = {}) {
   try {
@@ -85,7 +90,16 @@ export async function runSync({
     // persisting it into a column is the owed health-app follow-up (OPEN_QUESTIONS).
     data.client = { ...(data.client || {}), trigger };
 
-    await syncHealthData(data, token);
+    const response = await syncHealthData(data, token);
+
+    // Sliding renewal (#47, health-app #325): every successful sync returns a fresh
+    // access token. Storing it is what keeps a never-opened app from reaching the 7-day
+    // expiry. Only a non-empty string is stored; a storage failure never fails the sync
+    // (the current token is still valid, and the next sync renews again).
+    const renewed = response?.renewed_token;
+    if (setToken && typeof renewed === 'string' && renewed.length > 0) {
+      try { await setToken(renewed); } catch (_) {}
+    }
 
     if (setLastSync) {
       // Best-effort local timestamp for the sync-screen status line (S5). A storage
@@ -95,6 +109,11 @@ export async function runSync({
 
     return { ok: true, received: countRecords(data), data, meta: data.fetchMeta ?? null, error: null };
   } catch (err) {
+    // A 401 means the token is dead (api.js's interceptor has already cleared it). Tell
+    // the caller so the pause is visible (#47) — never retried here. Best-effort.
+    if (err?.response?.status === 401 && onAuthExpired) {
+      try { await onAuthExpired({ trigger, at: now() }); } catch (_) {}
+    }
     // No throw on failure — the background task returns a result code, never rejects
     // (S1, S3). The manual caller reads { ok:false, error } and shows it.
     return { ok: false, received: 0, data: null, meta: null, error: err?.message ?? String(err) };

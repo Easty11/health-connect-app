@@ -12,8 +12,16 @@
 //   (c) missing token -> ok:false, NO fetch
 //   (d) trigger propagates into client
 //   (e) registration gating: no background permission -> not registered
+//   (f) renewed_token present -> setToken called with it (#47)
+//   (g) renewed_token absent / empty / non-string -> setToken NOT called; a throwing
+//       setToken never fails the sync
+//   (h) 401 -> onAuthExpired called (needsSignIn), ok:false; non-401 -> not called
+//   (i) source-bind: api.js 401 interceptor clears the token; backgroundSync injects
+//       storeToken + the needsSignIn writer; login clears the flag
 //
 // Run: node scripts/background-sync-sim.mjs   (exit 0 = PASS, 1 = FAIL)
+
+import { readFileSync } from 'node:fs';
 
 import { runSync, shouldRegisterBackground, hasBackgroundPermission } from '../src/syncRunner.js';
 
@@ -131,6 +139,125 @@ await (async () => {
   assert('(e) registered with background permission', shouldRegisterBackground(withPerm) === true, 'gated false');
   assert('(e) hasBackgroundPermission false on empty list', hasBackgroundPermission([]) === false, 'true on []');
   assert('(e) hasBackgroundPermission tolerant of non-array', hasBackgroundPermission(null) === false, 'true on null');
+})();
+
+// ── (f) renewed_token present -> setToken called with it ─────────────────────
+const RENEWED = 'FAKE.RENEWED.SIM'; // not a real credential
+await (async () => {
+  const stored = [];
+  const res = await runSync({
+    days: 7,
+    trigger: 'background',
+    getToken: async () => FAKE_TOKEN,
+    fetchAllData: async () => fakeData(),
+    syncHealthData: async () => ({ synced: 7, renewed_token: RENEWED }),
+    setToken: async (t) => { stored.push(t); },
+  });
+  assert('(f) ok true with a renewed token', res.ok === true, `ok=${res.ok} err=${res.error}`);
+  assert('(f) setToken called exactly once with renewed_token',
+    stored.length === 1 && stored[0] === RENEWED, `stored=${JSON.stringify(stored)}`);
+})();
+
+// ── (g) absent / empty / non-string -> not called; throwing setToken is harmless ──
+await (async () => {
+  for (const [label, body] of [
+    ['absent', { synced: 7 }],
+    ['empty string', { synced: 7, renewed_token: '' }],
+    ['non-string', { synced: 7, renewed_token: 12345 }],
+    ['undefined response', undefined],
+  ]) {
+    let calls = 0;
+    const res = await runSync({
+      days: 7,
+      trigger: 'background',
+      getToken: async () => FAKE_TOKEN,
+      fetchAllData: async () => fakeData(),
+      syncHealthData: async () => body,
+      setToken: async () => { calls++; },
+    });
+    assert(`(g) ${label}: setToken not called`, calls === 0, `calls=${calls}`);
+    assert(`(g) ${label}: sync still ok`, res.ok === true, `ok=${res.ok} err=${res.error}`);
+  }
+  const res = await runSync({
+    days: 7,
+    trigger: 'background',
+    getToken: async () => FAKE_TOKEN,
+    fetchAllData: async () => fakeData(),
+    syncHealthData: async () => ({ renewed_token: RENEWED }),
+    setToken: async () => { throw new Error('storage full'); },
+  });
+  assert('(g) a throwing setToken does not fail the sync', res.ok === true, `ok=${res.ok} err=${res.error}`);
+})();
+
+// ── (h) 401 -> onAuthExpired (needsSignIn) ; non-401 -> not called ─────────────
+function httpError(status) {
+  const e = new Error(`Request failed with status code ${status}`);
+  e.response = { status };
+  return e;
+}
+await (async () => {
+  const flagged = [];
+  let tokenWrites = 0;
+  const res = await runSync({
+    days: 7,
+    trigger: 'background',
+    getToken: async () => FAKE_TOKEN,
+    fetchAllData: async () => fakeData(),
+    syncHealthData: async () => { throw httpError(401); },
+    setToken: async () => { tokenWrites++; },
+    onAuthExpired: async (x) => { flagged.push(x); },
+    now: () => '2026-09-24T00:00:00.000Z',
+  });
+  assert('(h) 401 -> ok false', res.ok === false, `ok=${res.ok}`);
+  assert('(h) 401 -> onAuthExpired called once with trigger + timestamp',
+    flagged.length === 1 && flagged[0].trigger === 'background' && flagged[0].at === '2026-09-24T00:00:00.000Z',
+    `flagged=${JSON.stringify(flagged)}`);
+  assert('(h) 401 -> no token stored', tokenWrites === 0, `tokenWrites=${tokenWrites}`);
+
+  let calls = 0;
+  await runSync({
+    days: 7,
+    trigger: 'background',
+    getToken: async () => FAKE_TOKEN,
+    fetchAllData: async () => fakeData(),
+    syncHealthData: async () => { throw httpError(500); },
+    onAuthExpired: async () => { calls++; },
+  });
+  assert('(h) 500 -> onAuthExpired NOT called', calls === 0, `calls=${calls}`);
+
+  let threw = false;
+  try {
+    await runSync({
+      days: 7,
+      trigger: 'background',
+      getToken: async () => FAKE_TOKEN,
+      fetchAllData: async () => fakeData(),
+      syncHealthData: async () => { throw httpError(401); },
+      onAuthExpired: async () => { throw new Error('storage broken'); },
+    });
+  } catch (_) { threw = true; }
+  assert('(h) a throwing onAuthExpired does not make runSync throw', threw === false, 'it threw');
+})();
+
+// ── (i) source-bind: the pieces runSync cannot see ───────────────────────────
+// The token clear on 401 lives in api.js's axios interceptor, and the real injections
+// live in backgroundSync.js / Root.js — none node-importable (RN / axios / expo). Bind to
+// the committed text so removing any of them fails here.
+await (async () => {
+  const root = new URL('..', import.meta.url);
+  const api = readFileSync(new URL('src/api.js', root), 'utf8');
+  const bg = readFileSync(new URL('src/backgroundSync.js', root), 'utf8');
+  const rootSrc = readFileSync(new URL('Root.js', root), 'utf8');
+  assert('(i) api.js 401 interceptor clears the stored token',
+    /status === 401\)\s*\{\s*await AsyncStorage\.removeMany\(\[TOKEN_KEY/.test(api), 'clear not found');
+  assert('(i) api.js storeToken writes TOKEN_KEY and mirrors to native',
+    /export async function storeToken\(token\)\s*\{\s*await AsyncStorage\.setItem\(TOKEN_KEY, token\);\s*await mirrorTokenToNative\(token\);/.test(api),
+    'storeToken body not found');
+  assert('(i) api.js no longer dumps the full payload', !/Syncing data:/.test(api), 'payload dump still present');
+  assert('(i) background task injects setToken: storeToken', /setToken: storeToken/.test(bg), 'not injected');
+  assert('(i) background task injects onAuthExpired: writeNeedsSignIn',
+    /onAuthExpired: writeNeedsSignIn/.test(bg), 'not injected');
+  assert('(i) login clears the needsSignIn flag', /await clearNeedsSignIn\(\)/.test(rootSrc), 'not cleared on login');
 })();
 
 console.log(failures === 0 ? '\nALL PASS' : `\n${failures} FAILURE(S)`);

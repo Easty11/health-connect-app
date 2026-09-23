@@ -4,11 +4,11 @@ import {
   ActivityIndicator, StyleSheet, useColorScheme, Alert, Button,
 } from 'react-native';
 import { getGrantedPermissions } from 'react-native-health-connect';
-import { syncHealthData } from './api';
+import { syncHealthData, storeToken } from './api';
 import { requestPermissions, requestBackgroundPermission, fetchAllData } from './healthConnect';
 import { runSync, hasBackgroundPermission } from './syncRunner';
 import { runEnableBackground } from './backgroundPermission';
-import { ensureBackgroundSyncRegistered, getLastBackgroundSync } from './backgroundSync';
+import { ensureBackgroundSyncRegistered, getLastBackgroundSync, getNeedsSignIn } from './backgroundSync';
 import { validateNight, runDeepConfidence } from './deepSleepConfidence';
 
 // Last-night window: yesterday 18:00 → today 11:00 local. Wide enough to capture
@@ -78,10 +78,12 @@ export default function SyncScreen({ token, username, onLogout }) {
   // to local storage after each background run.
   const [bgStatus, setBgStatus] = useState({ on: false, reason: 'checking' });
   const [lastBg, setLastBg] = useState(null);
+  const [needsSignIn, setNeedsSignIn] = useState(null); // ISO time of the first background 401 (#47)
   const [enablingBg, setEnablingBg] = useState(false); // Enable-background-sync tap in flight
 
   const refreshBackgroundStatus = useCallback(async () => {
     setLastBg(await getLastBackgroundSync());
+    setNeedsSignIn(await getNeedsSignIn());
     try {
       const granted = await getGrantedPermissions();
       setBgStatus(hasBackgroundPermission(granted)
@@ -161,6 +163,7 @@ export default function SyncScreen({ token, username, onLogout }) {
         getToken: async () => token,
         fetchAllData,
         syncHealthData,
+        setToken: storeToken, // keep the renewed token (#47)
       });
       if (!ok || !data) {
         console.warn('Sync error:', error);
@@ -282,7 +285,9 @@ export default function SyncScreen({ token, username, onLogout }) {
       {/* Background sync status (S5) — one status line + last background sync time */}
       <View style={styles.bgStatus}>
         <Text style={[styles.bgStatusText, { color: t.subtext }]}>
-          Background sync: {bgStatus.on ? 'on' : `off (${bgStatus.reason})`}
+          Background sync: {needsSignIn
+            ? `paused — sign in required (since ${new Date(needsSignIn).toLocaleString()})`
+            : bgStatus.on ? 'on' : `off (${bgStatus.reason})`}
         </Text>
         <Text style={[styles.bgStatusText, { color: t.subtext }]}>
           Last background sync: {lastBg ? new Date(lastBg).toLocaleString() : '—'}

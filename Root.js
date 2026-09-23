@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView, View, Text, TouchableOpacity, ActivityIndicator, StyleSheet,
-  DeviceEventEmitter, NativeModules, StatusBar,
+  DeviceEventEmitter, NativeModules, StatusBar, AppState,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import App from './App';
 import SyncScreen from './src/SyncScreen';
-import { ensureBackgroundSyncRegistered } from './src/backgroundSync';
+import { ensureBackgroundSyncRegistered, getNeedsSignIn, clearNeedsSignIn } from './src/backgroundSync';
 
 // Shared auth state lives here and is passed down to both screens.
 // TOKEN_KEY matches the key api.js's axios interceptor reads.
@@ -19,6 +19,21 @@ export default function Root() {
   const [username, setUsername] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('scraper'); // 'scraper' | 'healthConnect'
+  // ISO time of the first background-sync 401 (#47). A 401 clears the token, so the
+  // user lands HERE, on the login screen — this is where the pause must be visible.
+  const [needsSignIn, setNeedsSignIn] = useState(null);
+
+  // Re-read whenever we are (or become) logged out, and on every return to the
+  // foreground: a background 401 in a live runtime clears the token (AuthExpired) a
+  // moment BEFORE runSync writes the flag, so the logout re-render can miss it.
+  useEffect(() => {
+    if (token) return undefined;
+    getNeedsSignIn().then(setNeedsSignIn);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') getNeedsSignIn().then(setNeedsSignIn);
+    });
+    return () => sub.remove();
+  }, [token]);
 
   // Restore auth from storage on mount.
   useEffect(() => {
@@ -40,6 +55,9 @@ export default function Root() {
     if (newUsername != null) await AsyncStorage.setItem(USERNAME_KEY, newUsername);
     setToken(newToken);
     setUsername(newUsername ?? null);
+    // A successful login ends the pause (#47).
+    await clearNeedsSignIn();
+    setNeedsSignIn(null);
   };
 
   const onLogout = async () => {
@@ -88,6 +106,11 @@ export default function Root() {
   if (!token) {
     return (
       <SafeAreaView style={styles.root}>
+        {needsSignIn ? (
+          <Text style={styles.pausedBanner}>
+            Background sync: paused — sign in required (since {new Date(needsSignIn).toLocaleString()})
+          </Text>
+        ) : null}
         <App token={token} username={username} onLogin={onLogin} onLogout={onLogout} />
       </SafeAreaView>
     );
@@ -146,4 +169,8 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 14, fontWeight: '600', color: '#6b7280' },
   tabTextActive: { color: '#4f46e5' },
   body: { flex: 1 },
+  pausedBanner: {
+    padding: 12, fontSize: 14, fontWeight: '600', textAlign: 'center',
+    color: '#92400e', backgroundColor: '#fef3c7',
+  },
 });

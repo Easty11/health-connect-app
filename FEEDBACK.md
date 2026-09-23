@@ -22,6 +22,19 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-09-24 — CORRECTION to 2026-09-22 "a release APK emits no ReactNativeJS logcat"  [code]
+**Friction:** the 2026-09-22 entry's premise is wrong. The operator's 24 Sep logcat (the #44 token-expiry
+diagnosis) showed full `ReactNativeJS` output from the release build. The earlier empty read was timing — the
+capture window missed the run — not an absence of JS logging. (Operator-read on an unseeable surface; recorded
+as reported, not re-observed by Code.)
+**Cost:** a false constraint in the store: "release builds cannot log" would steer a future diagnosis away
+from logcat, and it hid a real consequence — the full-payload `Syncing data:` dump in `src/api.js` WAS
+reaching logcat, writing every synced health record there.
+**Fix:** the 2026-09-22 entry is left as written (append-only); this entry supersedes its premise. Its rule —
+on-device failures get a payload-visible signal, never a logcat-only one — stands on its own merits
+(logcat is still an unseeable, per-device, uncaptured surface). The payload dump is removed (`#47`); the
+bounded `[HC payload summary]` line is the only payload log.
+
 ### 2026-09-22 — this repo is bare workflow: `app.json` permissions never reach the build  [env]
 **Friction:** `android/` is committed and built directly; there is no `expo prebuild` in the build path,
 so `app.json` `android.permissions` and plugin config are inert. `#44` added the background permission to

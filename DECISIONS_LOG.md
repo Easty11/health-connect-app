@@ -1699,3 +1699,55 @@ question max `Q23`. This entry takes **#46**. No new question minted.
 manifest declaration is regenerated from it — keep the two in sync until then), or G2 shows the OS still lists
 no background item with the manifest declaring it (then the permission name or HC version is wrong — re-check
 against the installed HC provider).
+
+### #47 — Client stores the renewed sync token; a background 401 surfaces as "sign in required"
+
+**Decision:** `runSync` takes two injected hooks. `setToken` — after a successful POST, if the response
+carries `renewed_token` as a non-empty string, it is stored via `api.storeToken` (the same two writes login
+makes: `AsyncStorage` `@health_app_token` + `mirrorTokenToNative`). `onAuthExpired` — on a 401, the background
+task stamps `@hc_needs_sign_in` with the time of the FIRST 401 (same AsyncStorage as the last-sync time). Both
+are best-effort and never throw; a 401 is never retried. The pause renders as "Background sync: paused — sign in
+required (since <time>)" on the login screen (Root's logged-out branch) and on the sync screen's status line;
+a successful login clears it. Both manual and background syncs store the renewed token. Separately, the
+full-payload `console.log('Syncing data:', …)` in `api.syncHealthData` is removed; the bounded
+`[HC payload summary]` line is the only payload log.
+
+**Rationale:** prod tokens expire after 7 days. `#44` background sync got a 401 on the first run after expiry;
+the interceptor cleared the token and every later run exited `no auth token` — silently, the only symptom being
+`health_connect_sync_events` rows stopping. Any fixed lifetime fails identically for an app the operator never
+opens; health-app `#325` makes every successful sync return a fresh token, and this stores it. Rejected: a
+long-lived device token (still a cliff; larger blast radius if leaked).
+
+**Divergence from the brief (placement, not scope):** the brief put the paused line on the sync screen only. A
+401 clears the token, and Root never mounts the sync screen without one — so the user lands on the LOGIN
+screen, and a sync-screen-only line would be unreachable in exactly the case it exists for. The line is
+therefore also rendered on the login screen (re-read on logout and on every return to the foreground, because
+the interceptor clears the token a moment before runSync writes the flag).
+
+**Empirical premise (recorded at confidence):** health-app master carries `renewed_token` on the sync response
+— **Certain**, health-app `#325` merged as PR #251 → `01d9c38`. `api.syncHealthData` returns `response.data`
+and the 401 interceptor clears `@health_app_token` + username and emits `AuthExpired` — **Certain**, from the
+tree at `bb94b67`. Railway has redeployed `#325` — **Unverified by Code** (G2 reads it implicitly: the first
+sync after sign-in either renews or does not).
+
+**Status:** implemented on `feat/sync-token-renewal`. Device verification OWED — operator G2: commit
+`package-lock.json` first so the fingerprint is clean; rebuild; sign in; confirm "Background sync: on"; leave
+the app 8+ days. Pass = `health_connect_sync_events` rows every ~6h continuously past the 7-day mark from
+sign-in, all on the new `git_sha`, no `-dirty`.
+
+**How you know:** `scripts/background-sync-sim.mjs` (source-bound to `src/syncRunner.js`) — 42 checks, the
+original 19 unregressed plus: (f) `renewed_token` present → `setToken` called once with it; (g) absent / empty /
+non-string / undefined response → not called, and a throwing `setToken` leaves the sync ok; (h) 401 →
+`onAuthExpired` called once with trigger + timestamp, no token stored, ok:false; 500 → not called; a throwing
+`onAuthExpired` never makes runSync throw; (i) source-binds on the committed text: the api.js 401 interceptor
+clears `TOKEN_KEY`, `storeToken`'s body, the payload dump gone, both background injections present, login
+clears the flag. Negative control: with the source changes stashed, 8 checks fail. All five sims green;
+`node --check` on the three plain modules; `Root.js`/`src/SyncScreen.js` parse (esbuild, JSX loader). Cross-ref
+`#44`, health-app `#325`.
+
+**Number claimed at merge:** `origin/master` re-read immediately before landing — decision max `### #46`,
+question max `Q23`. This entry takes **#47**. No new question minted.
+
+**Do not revisit unless:** the backend stops returning `renewed_token` (then this is inert, not broken — the
+cliff returns), or a revocation requirement appears (sliding renewal keeps a leaked token alive while it
+keeps syncing).

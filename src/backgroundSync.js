@@ -1,6 +1,7 @@
 // Background HC sync (#44). Module-scope task registration — Expo requires the task
-// to be DEFINED outside any component, at import time. The task runs the SAME 7-day
-// sync as the manual button through the pure runSync core, stamped trigger:'background'.
+// to be DEFINED outside any component, at import time. The task runs the same sync as the
+// manual button through the pure runSync core, stamped trigger:'background', over a 30-day
+// window (#370 S5) — wide enough that a few failed runs cannot age data past the reach.
 //
 // Everything that only exists in the RN/Expo runtime is imported HERE, never in
 // syncRunner.js, so the pure core stays node-importable for the sim. Nothing in the
@@ -13,7 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { runSync, shouldRegisterBackground } from './syncRunner';
 import { getStoredToken, storeToken, syncHealthData } from './api';
-import { fetchAllData } from './healthConnect';
+import { fetchAllData, initializeHealthConnect } from './healthConnect';
 
 export const BACKGROUND_SYNC_TASK = 'hc-background-sync';
 export const LAST_BACKGROUND_SYNC_KEY = '@hc_last_background_sync';
@@ -27,6 +28,9 @@ export const NEEDS_SIGN_IN_KEY = '@hc_needs_sign_in';
 // run to a maintenance window (device unlocked / charging), which is the expected
 // "partial" outcome in G2, not a failure.
 const INTERVAL_MINUTES = 360;
+
+// Window the scheduled run reads. Manual buttons keep their own windows (7 routine, 30 deep).
+const BACKGROUND_WINDOW_DAYS = 30;
 
 async function writeLastBackgroundSync({ trigger, at }) {
   // Only the background trigger owns the "Last background sync" line (S5); a manual
@@ -49,7 +53,7 @@ async function writeNeedsSignIn({ at }) {
 TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
   try {
     const { ok } = await runSync({
-      days: 7,
+      days: BACKGROUND_WINDOW_DAYS,
       trigger: 'background',
       getToken: getStoredToken,
       fetchAllData,
@@ -77,6 +81,12 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
  */
 export async function ensureBackgroundSyncRegistered() {
   try {
+    // getGrantedPermissions sits behind the same lateinit-client guard as readRecords, so
+    // on a cold start (Root) it rejected "not initialized" and was swallowed into a
+    // silent registered:false (#370). Init first; an init failure is reported, not hidden.
+    if (!(await initializeHealthConnect())) {
+      return { registered: false, reason: 'Health Connect not initialized' };
+    }
     const granted = await getGrantedPermissions();
     if (!shouldRegisterBackground(granted)) {
       return { registered: false, reason: 'background permission not granted' };

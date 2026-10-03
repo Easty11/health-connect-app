@@ -9,6 +9,8 @@
 // healthConnect.js and api.js cannot be imported outside Metro (react-native /
 // NativeModules / axios), so the same logic could not live there and stay testable.
 
+import { fetchFailureReason } from './fetchMeta.js';
+
 // The special Health Connect permission that gates reads while the app is backgrounded
 // (react-native-health-connect 3.5.3: recordType 'BackgroundAccessPermission', accepted
 // by requestPermission and returned by getGrantedPermissions). 3.5.3 exposes NO
@@ -99,6 +101,16 @@ export async function runSync({
     const renewed = response?.renewed_token;
     if (setToken && typeof renewed === 'string' && renewed.length > 0) {
       try { await setToken(renewed); } catch (_) {}
+    }
+
+    // A 200 is not a successful sync when every stream failed (#370: an uninitialised
+    // client posted empty payloads and WorkManager saw Success). The POST above still
+    // happened — the server records the event — but the result is honest, so the
+    // background task reports Failed and WorkManager backs off and retries. The
+    // last-sync stamp is skipped: nothing was synced.
+    const failure = fetchFailureReason(data);
+    if (failure) {
+      return { ok: false, received: 0, data, meta: data.fetchMeta ?? null, error: failure };
     }
 
     if (setLastSync) {

@@ -227,3 +227,47 @@ export async function paginateWithSlicing(reader, timeRangeFilter, opts = {}) {
     sliced: true,
   };
 }
+
+export const STREAMS = ['sleep', 'hrv', 'heartRate', 'steps', 'workouts'];
+export const HC_NOT_INITIALIZED = 'Health Connect client is not initialized';
+
+/**
+ * The payload fetchAllData returns when Health Connect could not be initialised (#370).
+ * Same shape as a real fetch with every stream failed: each fetchMeta entry carries the
+ * error (FetchMetaEntry is extra="allow" backend-side and `error` already rides every
+ * entry), and errors[] names it once. No top-level string key under fetchMeta — the
+ * backend types it dict[str, FetchMetaEntry], so a bare string there risks a 422.
+ */
+export function failedFetchResult({ days, error, client, now = () => new Date().toISOString() }) {
+  const fetchMeta = {};
+  for (const s of STREAMS) {
+    fetchMeta[s] = streamMeta([], { pages: 0, truncated: false, endedOnFailure: true, error });
+  }
+  return {
+    syncedAt: now(),
+    periodDays: days,
+    client,
+    sleep: [],
+    hrv: [],
+    heartRate: [],
+    steps: [],
+    workouts: [],
+    fetchMeta,
+    errors: [error],
+  };
+}
+
+/**
+ * Why a fetch must not count as a successful sync, or null. A fetch failed when EVERY
+ * stream carries an error and nothing was read. A partial (some stream read, or a stream
+ * errored after returning pages) is still a sync; an honestly empty window has no errors.
+ */
+export function fetchFailureReason(data) {
+  const meta = data?.fetchMeta;
+  if (!meta) return null;
+  const allErrored = STREAMS.every((s) => meta[s] && meta[s].error);
+  if (!allErrored) return null;
+  const read = STREAMS.reduce((n, s) => n + (data[s]?.length || 0), 0);
+  if (read > 0) return null;
+  return meta.sleep.error;
+}

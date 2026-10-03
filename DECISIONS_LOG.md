@@ -1751,3 +1751,80 @@ question max `Q23`. This entry takes **#47**. No new question minted.
 **Do not revisit unless:** the backend stops returning `renewed_token` (then this is inert, not broken — the
 cliff returns), or a revocation requirement appears (sliding renewal keeps a leaked token alive while it
 keeps syncing).
+
+### #48 — Background sync initialises Health Connect at the fetch choke point; an all-failed fetch is `ok:false`, not Success
+
+**Decision:** (1) `fetchAllData` awaits `initializeHealthConnect()` as its first step. If it returns false, the
+fetch returns `failedFetchResult` — every stream errored, `HC_NOT_INITIALIZED` on each `fetchMeta` entry
+(`received:0`, `endedOnFailure:true`) and once in `errors[]`, `periodDays`/`client` preserved. (2) `runSync`
+still POSTs, then returns `ok:false` when **every** stream carries an error **and** nothing was read
+(`fetchFailureReason`); the last-sync stamp is skipped, the renewed token is still stored. A partial fetch (any
+record read) and an honestly empty window (no errors) stay `ok:true`. The background task therefore returns
+`Failed` and WorkManager backs off and retries. (3) `ensureBackgroundSyncRegistered` and SyncScreen's status
+read await init before `getGrantedPermissions`; SyncScreen reports `not registered: <reason>` instead of
+inferring "on" from the permission alone. (4) The scheduled run reads 30 days (`BACKGROUND_WINDOW_DAYS`);
+manual buttons keep 7 / 30. Supersedes `#44`'s "the SAME 7-day sync" for the background task only.
+
+**Rationale:** the background task runs in a fresh process where nothing has called `initialize()`. The native
+client is `lateinit` and every call goes through `throwUnlessClientIsAvailable` — `readRecords`,
+`getGrantedPermissions` and the rest — so every read rejected `Health Connect client is not initialized`;
+`safeFetch` absorbed it per stream and the payload went out empty. `runSync` then returned `ok:true` on any
+200 (`syncRunner.js:110` at `0c2f982`), so WorkManager saw Success and never retried. Init lives at
+`fetchAllData` rather than in the task body because it is idempotent (`getOrCreate`) and every caller needs it.
+Rejected: throwing from `fetchAllData` (loses the telemetry POST the server needs to see the event); `ok:false`
+on any stream error (a partial is a real sync); a top-level `fetchMeta.error` string (below).
+
+**Divergence from the brief — S2 error shape (operator-ratified):** the brief said "error recorded in
+fetchMeta … a top-level error". `docs/health-app-sync-events-spec.md` types the server field
+`fetchMeta: dict[str, FetchMetaEntry]`, so a bare string key risks a 422. The error rides each per-stream entry
+(`FetchMetaEntry` is `extra="allow"`; `error` already rides every entry) plus `errors[]`. The operator
+ratified this shape and ruled it not to be changed. **Unverified by Code:** the *deployed* schema — the
+backend host is blocked by this session's egress proxy, so the spec doc is the only source read.
+
+**Empirical premise (recorded at confidence):** the field failure — sync events 59/60, `hr_received 0`, the
+not-initialized error every day, server time ~40 ms, installed build `0c2f982` on events 57–64 — is
+operator-/brief-reported from health-app (`Q207`/`#369`/`#370`), **not re-observed by Code**. Library behaviour
+is **Certain**: read from `react-native-health-connect@3.5.3` (`HealthConnectManager.kt` — `lateinit`,
+`isInitialized`, `throwUnlessClientIsAvailable` on `getGrantedPermissions` and `readRecords`). That the
+cold-start registration in `Root.js` was also failing silently is **Likely**, inferred from the same guard —
+the existing registration probably survived only because WorkManager persists it from an earlier "Enable
+background sync" tap.
+
+**S3 (no change):** `READ_HEALTH_DATA_IN_BACKGROUND` is declared (`AndroidManifest.xml:18`, `#46`) and requested
+on the foreground path after `initialize()` (`healthConnect.js` `requestPermissions`,
+`requestBackgroundPermission`); the library maps `BackgroundAccessPermission` to it
+(`PermissionUtils.kt:26-27`, granted read `:65-67`). Official docs say a background read without it "may result
+in an error" (HealthPermission reference, developer.android.com) and that the feature depends on the installed
+Health Connect version (`FEATURE_READ_HEALTH_DATA_IN_BACKGROUND`) — **not** a guarantee it throws. The library
+has no feature-status call, so the grant list stays the only gate. The device's Android version was not
+established; whether a background read succeeds without the permission is **not verified**.
+
+**Behaviour change on the manual path (consequence, not scope):** an all-failed manual sync now shows an error
+instead of a zero-record success. Fetch windows and the POST shape are unchanged.
+
+**Status:** implemented on `fix/background-sync-init` (PR #64). Device verification OWED — operator G2 (below).
+Held, unchanged: `Q23` (`client.trigger` persistence; a schema change, HOLD in health-app). Server-side siblings
+(health-app `Q208`) are not this repo's concern. Cross-ref health-app `#370`.
+
+**How you know:** `scripts/background-sync-sim.mjs` (source-bound to `src/syncRunner.js` and
+`src/fetchMeta.js`) — 41 PASS at `0c2f982`, 59 now (+18): (j) `failedFetchResult` — every stream errored, all
+`fetchMeta` values are objects (no bare string), `errors[]`/`periodDays`/`client` preserved; (k)
+`fetchFailureReason` — all-failed → reason; errored-but-read, some-errored, empty-honest, no-meta/`null` → null;
+(l) `runSync` on an all-failed fetch → `ok:false`, POST sent once, no last-sync stamp, renewed token stored,
+data/meta still returned; (m) source-binds — `fetchAllData` awaits init before its first `safeFetch(` and
+returns `failedFetchResult`, registration awaits init before `getGrantedPermissions`, the background window is
+30 and wired. **Negative controls:** disabling the S2 failure branch fails 3 checks; the S1 init, 1; the S4
+init, 1; the window at 7, 1 (the S5 assertion) — counted on check lines, not the summary line. All five sims green. CI `placeholder guard (POSIX)` green on `40902ca`.
+
+**Device verification (OWED, operator + Code):** install the new build; let one scheduled run fire; read the new
+`health_connect_sync_events` row — `hr_received > 0`, no error, `period_days 30`, server time in seconds not
+ms; `git_sha` is the new build's, no `-dirty`. Overlap check for health-app `#371`: trigger a manual sync during
+a scheduled one — both return 200.
+
+**Number claimed at merge:** `origin/master` re-read immediately before landing — decision max `### #47`,
+question max `Q23`. This entry takes **#48**. No new question minted.
+
+**Do not revisit unless:** the server schema is read live and accepts a top-level `fetchMeta` string and the
+operator wants it (the shape is ratified, so only on their say-so); `react-native-health-connect` gains a
+per-feature availability call (then gate registration on it, not the grant list); or the device check shows a
+background read succeeding or failing in a way that contradicts the S3 reading above.

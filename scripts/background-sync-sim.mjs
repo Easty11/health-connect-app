@@ -18,12 +18,17 @@
 //   (h) 401 -> onAuthExpired called (needsSignIn), ok:false; non-401 -> not called
 //   (i) source-bind: api.js 401 interceptor clears the token; backgroundSync injects
 //       storeToken + the needsSignIn writer; login clears the flag
+//   (j) failedFetchResult: uninitialised-client payload — every stream errored, shape safe
+//   (k) fetchFailureReason: all-failed -> reason; partial / empty-honest / no meta -> null
+//   (l) runSync on an all-failed fetch -> ok:false, POST still sent, no last-sync stamp (#370)
+//   (m) source-bind: fetchAllData inits before reading; registration inits before grants
 //
 // Run: node scripts/background-sync-sim.mjs   (exit 0 = PASS, 1 = FAIL)
 
 import { readFileSync } from 'node:fs';
 
 import { runSync, shouldRegisterBackground, hasBackgroundPermission } from '../src/syncRunner.js';
+import { failedFetchResult, fetchFailureReason, STREAMS, HC_NOT_INITIALIZED } from '../src/fetchMeta.js';
 
 let failures = 0;
 const ok = (name) => console.log(`  PASS  ${name}`);
@@ -258,6 +263,71 @@ await (async () => {
   assert('(i) background task injects onAuthExpired: writeNeedsSignIn',
     /onAuthExpired: writeNeedsSignIn/.test(bg), 'not injected');
   assert('(i) login clears the needsSignIn flag', /await clearNeedsSignIn\(\)/.test(rootSrc), 'not cleared on login');
+})();
+
+// ── (j)-(l) #370: an uninitialised client must not read as a successful sync ──
+const CLIENT = { gitSha: 'abc1234', builtAt: '2026-10-03T00:00:00Z', appVersion: '1.0.0', platform: 'android' };
+const failedFetch = (days = 7) => failedFetchResult({ days, error: HC_NOT_INITIALIZED, client: CLIENT, now: () => '2026-10-03T00:00:00.000Z' });
+
+await (async () => {
+  const d = failedFetch(30);
+  assert('(j) every stream entry carries the error',
+    STREAMS.every((s) => d.fetchMeta[s]?.error === HC_NOT_INITIALIZED && d.fetchMeta[s].received === 0 && d.fetchMeta[s].endedOnFailure === true),
+    JSON.stringify(d.fetchMeta));
+  assert('(j) fetchMeta values are all objects (backend: dict[str, FetchMetaEntry], no bare string -> no 422)',
+    Object.values(d.fetchMeta).every((v) => v && typeof v === 'object'), 'non-object value in fetchMeta');
+  assert('(j) errors[] names it once; periodDays + client preserved; arrays empty',
+    d.errors.length === 1 && d.errors[0] === HC_NOT_INITIALIZED && d.periodDays === 30 && d.client === CLIENT
+      && STREAMS.every((s) => Array.isArray(d[s]) && d[s].length === 0), JSON.stringify(d));
+})();
+
+await (async () => {
+  assert('(k) all streams errored + nothing read -> reason', fetchFailureReason(failedFetch()) === HC_NOT_INITIALIZED, 'no reason');
+  // Partial: all five errored but one stream still returned records -> still a sync.
+  const partial = failedFetch(); partial.heartRate = [{}];
+  assert('(k) errored streams but records read -> null (partial is a sync)', fetchFailureReason(partial) === null, 'flagged partial');
+  // Only some streams errored.
+  const some = failedFetch(); some.fetchMeta.hrv = { ...some.fetchMeta.hrv, error: null };
+  assert('(k) not every stream errored -> null', fetchFailureReason(some) === null, 'flagged');
+  // Honest empty window: no errors anywhere.
+  const empty = failedFetch(); for (const s of STREAMS) empty.fetchMeta[s].error = null;
+  assert('(k) empty window with no errors -> null (still ok)', fetchFailureReason(empty) === null, 'flagged empty');
+  assert('(k) no fetchMeta -> null (old shape unaffected)', fetchFailureReason(fakeData()) === null && fetchFailureReason(null) === null, 'flagged');
+})();
+
+await (async () => {
+  let posted = 0, stamped = 0, stored = null;
+  const res = await runSync({
+    days: 7,
+    trigger: 'background',
+    getToken: async () => FAKE_TOKEN,
+    fetchAllData: async () => failedFetch(7),
+    syncHealthData: async () => { posted++; return { renewed_token: 'RENEWED.SIM' }; },
+    setLastSync: async () => { stamped++; },
+    setToken: async (t) => { stored = t; },
+  });
+  assert('(l) all-failed fetch -> ok:false so the task reports Failed', res.ok === false, `ok=${res.ok}`);
+  assert('(l) error is the init failure', res.error === HC_NOT_INITIALIZED, `error=${res.error}`);
+  assert('(l) telemetry still POSTed', posted === 1, `posted=${posted}`);
+  assert('(l) no last-sync stamp on a failed sync', stamped === 0, `stamped=${stamped}`);
+  assert('(l) renewed token still stored (the POST succeeded)', stored === 'RENEWED.SIM', `stored=${stored}`);
+  assert('(l) data/meta still returned (manual UI can show the error)', res.data && res.meta && res.received === 0, 'missing');
+})();
+
+// ── (m) source-bind: the init order lives in RN-only modules ─────────────────
+await (async () => {
+  const root = new URL('..', import.meta.url);
+  const hc = readFileSync(new URL('src/healthConnect.js', root), 'utf8');
+  const bg = readFileSync(new URL('src/backgroundSync.js', root), 'utf8');
+  const fa = hc.slice(hc.indexOf('export async function fetchAllData'));
+  const initAt = fa.indexOf('await initializeHealthConnect()');
+  const readAt = fa.indexOf('safeFetch(');
+  assert('(m) fetchAllData awaits init BEFORE its first read', initAt !== -1 && readAt !== -1 && initAt < readAt, `init=${initAt} read=${readAt}`);
+  assert('(m) fetchAllData returns failedFetchResult on init failure', /failedFetchResult\(/.test(fa.slice(0, readAt)), 'not returned');
+  const ens = bg.slice(bg.indexOf('export async function ensureBackgroundSyncRegistered'));
+  const i2 = ens.indexOf('await initializeHealthConnect()');
+  const g2 = ens.indexOf('await getGrantedPermissions()');
+  assert('(m) registration awaits init BEFORE getGrantedPermissions', i2 !== -1 && g2 !== -1 && i2 < g2, `init=${i2} grants=${g2}`);
 })();
 
 console.log(failures === 0 ? '\nALL PASS' : `\n${failures} FAILURE(S)`);

@@ -22,6 +22,25 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-10-03 — negative-control counts via `grep -c FAIL` included the summary line  [code]
+**Friction:** the first mutation-check pass for `#48` reported "fails 4 / 2 / 2". The sim prints `FAIL` on each
+failing check line AND again in its `N FAILURE(S)` summary, so `grep -c FAIL` over-counted every figure by one;
+the real counts were 3 / 1 / 1. Caught by recounting on the check-line anchor (`^  FAIL`) before the figures
+reached `DECISIONS_LOG`. Third recurrence of counting the word instead of the field (2026-07-20).
+**Cost:** one recount; had it landed, `#48`'s How-you-know would have carried wrong control figures.
+**Fix:** count the field — anchor on the check line, and before quoting any control figure assert the baseline
+reads 0 and every mutant reads ≥ 1. A figure that came from a word-grep is not a figure.
+
+### 2026-10-03 — a remote session cannot read the deployed backend schema; a repo spec doc is not the live contract  [env]
+**Friction:** the brief asked for an error "in fetchMeta, top-level"; `docs/health-app-sync-events-spec.md` types
+`fetchMeta` as `dict[str, FetchMetaEntry]`, which a bare string would violate. The deployed `/openapi.json` (the
+source `gen:contract` reads) is behind the egress proxy (CONNECT 403), so the spec doc could not be checked
+against the live server.
+**Cost:** a gate-and-ratify round trip instead of a one-step answer; resolved by operator ruling, not by evidence.
+**Fix:** for any payload-shape change, treat the repo spec doc as a claim and the deployed schema as the
+authority; where the session cannot read it, design to the stricter reading and name the unverified surface in
+the decision (`#48` does). Chat or the operator can read `/openapi.json` and settle it.
+
 ### 2026-09-24 — CORRECTION to 2026-09-22 "a release APK emits no ReactNativeJS logcat"  [code]
 **Friction:** the 2026-09-22 entry's premise is wrong. The operator's 24 Sep logcat (the #44 token-expiry
 diagnosis) showed full `ReactNativeJS` output from the release build. The earlier empty read was timing — the

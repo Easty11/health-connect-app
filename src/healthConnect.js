@@ -8,7 +8,9 @@ import {
   readRecords,
   aggregateGroupByPeriod,
 } from 'react-native-health-connect';
-import { paginateWithSlicing, streamMeta, HC_PAGE_SIZE, HC_MAX_PAGES } from './fetchMeta';
+import {
+  paginateWithSlicing, streamMeta, failedFetchResult, HC_NOT_INITIALIZED, HC_PAGE_SIZE, HC_MAX_PAGES,
+} from './fetchMeta';
 import {
   localDayFilter,
   fetchStepsWithFallback,
@@ -416,6 +418,18 @@ export async function fetchWorkoutData(startDate, endDate) {
 }
 
 export async function fetchAllData(days = 7) {
+  // The choke point (#370): a headless background task runs in a fresh process where
+  // nothing has called initialize(), and the native client is lateinit — every read then
+  // rejects "not initialized". initialize() is idempotent (getOrCreate), so init here
+  // rather than on each caller path. Failure is a failed fetch, not an empty success.
+  if (!(await initializeHealthConnect())) {
+    return failedFetchResult({
+      days,
+      error: HC_NOT_INITIALIZED,
+      client: { gitSha, builtAt, appVersion, platform: 'android' },
+    });
+  }
+
   const end = new Date();
   const start = daysAgo(days);
 

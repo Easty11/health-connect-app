@@ -256,3 +256,18 @@ export function failedFetchResult({ days, error, client, now = () => new Date().
     errors: [error],
   };
 }
+
+/**
+ * Why a fetch must not count as a successful sync, or null. A fetch failed when EVERY
+ * stream carries an error and nothing was read. A partial (some stream read, or a stream
+ * errored after returning pages) is still a sync; an honestly empty window has no errors.
+ */
+export function fetchFailureReason(data) {
+  const meta = data?.fetchMeta;
+  if (!meta) return null;
+  const allErrored = STREAMS.every((s) => meta[s] && meta[s].error);
+  if (!allErrored) return null;
+  const read = STREAMS.reduce((n, s) => n + (data[s]?.length || 0), 0);
+  if (read > 0) return null;
+  return meta.sleep.error;
+}

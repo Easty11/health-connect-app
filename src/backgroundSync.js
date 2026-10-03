@@ -13,7 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { runSync, shouldRegisterBackground } from './syncRunner';
 import { getStoredToken, storeToken, syncHealthData } from './api';
-import { fetchAllData } from './healthConnect';
+import { fetchAllData, initializeHealthConnect } from './healthConnect';
 
 export const BACKGROUND_SYNC_TASK = 'hc-background-sync';
 export const LAST_BACKGROUND_SYNC_KEY = '@hc_last_background_sync';
@@ -77,6 +77,12 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
  */
 export async function ensureBackgroundSyncRegistered() {
   try {
+    // getGrantedPermissions sits behind the same lateinit-client guard as readRecords, so
+    // on a cold start (Root) it rejected "not initialized" and was swallowed into a
+    // silent registered:false (#370). Init first; an init failure is reported, not hidden.
+    if (!(await initializeHealthConnect())) {
+      return { registered: false, reason: 'Health Connect not initialized' };
+    }
     const granted = await getGrantedPermissions();
     if (!shouldRegisterBackground(granted)) {
       return { registered: false, reason: 'background permission not granted' };

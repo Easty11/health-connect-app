@@ -5,7 +5,9 @@ import {
 } from 'react-native';
 import { getGrantedPermissions } from 'react-native-health-connect';
 import { syncHealthData, storeToken } from './api';
-import { requestPermissions, requestBackgroundPermission, fetchAllData } from './healthConnect';
+import {
+  requestPermissions, requestBackgroundPermission, fetchAllData, initializeHealthConnect,
+} from './healthConnect';
 import { runSync, hasBackgroundPermission } from './syncRunner';
 import { runEnableBackground } from './backgroundPermission';
 import { ensureBackgroundSyncRegistered, getLastBackgroundSync, getNeedsSignIn } from './backgroundSync';
@@ -85,10 +87,23 @@ export default function SyncScreen({ token, username, onLogout }) {
     setLastBg(await getLastBackgroundSync());
     setNeedsSignIn(await getNeedsSignIn());
     try {
+      // Same lateinit guard as the sync path: init before reading grants (#370), else a
+      // cold-start read rejects and the line reads "HC unavailable" for a healthy install.
+      if (!(await initializeHealthConnect())) {
+        setBgStatus({ on: false, reason: 'HC not initialized' });
+        return;
+      }
       const granted = await getGrantedPermissions();
-      setBgStatus(hasBackgroundPermission(granted)
+      if (!hasBackgroundPermission(granted)) {
+        setBgStatus({ on: false, reason: 'permission off' });
+        return;
+      }
+      // Permission alone is not "on": report whether the task actually registered, so a
+      // registered:false is visible rather than a silent "on" (#370 S4). Idempotent.
+      const reg = await ensureBackgroundSyncRegistered();
+      setBgStatus(reg.registered
         ? { on: true, reason: null }
-        : { on: false, reason: 'permission off' });
+        : { on: false, reason: `not registered: ${reg.reason}` });
     } catch (e) {
       setBgStatus({ on: false, reason: 'HC unavailable' });
     }

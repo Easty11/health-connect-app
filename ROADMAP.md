@@ -84,6 +84,54 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `fix/background-sync-init` → master (trunk)  ·  created from master `0c2f982`; gov close-out on `gov/hca-background-init-closeout`; harness branch `claude/trusting-meitner-h932zo` left untouched (no commits vs master)
+**Closed:** 2026-10-03 (scheduled background sync inits Health Connect and reports honest results — landed, PR #64)
+
+### This session — background sync initialises Health Connect; an all-failed fetch is `ok:false` (`#48`, PR #64 → `e3e2333`; health-app `#370`)
+Scheduled sync had been posting empty payloads and reporting Success. Cause (read from
+`react-native-health-connect@3.5.3`, **Certain**): the headless task runs in a fresh process where nothing calls
+`initialize()`; the native client is `lateinit` and every call, `readRecords` and `getGrantedPermissions` alike,
+rejects "not initialized". `runSync` returned `ok:true` on any 200, so WorkManager never retried.
+- **`b5a0d44` S1:** `fetchAllData` awaits `initializeHealthConnect()` first; failure → `failedFetchResult` (every
+  stream errored, error on each `fetchMeta` entry + `errors[]`).
+- **`1f3fc21` S2:** `runSync` → `ok:false` when every stream errored and nothing was read; still POSTs; no
+  last-sync stamp. Error shape (per-stream entries + `errors[]`, no top-level string) **operator-ratified**.
+- **`6b1937c` S4:** init before `getGrantedPermissions` in registration and SyncScreen; SyncScreen shows
+  `not registered: <reason>`.
+- **`40902ca` S6:** sim cases j–m (41 → 59 PASS), mutation-checked (3 / 1 / 1 / 1 failing checks per mutant).
+- **`4a1a180` S5:** scheduled window 7 → 30 days (background only; manual buttons untouched).
+- **`82d3d8c` gov:** DECISIONS `#48`, rode the branch as the code's rationale (FEEDBACK 2026-08-17).
+- **S3:** no change. Manifest + foreground request verified; background read without the permission "may result
+  in an error" (official docs), device Android version not established, behaviour not verified.
+`npm run android` NOT run on Code's side (no Android SDK). Installed build on events 57–64 was `0c2f982`
+(operator-reported). Self-merged on green after the operator cleared the gate.
+
+### Decisions / Questions
+Minted **`#48`**. No new question; `Q23` (`client.trigger` persistence, health-app migration = HOLD) unchanged.
+Number claimed at merge against a re-read `#47` / `Q23`. Cross-ref `#44` (its "SAME 7-day sync" is superseded for
+the background task only), health-app `#370`. Server-side siblings (health-app `Q208`) are not this repo's.
+
+### Branch dispositions (terminal state)
+- `fix/background-sync-init` — **merged+deleted** local and remote (PR #64 → merge `e3e2333`; remote ref
+  auto-deleted on merge, local deleted; `git cherry origin/master` empty). No `BRANCHES` row — stores cite
+  merge/commit SHAs and PR numbers only.
+- `gov/hca-background-init-closeout` — the gov close-out branch; merges this turn via its own PR.
+- `claude/trusting-meitner-h932zo` (harness-assigned) — untouched; no commits vs `origin/master`. Left for the harness.
+
+### Next action
+1. **OWED — operator G2.** On a clean master tree: `npm install`, then `npm run android` (release variant; never
+   the global `expo-cli`), install. Keep the app Unrestricted on battery. Let one scheduled run fire, then read the
+   newest `health_connect_sync_events` row: `git_sha` = the new merge SHA, no `-dirty`; `hr_received > 0`; no
+   error; `period_days 30`; server time in seconds not ms. If it still posts empty, the `fetchMeta` entries carry
+   the init error — paste that row back.
+2. **OWED — health-app `#371` overlap check.** Trigger a manual sync during a scheduled one; both return 200
+   (distinguish them by timestamp, not `trigger` — `Q23` is held).
+3. **OWED — health-app `Q23`.** Persist `client.trigger` (add a `trigger` column; migration = HOLD).
+4. Carried, unchanged — `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper unexercised),
+   `Q21` (owed verifications).
+
+### Superseded by this session (kept for the record)
+
 **Branch:** `fix/manifest-background-permission` → master (trunk)  ·  created from master `6ba2e3a`; gov close-out on `gov/manifest-background-closeout`; harness branch `claude/clever-franklin-5364uj` left untouched (no commits vs master)
 **Closed:** 2026-09-22 (background permission declared in the native manifest — landed, PR #60)
 

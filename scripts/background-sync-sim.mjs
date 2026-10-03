@@ -324,6 +324,8 @@ await (async () => {
   const readAt = fa.indexOf('safeFetch(');
   assert('(m) fetchAllData awaits init BEFORE its first read', initAt !== -1 && readAt !== -1 && initAt < readAt, `init=${initAt} read=${readAt}`);
   assert('(m) fetchAllData returns failedFetchResult on init failure', /failedFetchResult\(/.test(fa.slice(0, readAt)), 'not returned');
+  assert('(m) background task reads a 30-day window (#370 S5)',
+    /BACKGROUND_WINDOW_DAYS = 30;/.test(bg) && /days: BACKGROUND_WINDOW_DAYS,\s*trigger: 'background'/.test(bg), 'window not 30 / not wired');
   const ens = bg.slice(bg.indexOf('export async function ensureBackgroundSyncRegistered'));
   const i2 = ens.indexOf('await initializeHealthConnect()');
   const g2 = ens.indexOf('await getGrantedPermissions()');

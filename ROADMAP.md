@@ -84,6 +84,31 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `gov/overlap-proof-supersede` → master (trunk)  ·  created from master `52f9d4d`; governance only, no code; harness branch `claude/trusting-meitner-h932zo` left untouched (no commits vs master)
+**Closed:** 2026-10-05 (health-app `#380` overlap-proof ruling recorded — superseding entry `#49`)
+
+### This session — overlap-proof method superseded (`#49`; health-app `#380`)
+Cross-repo debt: the `#371` overlap proof is no longer "manual sync during a scheduled one" (~8 s sync vs 0–4.5 min
+worker drift — not reliably hittable; relayed, Unverified by Code). Old method text dropped from `ROADMAP` (Next
+action 2) and `closeout.md` (regenerated). `#48` is locked — not edited; `#49` supersedes its overlap sentence only.
+No code, no new question, `Q23` still HELD.
+
+### Decisions / Questions
+Minted **`#49`**. Number claimed at merge against a re-read `#48` / `Q23`. Cross-ref `#48`, health-app `#371`/`#380`.
+
+### Branch dispositions (terminal state)
+- `gov/overlap-proof-supersede` — merges this turn via its own PR; merged+deleted after. No `BRANCHES` row.
+- `claude/trusting-meitner-h932zo` (harness-assigned) — untouched; no commits vs `origin/master`.
+
+### Next action
+1. **OWED — operator G2** (unchanged from the `#48` block): clean master tree, `npm install`, `npm run android`,
+   install, Unrestricted battery, let one scheduled run fire, read the newest `health_connect_sync_events` row.
+2. **OWED — health-app `#371` overlap proof** — method per `#49`.
+3. **OWED — health-app `Q23`.** Persist `client.trigger` (HOLD).
+4. Carried — `Q18`, `Q19`, `Q20`, `Q21`.
+
+### Superseded by this session (kept for the record)
+
 **Branch:** `fix/background-sync-init` → master (trunk)  ·  created from master `0c2f982`; gov close-out on `gov/hca-background-init-closeout`; harness branch `claude/trusting-meitner-h932zo` left untouched (no commits vs master)
 **Closed:** 2026-10-03 (scheduled background sync inits Health Connect and reports honest results — landed, PR #64)
 
@@ -124,8 +149,9 @@ the background task only), health-app `#370`. Server-side siblings (health-app `
    newest `health_connect_sync_events` row: `git_sha` = the new merge SHA, no `-dirty`; `hr_received > 0`; no
    error; `period_days 30`; server time in seconds not ms. If it still posts empty, the `fetchMeta` entries carry
    the init error — paste that row back.
-2. **OWED — health-app `#371` overlap check.** Trigger a manual sync during a scheduled one; both return 200
-   (distinguish them by timestamp, not `trigger` — `Q23` is held).
+2. **OWED — health-app `#371` overlap proof (method superseded by `#49`).** A natural overlap in the backend
+   HTTP log (health-app's side), or a debug control firing two syncs back to back — a companion change, not
+   built; it would bypass the sync buttons' `disabled={syncing}` guard.
 3. **OWED — health-app `Q23`.** Persist `client.trigger` (add a `trigger` column; migration = HOLD).
 4. Carried, unchanged — `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper unexercised),
    `Q21` (owed verifications).

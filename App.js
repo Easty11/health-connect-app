@@ -132,7 +132,7 @@ export default function App({ token, username, onLogin, onLogout }) {
   if (!token) {
     return (
       <View style={s.container}>
-        <Text style={s.title}>Health Connect</Text>
+        <Text style={s.title}>Pocket EP</Text>
         <TextInput
           style={s.input}
           placeholder="Email"

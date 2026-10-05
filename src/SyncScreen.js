@@ -256,7 +256,7 @@ export default function SyncScreen({ token, username, onLogout }) {
       {/* Header (fixed) */}
       <View style={styles.header}>
         <View>
-          <Text style={[styles.appTitle, { color: t.text }]}>Health Sync</Text>
+          <Text style={[styles.appTitle, { color: t.text }]}>Pocket EP</Text>
           {username ? (
             <Text style={[styles.appSub, { color: t.subtext }]}>Signed in as {username}</Text>
           ) : null}

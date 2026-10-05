@@ -84,6 +84,32 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `gov/g2-48-verified` → master (trunk)  ·  created from master `ea5bedc`; governance only, no code; harness branch `claude/trusting-meitner-h932zo` left untouched (no commits vs master)
+**Closed:** 2026-10-05 (`#48` G2 recorded as met — superseding entry `#50`)
+
+### This session — `#48` device-verified (`#50`; evidence relayed from health-app `#377`)
+Operator G2 for `#48` is **met** on installed build `52f9d4d` (contains `e3e2333` — verified by ancestry): sync
+events ids 66–68, 6-hourly (12:08:42Z / 18:09:24Z / 00:09:43Z), `period_days 30`, no errors, heartRate ≈29.4–29.6k;
+"Last background sync" line seen at first open. Evidence relayed, Unverified by Code (`#377` out of repo scope).
+Not covered by it: the server-time-in-seconds figure, and `#48`'s S3 no-permission case. No code, no new question,
+`Q23` still HELD.
+
+### Decisions / Questions
+Minted **`#50`** (supersedes `#48`'s Status line only). Number claimed at merge against a re-read `#49` / `Q23`.
+
+### Branch dispositions (terminal state)
+- `gov/g2-48-verified` — merges this turn via its own PR; merged+deleted after. No `BRANCHES` row.
+- `claude/trusting-meitner-h932zo` (harness-assigned) — untouched; no commits vs `origin/master`.
+
+### Next action
+1. **OWED — health-app `#371` overlap proof** — method per `#49` (natural overlap in the backend HTTP log, or a
+   debug control; the control is not built).
+2. **OWED — health-app `Q23`.** Persist `client.trigger` (add a `trigger` column; migration = HOLD).
+3. Carried — `Q18` (scraper canary), `Q19` (12-hour clock), `Q20` (HC HRV mapper unexercised), `Q21` (owed
+   verifications).
+
+### Superseded by this session (kept for the record)
+
 **Branch:** `gov/overlap-proof-supersede` → master (trunk)  ·  created from master `52f9d4d`; governance only, no code; harness branch `claude/trusting-meitner-h932zo` left untouched (no commits vs master)
 **Closed:** 2026-10-05 (health-app `#380` overlap-proof ruling recorded — superseding entry `#49`)
 

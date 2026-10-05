@@ -1828,3 +1828,36 @@ question max `Q23`. This entry takes **#48**. No new question minted.
 operator wants it (the shape is ratified, so only on their say-so); `react-native-health-connect` gains a
 per-feature availability call (then gate registration on it, not the grant list); or the device check shows a
 background read succeeding or failing in a way that contradicts the S3 reading above.
+
+### #49 — The health-app `#371` overlap proof is a natural overlap in the backend HTTP log, or a debug control — not a manual tap during a scheduled run (supersedes part of `#48`)
+
+**Decision:** supersedes ONLY the sentence in `#48`'s *Device verification* paragraph that reads "Overlap check for
+health-app `#371`: trigger a manual sync during a scheduled one — both return 200." The proof is now either (a) a
+**natural overlap** between two real syncs in the backend HTTP log (read on health-app's side), or (b) a **debug
+control firing two syncs back to back** — a companion change that is **not built and not scheduled here**; it
+would have to bypass the sync buttons' `disabled={syncing}` guard (`src/SyncScreen.js:284,294`). Everything else
+in `#48` stands, including the scheduled-run row check (`git_sha`, `hr_received > 0`, no error, `period_days 30`,
+server time in seconds). `#48` is locked and is not edited; this entry is the supersession.
+
+**Rationale:** health-app `#380` (5 Oct), as relayed by the operator: a sync takes ~8 s while the scheduled worker
+drifts 0–4.5 min from its slot, so a manual tap landing inside a scheduled run is not reliably hittable — an
+instruction an operator can follow but not reproduce on demand. The guard is real and narrower than it sounds:
+`disabled={syncing}` is sync-screen React state, and `src/backgroundSync.js` never consults it, so it blocks two
+manual taps overlapping, not a manual tap against a scheduled run. That is why a back-to-back debug control would
+have to bypass it. Rejected as a hold-over: keeping the old method as the acceptance step, which can pass or fail
+on timing luck rather than on the server's behaviour.
+
+**Status:** docs-only; no code change, no new question. Operator device step 2 collapses into the scheduled-run row
+check; the overlap proof lives with health-app. `Q23` (`client.trigger` persistence) stays HELD, unchanged.
+
+**How you know:** the 8 s / 0–4.5 min figures and the `#380` ruling are **relayed, Unverified by Code** — health-app
+is outside this session's repository scope and `#380` was not read. The guard is **Certain**, from the tree at
+`52f9d4d`: `disabled={syncing}` at `src/SyncScreen.js:284` and `:294`; `src/backgroundSync.js` has no reference to
+it. Old-method text located before editing: `ROADMAP.md:127`, `closeout.md:53` (both as named in the brief),
+plus `closeout.md:32` (names the item, no method) and `DECISIONS_LOG.md:1821` (inside locked `#48`, left as written).
+
+**Number claimed at merge:** `origin/master` re-read immediately before landing — decision max `### #48`, question
+max `Q23`. This entry takes **#49**. No new question minted.
+
+**Do not revisit unless:** the debug control is actually built (then record how it bypasses the guard and whether
+it ships in release builds), or health-app changes how it proves overlap.

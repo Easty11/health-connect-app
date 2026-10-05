@@ -1861,3 +1861,47 @@ max `Q23`. This entry takes **#49**. No new question minted.
 
 **Do not revisit unless:** the debug control is actually built (then record how it bypasses the guard and whether
 it ships in release builds), or health-app changes how it proves overlap.
+
+### #50 — `#48`'s device verification (G2) is met on build `52f9d4d`; evidence relayed from health-app `#377` (supersedes `#48`'s Status line)
+
+**Decision:** supersedes ONLY `#48`'s *Status* line ("Device verification OWED — operator G2") and the
+scheduled-run half of its *Device verification* paragraph. G2 is **met**: a build containing `#48` ran scheduled
+background syncs on a 6-hourly cadence with a 30-day window, no errors, and ~29.4–29.6k heart-rate records per
+run — the field failure `#48` exists to fix (`hr_received 0`, "client is not initialized", every run) is gone.
+`#48` is locked and not edited. The overlap proof (health-app `#371`) is NOT part of G2 and stays with
+health-app per `#49`. `Q23` (`client.trigger` persistence) stays HELD, unchanged.
+
+**Rationale:** `#48` shipped with its verification explicitly OWED (operator G2). The repo's discipline is that a
+locked entry's claim is superseded by a new entry, never edited, so the store does not carry "OWED" for a check
+that has since passed.
+
+**Evidence (relayed — health-app `#377`, 5 Oct, is outside this repo's scope and was not read):**
+- Installed build `git_sha` `52f9d4d`, built 2026-10-04T00:02:06Z; the operator's `compare e3e2333...52f9d4d`
+  read **ahead**.
+- `health_connect_sync_events` ids **66–68**, `synced_at` 2026-10-04 12:08:42Z / 18:09:24Z / 2026-10-05
+  00:09:43Z — intervals 6h00m42s and 6h00m19s (computed here from the relayed timestamps); `period_days 30`; no
+  errors; `heartRate` received ≈ 29.4–29.6k.
+- The operator saw "Last background sync 05/10/2026 04:09:31" at first app open after the last row.
+
+**Verified by Code in this tree (Certain):** `e3e2333` is an ancestor of `52f9d4d`, and `52f9d4d` is on master, so
+the installed build contains `#48`'s code. `52f9d4d` was committed 2026-10-03T23:44:30Z, 17 minutes before the
+relayed build time — consistent.
+
+**Not established by this evidence:** (1) the "server time in seconds, not ms" figure — `#48` listed it as a pass
+criterion and it was not in what was relayed; recorded as not covered, not assumed. (2) `#48`'s *S3* open item —
+whether a background read without `READ_HEALTH_DATA_IN_BACKGROUND` succeeds. The rows show reads succeeding WITH
+the permission, which registration already requires; the no-permission case remains unverified and unchanged.
+(3) The relayed local-time "Last background sync" stamp was not reconciled against the server rows — the device's
+UTC offset and clock skew are not in the evidence.
+
+**Status:** governance only; no code change, no new question.
+
+**How you know:** the rows and build SHA above are **relayed, Unverified by Code**; the ancestry and commit-time
+facts are **Certain** from `git merge-base --is-ancestor e3e2333 52f9d4d`, `git merge-base --is-ancestor 52f9d4d
+origin/master`, and `git log -1 --format=%cI` on both commits at `ea5bedc`. Cross-ref `#48`, `#49`, health-app `#377`.
+
+**Number claimed at merge:** `origin/master` re-read immediately before landing — decision max `### #49`, question
+max `Q23`. This entry takes **#50**. No new question minted.
+
+**Do not revisit unless:** the sync-events rows are found not to be what `#377` reports, or the scheduled cadence
+regresses on a later build (then `#48`'s init path is the first suspect).

@@ -84,6 +84,31 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `claude/admiring-clarke-r0cgh2` (harness-assigned; kept — see dispositions) → master (trunk)  ·  created from master `b4f3f80`; one code commit (`648189b`) + this close-out
+**Closed:** 2026-10-05 (display name → "Pocket EP", PR #68; implements health-app `#381`)
+
+### This session — companion rebrand (health-app `#381`; PR #68, `648189b`)
+Display/brand only; "EP" is a brand, never a credential claim. Four one-line edits: `strings.xml` `app_name`,
+`app.json` `expo.name`, `App.js` login heading, `src/SyncScreen.js` `appTitle`. Unchanged: `applicationId`/`namespace`/
+`package`, `slug`, repo name, `package.json` `name`, `rootProject.name`, backend URLs, the OpenAPI spec source.
+Left alone on purpose: every "Health Connect" string that names the Android data source (`Root.js` tab,
+`SyncScreen.js` button/status text, `backgroundSync.js` reasons). **Judgment call, operator may revert:** the
+post-login heading was "Health Sync" (not the old name) and was changed so login and main screen agree.
+Not device-verified; the sims do not read these strings. `#381` itself is in health-app and was not read here
+(brief-relayed). No decision, no question minted.
+
+### Decisions / Questions
+None minted. Maxima unchanged: decisions `#50`, questions `Q23`.
+
+### Branch dispositions (terminal state)
+- `claude/admiring-clarke-r0cgh2` (harness-assigned) — merges this turn via PR #68. A remote delete is refused in
+  remote sessions (FEEDBACK 2026-09-21), so **operator deletes the merged ref**. No `BRANCHES` row.
+
+### Next action
+Nothing owed on this repo's side. Carried items below are unchanged (`#371` overlap proof, `Q23`, `Q18`–`Q21`).
+
+### Superseded by this session (kept for the record)
+
 **Branch:** `gov/g2-48-verified` → master (trunk)  ·  created from master `ea5bedc`; governance only, no code; harness branch `claude/trusting-meitner-h932zo` left untouched (no commits vs master)
 **Closed:** 2026-10-05 (`#48` G2 recorded as met — superseding entry `#50`)
 

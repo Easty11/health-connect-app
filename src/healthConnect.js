@@ -7,6 +7,7 @@ import {
   openHealthConnectSettings,
   readRecords,
   aggregateGroupByPeriod,
+  SdkAvailabilityStatus,
 } from 'react-native-health-connect';
 import {
   paginateWithSlicing, streamMeta, failedFetchResult, HC_NOT_INITIALIZED, HC_PAGE_SIZE, HC_MAX_PAGES,
@@ -26,8 +27,21 @@ import { gitSha, builtAt, appVersion } from './buildInfo';
 // Read-only import of the background-permission predicate (#44). Not a modification
 // of syncRunner — reused so the "is it granted" check is defined once.
 import { hasBackgroundPermission } from './syncRunner';
+import { openHealthConnectSafely } from './hcSettings';
 
 export { openHealthConnectSettings };
+
+/**
+ * "Open Health Connect" button action. NEVER throws; returns { opened, hint } where hint is
+ * the manual path ("Settings > Apps > Health Connect") when the settings screen could not be
+ * opened. The library call is void and its native failures are invisible to JS, so the SDK
+ * is asked for availability first (pure logic + sim in ./hcSettings).
+ */
+export const openHealthConnectSettingsSafe = () => openHealthConnectSafely({
+  getSdkStatus,
+  open: openHealthConnectSettings,
+  available: SdkAvailabilityStatus.SDK_AVAILABLE,
+});
 
 /**
  * Opens the Health Connect permission management screen for this app

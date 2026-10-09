@@ -791,3 +791,83 @@ app opens** (with no manual opens, every row is a background sync). `synced_at` 
 persists `payload.client.model_extra.get('trigger')` (schema migration = HOLD there; no HCA change —
 the field already ships). Then G2 can select on `trigger='background'` directly. Low urgency: the
 cadence-based read already proves the objective; the column only sharpens the evidence.
+
+### Q24 — Samsung scraper has no live device behind it (ring on warranty); its silence is expected, and must be visible rather than silent  ·  OWED
+**State:** OWED — settled by operator ruling 2026-10-09, loop-close named (the staleness brief below, then a
+re-verification when the ring returns), neither run. **Related:** `Q18` (scraper canary — its gap-vs-failure
+discriminator is NOT closed by this row), `Q2`/`Q4` (the end-to-end scrape this must be re-proved against),
+`Q19`, `Q1`. **Minted:** 2026-10-09. **Number-at-merge:** questions max re-read `Q23` immediately before this
+row; takes `Q24` (and `Q25` below).
+
+**Operator ruling (2026-10-09).** The Galaxy Ring has been dead for weeks and is away on warranty. Garmin is the
+primary sleep and HRV source. **Do not fix the scraper now; no live device exists to fix it against.** Make it fail
+visibly (a staleness signal) rather than silently, and revisit when the ring returns.
+
+**What is established.**
+- *(Relayed — operator-pasted Railway reads, Unverified by Code)* `samsung_hrv_readings` holds one context,
+  `passive_overnight`, with `max(captured_at) = 2026-09-14`. Health Connect sleep rows by writer
+  (`health_connect_record_sources`, `record_type='sleep'`): `com.sec.android.app.shealth` 147 rows to 2026-09-30,
+  `com.garmin.android.apps.connectmobile` 41 rows 2026-08-24 to 2026-10-08, `com.withings.wiscale2` 23 rows to
+  2026-09-01. Health Connect sleep is ingested every night through 2026-10-09 (`health_connect_syncs`).
+- *(Certain — read in this tree)* The scraper's gate (`SDKSyncObserver.kt:119-142`, `hasTodayData` `:153-179`) opens on
+  **any** `SleepSessionRecord` ending today, with no origin filter. A Garmin night — direct, or relayed through
+  Samsung Health — therefore opens the gate daily; the accessibility extraction then finds no ring data and posts
+  nothing. **A silent scraper and a healthy one look identical to the gate, and the gate is satisfied by the wrong
+  writer.** That is `Q18`'s failure mode with a concrete mechanism.
+- *(Certain — health-app `0939eaf`, read-only clone)* `get_readiness_snapshot` reads sleep only from
+  `samsung_hrv_readings` (`backend/mcp_server.py:738-750`), so its sleep is stuck at 2026-09-14 while Health Connect
+  sleep is current. The fix is health-app's: **ratified 2026-10-09 — read Garmin sleep from `health_connect_syncs`,
+  every value labelled with its writer, one writer per night by fixed priority (Garmin direct > Samsung Health relay >
+  Samsung scraper), never blended, `deepSleepConfidence.js` for stage trust.** Own health-app PR, owed after the
+  companion PR; not started.
+- *(Info only, not a fix target)* Why the Samsung Health relay stopped on 2026-09-30 is not established from this
+  repo or the data. Whether those Samsung Health sleep rows are Garmin relayed through Samsung Health or ring data is
+  not determinable from the payload: the sleep mapper forwards `dataOrigin` only (`src/healthConnect.js`
+  `fetchAllData`), not `metadata.device`/`clientRecordId`. Timestamp alignment between the two writers' rows is the
+  available test; it has not been run.
+
+**Loop-close (owed).** (1) The per-(stream, writer) staleness signal and the "last background delivery" age (see
+`Q25`) — a brief the operator is writing after the companion PR, with the training-load home card — which turns the
+stuck sleep/HRV state from silence into an amber line. (2) **When the ring returns:** re-prove the scrape end to end
+(a `Q2`-style Railway read), re-check Samsung Health UI compatibility (`Q1`, `Q19`), and decide whether the gate
+should filter by origin. Until then no scraper code changes.
+
+**Do not revisit unless:** the ring is back in service, or a second Samsung-only signal is wanted before then.
+
+### Q25 — Scheduled background sync went 23 h 48 m (any sync) and ~40 h (background) without delivering, with a registered worker; cause unresolved  ·  OPEN
+**State:** OPEN — the mechanism that withheld the runs is not established. **Related:** `#44`, `#48`/`#50` (G2: 6-hourly
+cadence met on `52f9d4d`), `Q23` (`client.trigger` not persisted — the reason background and manual rows are told
+apart by timing here). **Minted:** 2026-10-09.
+
+**Observed.**
+- *(Certain — Railway HTTP log read by Code)* No `POST /health-connect/sync` between 2026-10-08T01:22Z and
+  2026-10-09T01:10Z, in a window where the phone's IP made other requests (05:38–05:52 AEST 9 Oct). *(Relayed —
+  operator-pasted `health_connect_sync_events` ids 80–93)* agrees: row 91 `2026-10-08 01:22:09Z` is followed by row 92
+  `2026-10-09 01:10:26Z`, a gap of 23 h 48 m.
+- *(Relayed + operator observation)* The "Last background sync" line read 05:47 AEST on **8** Oct (rows 87–89, the
+  last background delivery; the 9 Oct date in the original report was a misread). The next background delivery is
+  row 93, `2026-10-09 11:41:05Z`; the stamp read 21:41:28 AEST, which matches. **Background silence ≈ 39 h 54 m**
+  (`19:47Z` 7 Oct → `11:41Z` 9 Oct). Before the gap the cadence was 6-hourly at `01:08Z / 07:08Z / 13:09Z / 19:47Z`
+  on 7 Oct.
+- The 8 Oct 18:53 AEST walk (`workouts.newestAt 2026-10-08T08:53:00Z` in row 92) reached the backend at the first
+  sync event after it existed. Nothing was dropped by a stream.
+
+**Ruled out by reading the installed sources (expo-background-task / expo-task-manager 56.0.27, Certain).** Opening
+the app does **not** reset or defer the 6 h window: `registerTaskAsync` returns early on `isTaskRegisteredAsync`
+(`BackgroundTask.ts`); `TaskService.registerTask` only updates options for an existing task; and
+`BackgroundTaskScheduler.scheduleWorker` skips cancel-and-replace while its unique worker is `ENQUEUED`/`RUNNING`.
+The comment in `src/backgroundSync.js` that said otherwise was wrong and is corrected.
+
+**Not established.** Why an enqueued worker did not run for ~24–40 h. Candidate mechanisms (Guessing, none observed):
+the OS app-standby bucket or Doze deferring a one-time work request; a lost chain — the next run is enqueued only
+after a run completes, and `runTasks` returns *without rescheduling* when it finds no registered consumers (a cold
+headless process before restore), self-healing only at the next app launch; the battery setting no longer
+Unrestricted (the G2 precondition). Foreground-at-fire reschedules in 60 min and does not explain it.
+
+**Discriminators, not yet taken** (operator, on the phone, during a silence): `adb shell am get-standby-bucket
+com.anonymous.healthconnectapp`; `adb shell dumpsys jobscheduler` filtered to the package; Settings > Apps > Pocket EP
+Sync > Battery reads Unrestricted.
+
+**Closes when:** the "last background delivery" age ships on the home screen and `get_readiness_snapshot` (the
+brief owed after the companion PR), and either a silence is caught with the discriminators above or the cadence holds
+at ≤ ~7 h for a sustained run.

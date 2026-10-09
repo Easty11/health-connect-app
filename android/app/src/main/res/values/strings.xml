@@ -1,4 +1,4 @@
 <resources>
-  <string name="app_name">Pocket EP</string>
+  <string name="app_name">Pocket EP Sync</string>
   <string name="hrv_service_description">Reads HRV data from Samsung Health screens</string>
 </resources>

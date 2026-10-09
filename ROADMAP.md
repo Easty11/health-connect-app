@@ -84,6 +84,48 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `claude/medical-doc-storage-sync-o926xi` (harness-assigned; the brief designated it, which overrides the `claude/<hash>` auto-name ban for this task) → master (trunk)  ·  created from master `05e03e6`; three code commits (`98fff88`, `515fc5d`, `83b9db9`) + this close-out
+**Closed:** 2026-10-09 (launcher label → "Pocket EP Sync"; "Open Health Connect" button; sync-gap diagnosis → `Q24`, `Q25`)
+
+### This session — Part 1 diagnosis (read-only), then Part 2 (companion PR)
+**Part 1 (no code).** A walk logged on 8 Oct reached the backend late because **no sync event existed** between
+`2026-10-08 01:22Z` and `2026-10-09 01:10Z` (Railway HTTP log read by Code; operator-pasted `health_connect_sync_events`
+agrees). The "success" stamp was 05:47 AEST on **8** Oct (misread date), so the background task was silent ≈ 40 h —
+`Q25`. Per-stream masking (`fetchFailureReason` fails only when all five streams error and nothing was read) is real in
+code and has produced one partial (steps, 22 Sep, pre-`#42`) and a 15-event whole-run failure (26 Sep–3 Oct, the fixed
+`#48` bug) in the data; nothing since 3 Oct. Stuck snapshot sleep: `get_readiness_snapshot` reads only the Samsung
+scraper table (last row 14 Sep, ring dead), while Health Connect sleep is ingested nightly through 9 Oct — `Q24`.
+**Ruling 1 answered:** repeat `ensureBackgroundSyncRegistered` calls do **not** reset the window (read from the
+installed 56.0.27 sources) — no registration fix was made; the misleading comment was corrected (`83b9db9`).
+**Part 2 (`98fff88`, `515fc5d`).** Launcher label and `app.json` `expo.name` → "Pocket EP Sync" (`applicationId`,
+`package`, `slug` untouched; in-app headings stay "Pocket EP"). SyncScreen "Open Health Connect" button via
+`openHealthConnectSettings()` (react-native-health-connect 3.5.3), gated on `getSdkStatus()` because the native call is
+void and its failures are invisible to JS; fallback hint "Settings > Apps > Health Connect". New `npm run
+test:hc-settings` (mutation-checked: removing the guard fails 5 assertions); the other five sims unregressed. Parse-checked
+all four touched JS files. **Not device-verified** — see the gate below.
+
+### Decisions / Questions
+Minted **`Q24`** (scraper, OWED) and **`Q25`** (background silence, OPEN). No decision minted: maxima decisions `#50`
+(unchanged), questions `Q23` → `Q25`. Number claimed at merge against a re-read `#50` / `Q23`. The health-app snapshot
+ruling (Garmin primary, fixed writer priority) is health-app's decision to record, not restated here.
+
+### Branch dispositions (terminal state)
+- `claude/medical-doc-storage-sync-o926xi` (harness-assigned) — merges this turn via its own PR; the merge SHA does not
+  exist until it does. A remote delete is refused in remote sessions (FEEDBACK 2026-09-21), so **operator deletes the
+  merged ref**. No `BRANCHES` row — stores cite landed commit SHAs and the PR number only.
+
+### Next action
+1. **OWED — operator device gate for this PR** (install steps in `closeout.md`): install over the existing app; Health
+   Connect grants intact; launcher reads "Pocket EP Sync"; "Open Health Connect" opens HC; background sync registered
+   once. Record the accessibility-service state (ON/OFF) before the install — the field was left as a template.
+2. **OWED — health-app PR:** `get_readiness_snapshot` reads Garmin sleep from `health_connect_syncs`, writer-labelled,
+   Garmin direct > Samsung Health relay > Samsung scraper, never blended. Ratified; not started (health-app, read-only here).
+3. **OWED — staleness brief** (operator-written, with the training-load home card): per-(stream, writer) staleness plus a
+   "last background delivery" age, amber past ~13 h. Closes `Q25`'s visibility half and `Q24`'s.
+4. Carried — `Q23` (HELD), `Q18`, `Q19`, `Q20`, `Q21`; health-app `#371` overlap proof.
+
+### Superseded by this session (kept for the record)
+
 **Branch:** `claude/admiring-clarke-r0cgh2` (harness-assigned; kept — see dispositions) → master (trunk)  ·  created from master `b4f3f80`; one code commit (`648189b`) + this close-out
 **Closed:** 2026-10-05 (display name → "Pocket EP", PR #68; implements health-app `#381`)
 

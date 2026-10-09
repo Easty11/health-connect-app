@@ -22,6 +22,36 @@ over time instead of the same papercut recurring silently.
 
 ---
 
+### 2026-10-09 — a code comment asserted library behaviour nobody had read; it steered a wrong hypothesis  [code]
+**Friction:** `src/backgroundSync.js` said "`registerTaskAsync` overwrites the existing registration of the same name,
+so repeated calls are safe." Diagnosing a 40 h background-sync silence, that sentence read as "re-registering on every
+app open may reset the 6 h window" and became the leading suspect. The installed `expo-background-task` /
+`expo-task-manager` 56.0.27 sources say otherwise: a repeat call is a no-op (JS early return, `TaskService.registerTask`
+updates options only, the scheduler skips cancel-and-replace while its worker is enqueued). The comment was plausible,
+unsourced, and wrong in its mechanism while right in its conclusion.
+**Cost:** a ruling and a source-read detour to rule out a mechanism that never existed; the real cause (Q25) is still open.
+**Fix:** a comment that states what a library does cites where it was read (file and version). Corrected to do so
+(`83b9db9`), with a re-verify note for upgrades. Download the exact locked package with `npm pack <name>@<ver>` into
+a scratch dir — a remote session has no `node_modules`, but the registry is reachable.
+
+### 2026-10-09 — "Last background sync" shows an absolute locale date; a misread date cost a diagnostic round  [workflow]
+**Friction:** the status line renders `new Date(lastBg).toLocaleString()` (`09/10/2026, 9:41:28 pm`). The 05:47 AEST stamp
+of 8 Oct was reported as 05:45 on 9 Oct; the server had no event at that time, which produced a contradiction ("a
+success stamp with no POST") that was only dissolved by the operator re-reading the date. A bare dd/mm timestamp
+carries no age, so staleness is invisible and misreadable at a glance.
+**Cost:** one round of reconciling a stamp against rows that could not match; a 40 h background silence looked like a
+24 h one until the date was fixed.
+**Fix:** show age ("3 h ago", amber past ~13 h), not just the timestamp — in the staleness brief (Q25). Until then,
+read the stamp's date before reasoning from its time.
+
+### 2026-10-09 — prod reads: the laptop cannot reach the DB, and the Railway agent cannot run SQL  [env]
+**Friction:** `railway run` from the operator's laptop cannot reach prod Postgres (private hostname; it falls back to a
+local SQLite). Railway's MCP agent has no SQL tool. A multi-statement `psql`/Python script was the wrong shape for both.
+**Cost:** a script handed over that could not run; one wasted agent call.
+**Fix:** for prod reads give **single SQL statements for the Railway query editor, one per run**, or a
+`railway ssh --service health-app-backend` + `/opt/venv/bin/python -m scripts.<name>` recipe. The Railway HTTP-log
+tool (`get-logs`, `types:["http"]`) is readable from a session and keeps ~7 days — good for "did a POST arrive".
+
 ### 2026-10-03 — negative-control counts via `grep -c FAIL` included the summary line  [code]
 **Friction:** the first mutation-check pass for `#48` reported "fails 4 / 2 / 2". The sim prints `FAIL` on each
 failing check line AND again in its `N FAILURE(S)` summary, so `grep -c FAIL` over-counted every figure by one;

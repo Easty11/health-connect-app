@@ -74,8 +74,13 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
  * Idempotent registration, called on app start after login (Root) and again after a
  * fresh permission grant (SyncScreen). NEVER registers without the background HC
  * permission — 3.5.3 has no feature-status call, so a live getGrantedPermissions read
- * IS the availability gate (V4 fallback). registerTaskAsync overwrites the existing
- * registration of the same name, so repeated calls are safe. Never throws.
+ * IS the availability gate (V4 fallback). Repeated calls are no-ops, NOT overwrites, and
+ * never reset the 6 h window (read from the installed sources, expo-background-task and
+ * expo-task-manager 56.0.27): registerTaskAsync returns early when
+ * TaskManager.isTaskRegisteredAsync(name) is true (BackgroundTask.ts); TaskService.
+ * registerTask only updates options for an existing task; and the native scheduler skips
+ * cancel-and-replace while its unique worker is ENQUEUED or RUNNING. Re-verify these on
+ * any expo-background-task upgrade. Never throws.
  *
  * @returns {Promise<{registered:boolean, reason:string|null}>}
  */

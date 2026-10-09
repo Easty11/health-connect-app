@@ -25,7 +25,8 @@
     "test:fetch-meta": "node scripts/fetch-meta-sim.mjs",
     "test:steps-aggregate": "node scripts/steps-aggregate-sim.mjs",
     "test:background-sync": "node scripts/background-sync-sim.mjs",
-    "test:background-permission": "node scripts/background-permission-sim.mjs"
+    "test:background-permission": "node scripts/background-permission-sim.mjs",
+    "test:hc-settings": "node scripts/hc-settings-sim.mjs"
   },
   "private": true
 }

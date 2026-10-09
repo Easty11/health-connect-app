@@ -7,6 +7,7 @@ import { getGrantedPermissions } from 'react-native-health-connect';
 import { syncHealthData, storeToken } from './api';
 import {
   requestPermissions, requestBackgroundPermission, fetchAllData, initializeHealthConnect,
+  openHealthConnectSettingsSafe,
 } from './healthConnect';
 import { runSync, hasBackgroundPermission } from './syncRunner';
 import { runEnableBackground } from './backgroundPermission';
@@ -82,6 +83,14 @@ export default function SyncScreen({ token, username, onLogout }) {
   const [lastBg, setLastBg] = useState(null);
   const [needsSignIn, setNeedsSignIn] = useState(null); // ISO time of the first background 401 (#47)
   const [enablingBg, setEnablingBg] = useState(false); // Enable-background-sync tap in flight
+  const [hcHint, setHcHint] = useState(''); // manual path shown when Open Health Connect could not open it
+
+  // "Open Health Connect": never throws (see openHealthConnectSettingsSafe); on any failure
+  // the screen names where to go by hand instead.
+  async function handleOpenHealthConnect() {
+    const { opened, hint } = await openHealthConnectSettingsSafe();
+    setHcHint(opened ? '' : `Couldn't open Health Connect. Open it via ${hint}`);
+  }
 
   const refreshBackgroundStatus = useCallback(async () => {
     setLastBg(await getLastBackgroundSync());
@@ -320,6 +329,14 @@ export default function SyncScreen({ token, username, onLogout }) {
           />
         </View>
       ) : null}
+
+      {/* Open Health Connect — jump to the app to check/restore grants (always visible). */}
+      <View style={styles.btn}>
+        <Button title="Open Health Connect" onPress={handleOpenHealthConnect} />
+        {hcHint ? (
+          <Text style={[styles.bgStatusText, { color: t.subtext, marginTop: 6 }]}>{hcHint}</Text>
+        ) : null}
+      </View>
 
       {/* DEV: deep-sleep gate — runs validateNight() for last night */}
       <View style={styles.btn}>

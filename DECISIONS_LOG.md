@@ -1933,3 +1933,43 @@ rendering on a device; the screen's minute tick (it is three lines of React stat
 
 **Do not revisit unless:** health-app's Health Connect amber gate moves (keep the two thresholds equal), or the background
 interval changes from 6 h.
+
+### #52 — The device gate for PRs #69 and #70 is met on build `d2d42b8` except two items; evidence relayed from the operator (supersedes `#51`'s device-look line in part)
+
+**Decision:** supersedes ONLY the "**OWED (operator):** a look at the amber rendering on a phone" half of `#51`'s *Status*
+line, and the device gate named in the 9 Oct close-out for PR #69 (`closeout.md`, ROADMAP "Next action" item 1). `#51` is
+locked and not edited. On the operator's device evidence of **10 Oct 2026**, a build from master `d2d42b8` installed over
+the existing app with no uninstall, the following are **met**: the launcher label reads "Pocket EP Sync"; the app opens with
+no permission prompt and shows SYNC and DEEP SYNC; "Open Health Connect" opens Health Connect; the "Last background sync"
+line shows a relative age ("x h ago") with the absolute time secondary; the accessibility service is still ON after the
+install-over.
+
+**Still OWED, not reported (so not met):**
+1. **The amber rendering.** The evidence says the line shows a relative age; it does not say the line was seen amber. Amber
+   needs a last background run older than 13 h, which is a silence, so it is unobserved. The sim (`#51`) covers the logic,
+   not the paint.
+2. **The registration-once logcat check** (the 9 Oct close-out's step 4: open and close the app three times and expect no
+   "Enqueuing worker" line on the re-opens). It was not reported. It bears on `Q25`'s lost-chain candidate.
+
+**Rationale:** the repo's discipline is that a locked entry's OWED claim is superseded by a new entry, never edited, so the
+store does not carry "device gate OWED" for checks that have since passed, and does not claim the two that were not
+reported.
+
+**Evidence (relayed, Unverified by Code):** the operator's list above, as reported on 10 Oct 2026. The installed build is
+stated as "from master `d2d42b8`"; the build's own embedded `git_sha` was not relayed.
+
+**Verified by Code in this tree (Certain):** `eed6492` (the merge of #69), `845f8c4` (the merge of #70) and `201daee` are
+ancestors of `d2d42b8`; `src/hcSettings.js` and `src/syncAge.js` exist at `d2d42b8`; the label "Pocket EP Sync" is in
+`app.json` and `android/app/src/main/res/values/strings.xml`. The part-2 commits `515fc5d` and `98fff88` could not be
+tested for ancestry (this clone is shallow); their merge `eed6492` is the check.
+
+**Status:** governance only; no code change, no new question. `Q24` gains an addendum (below it, in `OPEN_QUESTIONS.md`).
+
+**How you know:** the device items are **relayed**; the ancestry and file facts are **Certain** from
+`git merge-base --is-ancestor` and `grep` at `d2d42b8`. Cross-ref `#51`, `#50`, `Q24`, `Q25`.
+
+**Number claimed at merge:** `origin/master` re-read immediately before landing: decision max `### #51`, question max
+`Q25`. This entry takes **#52**. No new question minted.
+
+**Do not revisit unless:** the amber rendering is observed (or fails to render) on a device, or the registration-once logcat
+check is run and shows a re-enqueue on re-open.

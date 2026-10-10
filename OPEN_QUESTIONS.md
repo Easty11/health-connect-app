@@ -837,6 +837,15 @@ amber `STALE` line in its snapshot (`sleep+hrv · Samsung scraper`, with the Sam
 streams) and the sleep read is Garmin-primary and writer-labelled (health-app `#405`, `#406`; the PR the ruling above
 owed). The question stays **OWED**: loop-close (2), re-proving the scrape end to end when the ring returns, is untouched.
 
+**Status addendum (10 Oct 2026, device evidence; additive).** **An install-over does not disable the accessibility
+service.** The operator installed a build from master `d2d42b8` over the existing app, with no uninstall, and the
+accessibility service was still ON afterwards (relayed, Unverified by Code; `#52`). The scope of that observation is
+narrow: one install-over on one device, by the release path that keeps the same signing key and `applicationId`. It
+does not show that the scraper works (that needs the ring, loop-close (2)), and says nothing about an uninstall and
+reinstall (which would lose the grants) or an install signed with a different key. It matters here because the service
+being ON is a precondition for the scrape when the ring returns, so a routine install-over need not be followed by a
+re-enable. The question stays **OWED**.
+
 **Do not revisit unless:** the ring is back in service, or a second Samsung-only signal is wanted before then.
 
 ### Q25 — Scheduled background sync went 23 h 48 m (any sync) and ~40 h (background) without delivering, with a registered worker; cause unresolved  ·  OPEN

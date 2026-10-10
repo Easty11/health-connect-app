@@ -832,6 +832,11 @@ stuck sleep/HRV state from silence into an amber line. (2) **When the ring retur
 (a `Q2`-style Railway read), re-check Samsung Health UI compatibility (`Q1`, `Q19`), and decide whether the gate
 should filter by origin. Until then no scraper code changes.
 
+**Status addendum (10 Oct 2026; additive).** Loop-close (1) is **discharged**: health-app now lists the scraper as an
+amber `STALE` line in its snapshot (`sleep+hrv · Samsung scraper`, with the Samsung Health relay's sleep and heart-rate
+streams) and the sleep read is Garmin-primary and writer-labelled (health-app `#405`, `#406`; the PR the ruling above
+owed). The question stays **OWED**: loop-close (2), re-proving the scrape end to end when the ring returns, is untouched.
+
 **Do not revisit unless:** the ring is back in service, or a second Samsung-only signal is wanted before then.
 
 ### Q25 — Scheduled background sync went 23 h 48 m (any sync) and ~40 h (background) without delivering, with a registered worker; cause unresolved  ·  OPEN
@@ -871,3 +876,12 @@ Sync > Battery reads Unrestricted.
 **Closes when:** the "last background delivery" age ships on the home screen and `get_readiness_snapshot` (the
 brief owed after the companion PR), and either a silence is caught with the discriminators above or the cadence holds
 at ≤ ~7 h for a sustained run.
+
+**Status addendum (10 Oct 2026; additive, the paragraphs above are unedited).** **Freshness is now visible, so the next
+silence will be caught; the cause of this one is still unknown and this question stays OPEN.** Three things shipped: the
+phone's "Last background sync" line shows a relative age, amber past 13 h (`#51`); health-app's snapshot and home load
+card show the last Health Connect delivery's age, amber past the same 13 h (health-app `#406`); and the per-stream,
+per-writer staleness is live. The "last background delivery age ships on the home screen and the snapshot" half of
+**Closes when** is therefore met. The other half is not: no silence has been caught with the discriminators
+(`am get-standby-bucket`, `dumpsys jobscheduler`, the battery setting) and the cadence has not been shown to hold at
+<= ~7 h for a sustained run. Neither has been run.

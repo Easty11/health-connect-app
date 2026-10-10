@@ -43,6 +43,7 @@ carries no age, so staleness is invisible and misreadable at a glance.
 24 h one until the date was fixed.
 **Fix:** show age ("3 h ago", amber past ~13 h), not just the timestamp — in the staleness brief (Q25). Until then,
 read the stamp's date before reasoning from its time.
+**Resolved 10 Oct 2026:** the line now shows the age (`#51`, merge `845f8c4`), amber past 13 h, with the absolute time secondary.
 
 ### 2026-10-09 — prod reads: the laptop cannot reach the DB, and the Railway agent cannot run SQL  [env]
 **Friction:** `railway run` from the operator's laptop cannot reach prod Postgres (private hostname; it falls back to a

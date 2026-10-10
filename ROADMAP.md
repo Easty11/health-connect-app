@@ -118,10 +118,12 @@ ruling (Garmin primary, fixed writer priority) is health-app's decision to recor
 1. **OWED — operator device gate for this PR** (install steps in `closeout.md`): install over the existing app; Health
    Connect grants intact; launcher reads "Pocket EP Sync"; "Open Health Connect" opens HC; background sync registered
    once. Record the accessibility-service state (ON/OFF) before the install — the field was left as a template.
-2. **OWED — health-app PR:** `get_readiness_snapshot` reads Garmin sleep from `health_connect_syncs`, writer-labelled,
-   Garmin direct > Samsung Health relay > Samsung scraper, never blended. Ratified; not started (health-app, read-only here).
-3. **OWED — staleness brief** (operator-written, with the training-load home card): per-(stream, writer) staleness plus a
-   "last background delivery" age, amber past ~13 h. Closes `Q25`'s visibility half and `Q24`'s.
+2. **DONE — health-app PR:** `get_readiness_snapshot` reads Garmin sleep, writer-labelled, Garmin direct > Samsung Health
+   relay > Samsung scraper, never blended. Landed as health-app `#405` (merge `2156b71`); verified live 10 Oct.
+3. **DONE — staleness brief:** per-(stream, writer) staleness, the last Health Connect delivery's age amber past 13 h, and the
+   home load card landed as health-app `#406` (merge `ed1764e`); the phone's "Last background sync" line is `#51` (merge
+   `845f8c4`). Closes `Q24`'s loop-close (1) and `Q25`'s visibility half. **OWED (operator):** a look at the amber line on
+   the next build.
 4. Carried — `Q23` (HELD), `Q18`, `Q19`, `Q20`, `Q21`; health-app `#371` overlap proof.
 
 ### Superseded by this session (kept for the record)

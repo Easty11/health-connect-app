@@ -12,6 +12,7 @@ import {
 import { runSync, hasBackgroundPermission } from './syncRunner';
 import { runEnableBackground } from './backgroundPermission';
 import { ensureBackgroundSyncRegistered, getLastBackgroundSync, getNeedsSignIn } from './backgroundSync';
+import { describeSyncAge } from './syncAge';
 import { validateNight, runDeepConfidence } from './deepSleepConfidence';
 
 // Last-night window: yesterday 18:00 → today 11:00 local. Wide enough to capture
@@ -26,6 +27,9 @@ function lastNightWindow() {
 }
 
 // ─── Theme ─────────────────────────────────────────────────────────────────
+
+// Late-data amber: the background line turns this past ~13 h (src/syncAge.js).
+const AMBER = '#d97706';
 
 function useTheme() {
   const scheme = useColorScheme();
@@ -84,6 +88,14 @@ export default function SyncScreen({ token, username, onLogout }) {
   const [needsSignIn, setNeedsSignIn] = useState(null); // ISO time of the first background 401 (#47)
   const [enablingBg, setEnablingBg] = useState(false); // Enable-background-sync tap in flight
   const [hcHint, setHcHint] = useState(''); // manual path shown when Open Health Connect could not open it
+  // The clock the "Last background sync" age is measured against. Ticks each minute so a screen
+  // left open does not keep saying "1 h ago" for the whole of a silence (Q25).
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+  const bgAge = describeSyncAge(lastBg, now);
 
   // "Open Health Connect": never throws (see openHealthConnectSettingsSafe); on any failure
   // the screen names where to go by hand instead.
@@ -313,9 +325,18 @@ export default function SyncScreen({ token, username, onLogout }) {
             ? `paused — sign in required (since ${new Date(needsSignIn).toLocaleString()})`
             : bgStatus.on ? 'on' : `off (${bgStatus.reason})`}
         </Text>
-        <Text style={[styles.bgStatusText, { color: t.subtext }]}>
-          Last background sync: {lastBg ? new Date(lastBg).toLocaleString() : '—'}
+        <Text
+          testID="last-bg-sync"
+          style={[styles.bgStatusText, { color: bgAge.stale ? AMBER : t.subtext },
+            bgAge.stale ? styles.bgStale : null]}
+        >
+          Last background sync: {bgAge.relative}
         </Text>
+        {bgAge.absolute ? (
+          <Text style={[styles.bgStatusText, styles.bgAbsolute, { color: t.subtext }]}>
+            {bgAge.absolute}
+          </Text>
+        ) : null}
       </View>
 
       {/* Enable-background-sync (#45): shown only when base perms are granted but the
@@ -489,6 +510,8 @@ const styles = StyleSheet.create({
   // Background-sync status line (S5)
   bgStatus: { marginBottom: 12 },
   bgStatusText: { fontSize: 12, textAlign: 'center' },
+  bgStale: { fontWeight: '600' },
+  bgAbsolute: { fontSize: 11, opacity: 0.8 },
 
   // Progress — matches App.js extracting box
   progressBox: { marginTop: 16, alignItems: 'center' },

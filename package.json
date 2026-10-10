@@ -26,7 +26,8 @@
     "test:steps-aggregate": "node scripts/steps-aggregate-sim.mjs",
     "test:background-sync": "node scripts/background-sync-sim.mjs",
     "test:background-permission": "node scripts/background-permission-sim.mjs",
-    "test:hc-settings": "node scripts/hc-settings-sim.mjs"
+    "test:hc-settings": "node scripts/hc-settings-sim.mjs",
+    "test:sync-age": "node scripts/sync-age-sim.mjs"
   },
   "private": true
 }

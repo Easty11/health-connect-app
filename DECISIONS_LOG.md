@@ -1905,3 +1905,31 @@ max `Q23`. This entry takes **#50**. No new question minted.
 
 **Do not revisit unless:** the sync-events rows are found not to be what `#377` reports, or the scheduled cadence
 regresses on a later build (then `#48`'s init path is the first suspect).
+
+### #51 — The "Last background sync" line shows a relative age, amber past 13 h, with the absolute time secondary (closes the 9 Oct FEEDBACK item; `Q25` stays open)
+
+**Decision:** the status line leads with a relative age (`Last background sync: 3 h ago`), turns amber and bold
+past **13 h**, and keeps the absolute time as a smaller second line. Never-ran reads `never` and is **not** amber (a
+fresh install has not had a chance; amber means a run is overdue, which needs a last run to be overdue against). An
+unreadable stamp reads `unknown` and **is** amber (it cannot be called fresh). A stamp slightly in the future is clock
+skew and is clamped to `just now`. Units floor, so `59 min` never prints as `60 min ago`. The screen re-renders each
+minute, so an open screen cannot keep saying `1 h ago` through a silence. The logic is a pure module,
+`src/syncAge.js` (`describeSyncAge`), so the sim runs the real code.
+
+**Rationale:** on 8-9 Oct the background run was silent for about 40 h (`Q25`) and the line showed a bare locale date,
+so nothing on screen said the data was old, and a misread date cost a diagnostic round (FEEDBACK, 2026-10-09). The
+**13 h threshold is the same one health-app uses** for its Health Connect delivery gate (two 6 h background intervals
+plus an hour of slack; operator brief 9 Oct, ratified for health-app as its `#406`), so the phone and the home load card
+agree about when data is late.
+
+**Status:** landed via PR #70 (merge `845f8c4`); no native or manifest change, no schema. **OWED (operator):** a look at
+the amber rendering on a phone, on the next build. Governance only otherwise.
+
+**How you know:** `npm run test:sync-age` (`scripts/sync-age-sim.mjs`, source-bound to `src/syncAge.js`) passes at
+stamps **1 h** (`1 h ago`, not amber), **14 h** (`14 h ago`, amber) and **3 days** (`3 d ago`, amber), at the 13 h
+boundary (exactly 13 h not amber, 13 h 1 min amber), at the 48 h hours-to-days switch, for never-ran, an unreadable stamp
+and a future stamp; the six existing sims still pass; `src/SyncScreen.js` parses (esbuild). **Not verified:** the
+rendering on a device; the screen's minute tick (it is three lines of React state and was not run).
+
+**Do not revisit unless:** health-app's Health Connect amber gate moves (keep the two thresholds equal), or the background
+interval changes from 6 h.

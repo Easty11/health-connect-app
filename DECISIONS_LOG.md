@@ -2007,11 +2007,14 @@ record ("`HANDOFF.md` carried the mandated receipt") and is left as history. `FE
 `CLAUDE.md`, `.claude/commands/closeout.md`, `AGENTS.md`, `scripts/` and `.githooks/` contain no instruction to write `HANDOFF.md`, so no
 repoint is owed. The only instruction to write it was the file's own preamble, which the banner now overrides.
 
-**Also done here, named because it adds structure:** `CLAUDE.md` gains a `### Recent landings` block below the shared loop rules,
-holding this entry's pointer. HCA had no such block (`#21` records that health-app's carries one and HCA's does not; the
-`BRANCHES.md` row for PR #33 says "HCA has no such block"). It follows health-app's shape: pointer-only, capped at the
-three most recent, one line each, canonical home only. It is repo-specific content, below `END SHARED LOOP RULES`, so the
-shared block is untouched.
+**Also done here, then reverted the same day:** `CLAUDE.md` was given a `### Recent landings` block below the shared loop
+rules, holding this entry's pointer. HCA had no such block (`#21` records that health-app's carries one and HCA's does not;
+the `BRANCHES.md` row for PR #33 says "HCA has no such block"), and the block was added on the brief's instruction (item 5)
+without that being checked against `#21`. It was **reverted the same day, 11 Oct 2026, by operator ruling**: `#21` ruled the
+ritual-structure divergence INTENTIONAL, health-app's ritual maintains that block at its step 6, and HCA's ritual has no step
+that would, so the block contradicted `#21` and would have gone stale. The revert restores `CLAUDE.md` to its pre-`#53`
+content. This entry therefore adds no structure; its only lasting changes are `#53` itself and the `HANDOFF.md` banner. No new
+decision number: the ruling applies `#21`, it does not mint a rule.
 
 **Number claimed at merge:** `origin/master` re-read immediately before landing: decision max `### #52`, question max
 `Q25`. This entry takes **#53**. No new question minted.

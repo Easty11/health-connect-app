@@ -1,5 +1,7 @@
 # HANDOFF — interruption-survival ledger
 
+> **Retired (#53, 2026-10-11; mirrors health-app #413). Frozen; do not append. The live handoff is closeout.md.**
+
 One append-only ledger of session handoffs, so a session interrupted mid-crossing is
 resumable from the repo alone — without reconstructing state from chat scrollback. One
 ledger, not two.

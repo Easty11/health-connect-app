@@ -253,6 +253,16 @@ code-state defects (PENDING until resolved into a decision or a fix), and
 
 ---
 
+### Recent landings
+
+_Pointer-only. Capped at the 3 most recent, one line each, canonical home only, no SHAs /
+test counts / decision sub-bullets. Full history: `DECISIONS_LOG.md`. Latest handoff:
+`closeout.md`. Forward-looking work: `ROADMAP.md` (not this block)._
+
+- **`HANDOFF.md` is retired and frozen; `closeout.md` is the live handoff (`#53`, mirrors health-app `#413`).** Governance, non-migration. Canonical home: `DECISIONS_LOG.md` `#53`.
+
+---
+
 ## The closeout ritual
 
 - **`/closeout`** (Code slash command) — reads the canonical stores, reports

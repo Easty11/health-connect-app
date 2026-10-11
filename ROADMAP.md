@@ -84,6 +84,42 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `claude/upbeat-cannon-8z2j3w` (harness-assigned; the brief designated it, which overrides the `claude/<hash>` auto-name ban for this task) → master (trunk)  ·  created from master `5c71f2f`; one config commit (`dce6a70`, merged as `7eaa9f8`) + this close-out
+**Closed:** 2026-10-11 (`.gitattributes` `*.md text` mirrored from health-app `407be6e`; the day's `HANDOFF.md` retirement recorded)
+
+### This session — `.gitattributes`, and the 11 Oct landings recorded
+**Landed 11 Oct, all governance or config; no app code, no schema.** PR #73 → merge `632b44e` (content `b537e91`): `#53`
+retires and freezes `HANDOFF.md`, mirroring health-app `#413`. PR #74 → merge `5c71f2f` (content `32f358a`): reverts the
+`CLAUDE.md` Recent-landings block `#53` had added, and amends `#53` to say so. PR #75 → merge `7eaa9f8` (content `dce6a70`,
+this session): `.gitattributes` holding `*.md text` only, discharging health-app's OWED cross-repo row (health-app
+`407be6e`). Blanket `eol=lf` was rejected there (health-app `#416`) because this repo tracks `android/gradlew.bat` and
+`scripts/hevy-exercise-query.ps1`. `git add --renormalize .` staged only `.gitattributes`; `git ls-files --eol` shows the 11
+`.md` blobs `i/lf attr/text` and the `.bat` and `.ps1` unattributed and `i/lf`. The Linux checkout is all-LF, so this shows
+the index is unchanged, not what a CRLF Windows working tree does on its next `git add`.
+
+### Decisions / Questions
+None minted: maxima decisions `#53`, questions `Q25`, both unchanged. The two `BRANCHES` rows that said "merge SHA recorded
+at the next close-out" are resolved (`gov/device-gate-met` → `de857fd`, `gov/freshness-age-line` → `d2d42b8`). **Surfaced for
+ratification, not resolved here:** `#25`'s "Do not revisit unless" names "a `.gitattributes` lands", and one has; whether that
+warrants a superseding entry is chat's call (the landed form is `*.md text`, not either form `#25` contemplated).
+
+### Branch dispositions (terminal state)
+- `claude/upbeat-cannon-8z2j3w` (harness-assigned) — PR #75 merged and its remote ref auto-deleted; the branch was reset to
+  master `7eaa9f8` for this close-out, which merges via its own PR (its merge SHA does not exist until it does). No
+  `BRANCHES` row: stores cite landed commit SHAs and PR numbers only.
+- `claude/trusting-johnson-q2ff94` (PRs #73, #74) and `claude/medical-doc-storage-sync-o926xi` (PR #69) — remote refs gone;
+  `git ls-remote --heads origin` returns `master` only. This discharges the operator-owed delete of the latter.
+
+### Next action
+1. **OWED (operator) — the two items `#52` left open.** The amber rendering (needs a >13 h silence) and the registration-once
+   logcat check (open and close the app three times; no "Enqueuing worker" on the re-opens). Unchanged by this session.
+2. **`Q25` (OPEN).** While a silence lasts, take its discriminators on the phone (standby bucket, `dumpsys jobscheduler`
+   filtered to the package, Battery reads Unrestricted).
+3. **For chat:** whether `#25`'s revisit trigger warrants a superseding `DECISIONS_LOG` entry (above).
+4. Carried — `Q23` (HELD), `Q24` (OWED), `Q18`, `Q19`, `Q20`, `Q21`; health-app `#371` overlap proof.
+
+### Superseded by this session (kept for the record)
+
 **Branch:** `claude/medical-doc-storage-sync-o926xi` (harness-assigned; the brief designated it, which overrides the `claude/<hash>` auto-name ban for this task) → master (trunk)  ·  created from master `05e03e6`; three code commits (`98fff88`, `515fc5d`, `83b9db9`) + this close-out
 **Closed:** 2026-10-09 (launcher label → "Pocket EP Sync"; "Open Health Connect" button; sync-gap diagnosis → `Q24`, `Q25`)
 

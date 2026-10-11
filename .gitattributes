@@ -1,0 +1,3 @@
+# Mirrors health-app 407be6e. Markdown only: a blanket eol=lf is rejected (health-app #416)
+# because this repo tracks android/gradlew.bat and scripts/hevy-exercise-query.ps1.
+*.md text

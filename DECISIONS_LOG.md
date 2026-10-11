@@ -1973,3 +1973,48 @@ tested for ancestry (this clone is shallow); their merge `eed6492` is the check.
 
 **Do not revisit unless:** the amber rendering is observed (or fails to render) on a device, or the registration-once logcat
 check is run and shows a re-enqueue on re-open.
+
+### #53 — `HANDOFF.md` is retired and frozen here, mirroring health-app `#413`; it stops being the cross-lane write target (supersedes `#20`'s "established here" as a write target only)
+
+**Decision:** mirrors health-app `#413` (operator ruling, 11 Oct 2026; health-app PR #376, merge `4d56ed8`). Three parts, all by
+reference to `#413` rather than restated.
+- **`HANDOFF.md` is retired and frozen.** It gains a RETIRED banner directly under its title, in this repo's own wording
+  (it names `#53` and `#413`, and points at `closeout.md`). Every existing line is untouched. Nothing is appended to it again.
+- **`#20` is superseded as a write target only.** `#20`'s clause "`HANDOFF.md` is established in this repo, closing the
+  interruption-ledger asymmetry" stays true as history: the file was established, was used, and is now retired. What `#20` no
+  longer does is name this file as where a cross-lane instruction or a receipt is written. `#20`'s four-state vocabulary, its
+  shared-block amendment and its G1 breach record are not touched.
+- **The destination moves as `#413` moves it.** A cross-lane instruction travels as an addressed paste block; an agreement
+  with no brief yet rides `closeout.md`'s pending-commit queue and cold-resume handoff. The principle that an instruction not in
+  the repo did not happen stands.
+
+**Rationale:** the ledger had stopped being used. Its last entry is dated 21 Sep 2026 14:55 AEST (the S1 diagnostics line) and
+its last commit is `8c154c8` (21 Sep); no commit has touched it since. Over 21 Sep to 11 Oct 2026 `closeout.md` took 13
+non-merge commits here, six of them the 22 Sep run of per-landing close-outs. The file holds 8 ledger lines in all. A retired
+file that still described itself as the place to write a receipt would be a second handoff surface competing with the live one,
+which is the failure `#413` retires it against. HCA's figures are its own and much smaller than health-app's (65 commits);
+the conclusion is the same and does not rest on the count.
+
+**Status:** DONE. Governance only: no code, no schema. This repo's half of the cross-repo obligation `#413` named ("`health-connect-app`
+is the one other place").
+
+**How you know:** health-app `#413`, read on `origin/master` after a re-fetch on 11 Oct (the heading at `DECISIONS_LOG.md` line
+14044; merge `4d56ed8` is PR #376; `HANDOFF.md` line 3 carries its banner). This repo, `origin/master` `de857fd`, after
+deepening the shallow clone (it was shallower than the window): `git log --full-history --no-merges --since=2026-09-21` on
+`HANDOFF.md` returns nothing; the same on `closeout.md` through 11 Oct returns 13; `grep -rIi 'handoff\.md'` over the tree
+(excluding `.git`, `node_modules`, `android`) matches only this log, the `#20` entry, and `ROADMAP.md` line 685, which is a past-tense
+record ("`HANDOFF.md` carried the mandated receipt") and is left as history. `FEEDBACK.md` names "CODE HANDOFF" as a chat artefact, not the file.
+`CLAUDE.md`, `.claude/commands/closeout.md`, `AGENTS.md`, `scripts/` and `.githooks/` contain no instruction to write `HANDOFF.md`, so no
+repoint is owed. The only instruction to write it was the file's own preamble, which the banner now overrides.
+
+**Also done here, named because it adds structure:** `CLAUDE.md` gains a `### Recent landings` block below the shared loop rules,
+holding this entry's pointer. HCA had no such block (`#21` records that health-app's carries one and HCA's does not; the
+`BRANCHES.md` row for PR #33 says "HCA has no such block"). It follows health-app's shape: pointer-only, capped at the
+three most recent, one line each, canonical home only. It is repo-specific content, below `END SHARED LOOP RULES`, so the
+shared block is untouched.
+
+**Number claimed at merge:** `origin/master` re-read immediately before landing: decision max `### #52`, question max
+`Q25`. This entry takes **#53**. No new question minted.
+
+**Do not revisit unless:** a cross-lane instruction is lost in transit here and the cause is the absence of a repo-visible
+record, in which case the question is the surface (the paste block or `closeout.md`), not a return to a receipt file.

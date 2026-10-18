@@ -115,14 +115,14 @@ OPEN · OWED · DONE → #N, under the label `**State:**`.
 - Branch disposition by patch-id, never SHA: `git cherry origin/master <branch>`
   (`-` delete, `+` real work). Alias `stale` is global; each repo defines its own `land`
   locally and documents its fresh-clone setup below END SHARED LOOP RULES.
-- One branch per concern, concern-named. `claude/<hash>` auto-names banned for
-  in-flight work.
+- One branch per concern. Harness-assigned names (`claude/<hash>`) are accepted; the PR title
+  and the `BRANCHES.md` row carry the meaning, not the branch name.
 - **Severity gate on review:** raise as a gate only defects that change an outcome,
   corrupt data, leak a secret, or block the next step. Cosmetic, consistency, and
   wording defects batch into a single trailing "nits" note — never a reason to withhold
   a green-light or halt a land.
-- **Governance batching:** at most one `gov(...)` commit per session, at close-out.
-  Governance edits never interleave with feature work mid-session.
+- **Governance batching:** one `gov(...)` commit per landed ruling, written when that ruling
+  lands (not one per session). Governance edits never interleave with feature work mid-session.
 - Full corrections live in `FEEDBACK.md`; full history in `DECISIONS_LOG.md` and
   `FEEDBACK_ARCHIVE.md`. This file points at them; it does not duplicate them.
 

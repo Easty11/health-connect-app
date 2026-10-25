@@ -523,6 +523,10 @@ RN template's own "generate your own keystore in production" caution still in pl
 Acceptable for sideloading to household devices; blocks any real distribution.
 
 ### Q18 — Scraper canary — the sole HRV path has no failure detection, and the 2026-08-16 read shows live gaps  ·  OPEN
+**Re-scoped 2026-10-26 (operator-ruled; health-app `DECISIONS_LOG` #459).** Discharged: staleness detection per (stream, writer) with an amber STALE line in the snapshot (health-app #406), and the 13 h pipe gate on the phone and the card (#51, health-app #406). **Now asks:** the gap-vs-failure discriminator, the implausible-value floor, and the never-silently-score-without-HRV clause. **Premise softened:** Garmin now feeds HRV (health-app #405, #449), so while the ring is away the scraper is no longer the sole live source. The architecture invariant is unchanged: the scraper is still the permanent path for Samsung Ring HRV. The citations to health-app in this paragraph are carried from the brief and not re-read from this tree.
+
+_The entry below is kept as minted, for provenance; where it differs from the paragraph above, the paragraph above governs._
+
 **State:** OPEN. **Canonical home for** what health-app's `DECISIONS_LOG` "Known open issues"
 row 9 — and health-app `Q13`/`#215` after it — call *"issue #9"*. **No GitHub issue of that
 number exists**: the register row predates this store, and the name is a register ordinal that
@@ -641,8 +645,10 @@ other four were confirmed by the Postgres run? The ruling wants the operator's i
 path before any code moves. Until then `#18`'s emitter claim stands as "5 written, 4
 proven-by-live-data".
 
-### Q21 — HC pagination fix (`#38`) + 30-day deep-sync: two operator-side post-deploy verifications owed  ·  OWED
-**State:** OWED — design settled, loop-close named (both are Luke's post-deploy runs against Railway,
+### Q21 — HC pagination fix (`#38`) + 30-day deep-sync: two operator-side post-deploy verifications owed  ·  DONE → #44
+**State:** DONE → #44 — both owed runs are done: the behavioural gate at `record_sources` level, on operator-pasted prod reads, and the 30-day POST with `truncated: false`. The session-level residual was relocated to health-app Q159, since closed at health-app #452. Closed in the 2026-10-26 open-question sweep (operator-ruled; health-app `DECISIONS_LOG` #459).
+
+Prior state text, kept verbatim: OWED — design settled, loop-close named (both are Luke's post-deploy runs against Railway,
 per the unseeable-surface rule Code cannot self-verify). **Related:** `#38` (the pagination decision
 this verifies), PR #40 (`a7d90b6`). **Minted:** 2026-09-04, at the `#38` close-out.
 **Number-at-merge:** questions max re-read `Q20` immediately before this row; takes `Q21`.
@@ -663,7 +669,7 @@ fork, not a surprise. Owner: Luke to observe; a future Code session to chunk if 
 the 30-day POST is confirmed to fit (or chunking lands).
 
 ### Q22 — HR lags ~6d because the #38 pagination fix has never run on a device (H1 CONFIRMED)  ·  DONE → #44
-**State:** OPEN — the fix is owed on a device. **Progress (2026-09-21, `8c154c8` / PR #48):** the S1
+Prior state text (struck 2026-10-26: the heading's `DONE → #44` governs, and this line was never updated when the heading was): OPEN — the fix is owed on a device. **Progress (2026-09-21, `8c154c8` / PR #48):** the S1
 diagnostics HCA side LANDED — `client` build fingerprint + per-stream `fetchMeta`, fail-closed
 generation via `metro.config.js`, G1+G3 sim `test:fetch-meta` 22/22 PASS (see `#40`). Still OWED:
 (a) the health-app `health_connect_sync_events` migration + persistence

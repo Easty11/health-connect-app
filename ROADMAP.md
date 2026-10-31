@@ -90,6 +90,32 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `claude/new-session-cegdw6` (harness-assigned; the PR title and the `BRANCHES.md` row carry the meaning) → master via one PR.
+**Closed:** 2026-10-31 (question layer Phase C2 adopted here; `OPEN_QUESTIONS.md` deleted)
+
+### This session — question layer Phase C2 (`#54`; governed by health-app `#467`, `#468`, `#470`)
+**Landed in one PR, governance and config only; no app code, no schema.** Nine labels (REST, health-app's colours); `stale.yml` and
+`docs/design/{README,0000-template}.md` byte-identical from health-app master `b7743c3` (`ae781aa`); then one governance commit
+(`db8bf53`): the shared block re-mirrored verbatim (slice sha256 equal), the two repo-specific `CLAUDE.md` regions, `/closeout`
+(Issues + `docs/design` stores, REST forms, OWED/BLOCKED sweep, ANCHOR split), the guard's `OPEN_QUESTIONS.md` arm removed (code-identical
+with health-app's), the work-queue vocabulary sweep (`Q9`), a Later line for release signing (`Q17`), `DECISIONS_LOG` `#54`, and
+`OPEN_QUESTIONS.md` deleted (last whole at `3c2986b`). Seven issues created: GH#80 `Q1`, GH#81 `Q17` (closed `not_planned`), GH#82 `Q18`,
+GH#83 `Q19`, GH#84 `Q20`, GH#85 `Q24`, GH#86 `Q25`.
+
+### Decisions / Questions
+Minted `#54` (the 25-row map). Decisions max is now `#54`. There is no questions store and no questions maximum: live questions are
+GH#80 to GH#86 here, and health-app GH#523, GH#508 and GH#565 for the three closed by cross-repo ruling.
+
+### Branch dispositions (terminal state)
+- `claude/new-session-cegdw6` (harness-assigned) — rowed in `BRANCHES.md`; merges via its own PR and is deleted on merge.
+
+### Next action
+1. **Operator — the `Q20` query (GH#84).** If it returns `com.garmin…` HRV rows, the lean flips to a 1w stamp: a comment on GH#84, not a rewrite.
+2. **Operator — `Q25` (GH#86).** Take the discriminators during the next silence.
+3. **C3 (health-app session).** health-app's `scripts/gen_governance_view.py` calls `has_questions_store(repo)` for this repo; with the file gone it must report HCA's store as retired (Likely; not run from here).
+4. Carried, pinned and waiting on the ring: GH#82 `Q18`, GH#83 `Q19`, GH#85 `Q24`.
+
+### Previous session (kept for the record)
 **Branch:** `claude/upbeat-cannon-8z2j3w` (harness-assigned; the brief designated it, which overrides the `claude/<hash>` auto-name ban for this task) → master (trunk)  ·  created from master `5c71f2f`; one config commit (`dce6a70`, merged as `7eaa9f8`) + this close-out
 **Closed:** 2026-10-11 (`.gitattributes` `*.md text` mirrored from health-app `407be6e`; the day's `HANDOFF.md` retirement recorded)
 

@@ -2086,3 +2086,11 @@ record, in which case the question is the surface (the paste block or `closeout.
 **Nits, not gates:** the imported shared block names `scripts\gen_governance_view.py` (absent from this repo; the step is optional) and says the stale action closes at 60 days where `stale.yml` says 53. Both are health-app-side wording; byte-identity is the gate here, so neither is edited in transit.
 
 **Do not revisit unless:** a `Qn` citation fails to resolve through the map above or `git show 3c2986b:OPEN_QUESTIONS.md`, or the open `fork` count here shows the tracker has become the old file (health-app `#467`'s trigger).
+
+### #55 — Chat-side writes are approval-gated: health-app `#473` propagated verbatim
+
+**Tier:** ruling
+
+**Decision:** Pointer ruling to health-app `#473` (merged at master `99f6c6f`). A chat-side session writes to the repo or tracker only behind an explicit operator approval given in-turn; one approval may cover a named group of actions, stated and never inferred; a pasted queue or brief authorises nothing by itself. This repo takes the new shared-block bullet (§ Merge disposition, last before "Number-at-merge is unaffected") verbatim. The slice from `## Shared loop rules` through `## END SHARED LOOP RULES` is byte-identical to health-app master `99f6c6f` (sha256 prefix `b7ea48200e4d9520`, checked before and after the copy). Nothing else in `CLAUDE.md` changes. The 1 Nov 2026 instance is recorded in health-app `FEEDBACK.md` §66; no row is mirrored here.
+
+**Reverse-by:** An operator ruling in a later health-app entry, re-propagated here by the shared-block copy; none expected.

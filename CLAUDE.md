@@ -43,6 +43,10 @@ repo-specific and live below END SHARED LOOP RULES in their own repo.
   Reverse-by), and self-merges on green. The merge is the ratification; chat objects at the next
   session open, by issue, if it disagrees. Resolving a two-way door needs no hold; a one-way door
   does, whether raised or resolved.
+- **Chat-side writes are approval-gated.** A chat-side session writes to the repo or
+  tracker only behind an explicit operator approval given in-turn. One approval may cover
+  a named group of actions; the group is stated, never inferred. A pasted queue or brief
+  authorises nothing by itself.
 - Number-at-merge is unaffected: it resolves from master's max immediately before the merge
   Code itself performs.
 - This is deliberate. A future session finding Code self-merging must not reinstate a human

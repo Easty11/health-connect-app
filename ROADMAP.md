@@ -14,14 +14,14 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 
 ## Work queue
 
-- **Q2 — de-dup `validateNight()` — RESOLVED (`36df9a2`, on master).**
+- **Q2 — de-dup `validateNight()` — DONE (`36df9a2`, on master).**
   Landed via PR #5 rebase-merge; patch-identical to branch commit `84a06c6`
   (same patch-id). Re-verified 2026-07-02: `collapseSleepSessions()` collapses
   overlapping/duplicate `SleepSession` records to the longest per cluster
   (incl. transitive chains) with the non-duplicate path untouched.
 - **Q3 — wire `runDeepConfidence` into readiness / Banister.**
-  Unblocked by Q2's resolution; still gated by the threshold review
-  (DECISIONS_LOG #4 — tunables uncalibrated).
+  **BLOCKED** (blocker: the threshold review, DECISIONS_LOG #4 — tunables uncalibrated;
+  owner: Luke). Q2, which it waited on, is DONE.
   *Companion-rooted — the "could this run backend-side?" question is settled (PR #42,
   `src/SyncScreen.js`).* A DEV-only `SyncScreen` panel now runs `runDeepConfidence` for
   last night and renders per-segment `flag`/`confidence` on-device — the instrument for
@@ -42,7 +42,7 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
   is unbacked. Must wire before C3 lands: (1) add enum to `src/contract/`,
   (2) stamp context in `HRVCaptureModule.kt` event payload, (3) verify D2.
 - **HRV capture (`feat/hrv-capture`).** Native module + scraper + Polar override
-  parked (C3 unstaged). Unblocks after firewall gap above is closed.
+  C3 unstaged. **BLOCKED** (blocker: the HRV context-firewall item above; owner: Code).
   Follow-on: implement the `passive_overnight | calibration | session` context
   stamp end-to-end and prove the `session` → non-readiness routing
   (DECISIONS_LOG #6).
@@ -55,8 +55,8 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
   `SUFFICIENT`/`INSUFFICIENT` outcome into readiness: eyeball reason_codes over 3–4
   trusted nights, freeze the numbers (Luke on the values — don't mint solo), and bump
   `RULESET_VERSION` in the same commit. GATE-FIRST per the module header.
-- **Q5 — backend dual-field collapse.** Blocked on capturing a real sync payload
-  to drive the schema shape.
+- **Q5 — backend dual-field collapse.** **BLOCKED** (blocker: a captured real sync
+  payload to drive the schema shape; owner: operator).
 - **Scraper follow-ups (from 2026-06-25 sleep-capture session).**
   (1) SpO2 *lowest* — deferred; chose average-only. Needs a Blood-oxygen detail tap.
   (2) Derived sleep-efficiency provenance flag on the wire — a new `SyncPayload`
@@ -65,6 +65,12 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
   light-sleep + efficiency are captured — needs Luke (don't mint a number solo).
   (4) SH-breakage tally toward #12 SDK-migration trigger: 3rd event 25-Jun-2026
   (home relayout, closed via 06d5a43). Not yet tripping.
+
+## Later
+
+- **Release signing (own keystore)** — reopen at first distribution (Q17 → GH#81, closed
+  `not_planned`). Release `buildType` is signed with the debug keystore, acceptable for
+  household sideloading only.
 
 ## Open / unverified (carry until proven)
 
@@ -84,6 +90,32 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 <!-- SPRINT BLOCK — owned by /closeout, regenerated from git log. Do not hand-edit. -->
 ## Sprint block
 
+**Branch:** `claude/new-session-cegdw6` (harness-assigned; the PR title and the `BRANCHES.md` row carry the meaning) → master via one PR.
+**Closed:** 2026-10-31 (question layer Phase C2 adopted here; `OPEN_QUESTIONS.md` deleted)
+
+### This session — question layer Phase C2 (`#54`; governed by health-app `#467`, `#468`, `#470`)
+**Landed in one PR, governance and config only; no app code, no schema.** Nine labels (REST, health-app's colours); `stale.yml` and
+`docs/design/{README,0000-template}.md` byte-identical from health-app master `b7743c3` (`ae781aa`); then one governance commit
+(`db8bf53`): the shared block re-mirrored verbatim (slice sha256 equal), the two repo-specific `CLAUDE.md` regions, `/closeout`
+(Issues + `docs/design` stores, REST forms, OWED/BLOCKED sweep, ANCHOR split), the guard's `OPEN_QUESTIONS.md` arm removed (code-identical
+with health-app's), the work-queue vocabulary sweep (`Q9`), a Later line for release signing (`Q17`), `DECISIONS_LOG` `#54`, and
+`OPEN_QUESTIONS.md` deleted (last whole at `3c2986b`). Seven issues created: GH#80 `Q1`, GH#81 `Q17` (closed `not_planned`), GH#82 `Q18`,
+GH#83 `Q19`, GH#84 `Q20`, GH#85 `Q24`, GH#86 `Q25`.
+
+### Decisions / Questions
+Minted `#54` (the 25-row map). Decisions max is now `#54`. There is no questions store and no questions maximum: live questions are
+GH#80 to GH#86 here, and health-app GH#523, GH#508 and GH#565 for the three closed by cross-repo ruling.
+
+### Branch dispositions (terminal state)
+- `claude/new-session-cegdw6` (harness-assigned) — rowed in `BRANCHES.md`; merges via its own PR and is deleted on merge.
+
+### Next action
+1. **Operator — the `Q20` query (GH#84).** If it returns `com.garmin…` HRV rows, the lean flips to a 1w stamp: a comment on GH#84, not a rewrite.
+2. **Operator — `Q25` (GH#86).** Take the discriminators during the next silence.
+3. **C3 (health-app session).** health-app's `scripts/gen_governance_view.py` calls `has_questions_store(repo)` for this repo; with the file gone it must report HCA's store as retired (Likely; not run from here).
+4. Carried, pinned and waiting on the ring: GH#82 `Q18`, GH#83 `Q19`, GH#85 `Q24`.
+
+### Previous session (kept for the record)
 **Branch:** `claude/upbeat-cannon-8z2j3w` (harness-assigned; the brief designated it, which overrides the `claude/<hash>` auto-name ban for this task) → master (trunk)  ·  created from master `5c71f2f`; one config commit (`dce6a70`, merged as `7eaa9f8`) + this close-out
 **Closed:** 2026-10-11 (`.gitattributes` `*.md text` mirrored from health-app `407be6e`; the day's `HANDOFF.md` retirement recorded)
 

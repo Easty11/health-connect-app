@@ -2021,3 +2021,68 @@ decision number: the ruling applies `#21`, it does not mint a rule.
 
 **Do not revisit unless:** a cross-lane instruction is lost in transit here and the cause is the absence of a repo-visible
 record, in which case the question is the surface (the paste block or `closeout.md`), not a return to a receipt file.
+
+### #54 — Question layer adopted in health-connect-app; live questions migrated; `OPEN_QUESTIONS.md` deleted
+
+**Decision:** Phase C2 of the question-layer brief, governed by health-app `#467` and `#468` (and `#470` for the parity bullet). The 13 live entries in `OPEN_QUESTIONS.md` at master `3c2986b` each end in one destination (below); the 12 `DONE` entries keep their recorded resolutions as mapping rows, with no issue; the file is deleted. In the same change:
+1. **Labels.** The nine from health-app (`fork stamp verify watch design pinned stale abandoned build`) created through the REST API with health-app's colours and descriptions (read from its labels endpoint, compared after).
+2. **`stale.yml`** and **`docs/design/{README,0000-template}.md`** copied byte-identical from health-app master `b7743c3`. No design docs yet.
+3. **Shared block.** `CLAUDE.md` from `## Shared loop rules` through `## END SHARED LOOP RULES` replaced with health-app master's text, verbatim. The slice's sha256 equals health-app's (`d87a881972570dc0…`). The two repo-specific regions edited as declared: the "HCA additions" sentence about `OPEN_QUESTIONS.md` now says a code-state defect is a `bug`-labelled issue, and the `;cc` bullet carries the issue/doc pointers and CHAT DISPOSITION.
+4. **`/closeout`.** The stores row becomes Issues + `docs/design` (REST forms with `{owner}/{repo}`); the handoff reads open `fork` issues and design docs not in a terminal state; the pointer no longer names `OPEN_QUESTIONS`; the terminal-state step gains health-app `Q138`'s sweep of `OWED` / `BLOCKED` `BRANCHES.md` rows; the ANCHOR is split into PRECONDITIONS and a single HARD STOP (`Q10`).
+5. **Guard.** `scripts/check_governance_placeholders.py` loses its `OPEN_QUESTIONS.md` arm and the comment block explaining the two repos' heading grammar. It is code-identical with health-app's copy again (docstrings and the `main()` advisory string stay repo-local, per the parity bullet). The `OPEN_QUESTIONS.md` deletion follows the guard edit, because the guard exits 2 on an unreadable store.
+6. **`ROADMAP.md`.** The work queue's `RESOLVED` / `parked` / `Blocked on` rewritten into the State vocabulary (`Q9`); a Later line "Release signing (own keystore)" (`Q17`).
+7. **Citations.** A bare `#N` is a `DECISIONS_LOG` number; an issue or PR is `GH#N`. A historical `Qn` resolves through the map below, and the file itself through git: `git show 3c2986b:OPEN_QUESTIONS.md` is the last commit that carries it whole. The `src/syncRunner.js:92` comment and the `ROADMAP.md` / `FEEDBACK.md` / `BRANCHES.md` / `closeout.md` / `HANDOFF.md` history rows that cite it stay as written.
+
+**Mapping (all 25 headings).** Triage: 3 do-now (`Q9` `Q10` `Q15`), 3 closed by cross-repo ruling (`Q5` `Q16` `Q23`), 4 stamp (`Q1` `Q17` `Q18` `Q19`), 2 verify (`Q20` `Q25`), 1 build (`Q24`), 12 `DONE`. Issues created here: GH#80 to GH#86 (7; six open, GH#81 closed `not_planned`).
+
+| Q | Heading | Destination |
+|---|---|---|
+| Q1 | SH-relayout cadence vs SDK-migration trigger (#12) | GH#80. Stamp, two-way. |
+| Q2 | Native HRV scrape end-to-end to DB, post-:355 | Recorded resolution, unchanged: DONE → operator observation (2026-08-16) |
+| Q3 | Stale-APK-masked Compose-break defect record | Recorded resolution, unchanged: DONE → `db6f50e` (2026-07-11) |
+| Q4 | Day-lag / read-freshness of the HRV scrape | Recorded resolution, unchanged: DONE → operator observation (2026-08-08) |
+| Q5 | Historical stale-row reconciliation (τ-window bleed) | Closed by cross-repo ruling: health-app GH#523 (`Q135`). Pre-fix Samsung HRV rows are never reconciled; they retire with `hrv_ms`. The device Room row (`2026-07-09 = 117`) is re-examined only at `Q24`'s loop-close (GH#85), nothing before. |
+| Q6 | Does `BRANCHES.md` retain DONE rows or drop them? | Recorded resolution, unchanged: DONE → #31 |
+| Q7 | #18's flat-`sourcePackage` contract unfulfilled in `aggregateSteps` | Recorded resolution, unchanged: DONE → #36 (`10651cb`) |
+| Q8 | Shared loop-rules block parity is inverted; health-app return trip | Recorded resolution, unchanged: DONE → #26 |
+| Q9 | Struck vocabulary survives outside the two swept stores | Resolved this session: `ROADMAP.md`'s work queue rewritten into the State vocabulary (`RESOLVED` → DONE, `parked` / `Blocked on` → BLOCKED with blocker and owner). |
+| Q10 | The `/closeout` ANCHOR states required state in the declarative | Resolved this session: the `/closeout` ANCHOR rewritten as PRECONDITIONS (how to reach the state) and HARD STOPS (wrong repo only). |
+| Q11 | health-app's `/closeout` still instructs `parked`; ritual divergence ruled | Recorded resolution, unchanged: DONE → #26 |
+| Q12 | The guard cannot see server-side ref updates | Recorded resolution, unchanged: DONE → #28 |
+| Q13 | The imported block's question-state axis is not the axis this store uses | Recorded resolution, unchanged: DONE → `ff2f3f6` (2026-08-17) |
+| Q14 | The shared block still says `parked`; mirror of health-app `Q33` | Recorded resolution, unchanged: DONE → #34 |
+| Q15 | Which cross-repo-parity artefacts are governed, and by what rule? | Resolved by the shared-block parity bullet (health-app `#470` (d)), which arrives verbatim in this change. The HCA-verified table is preserved below. |
+| Q16 | HCA's `land` guard is owed to health-app's identical alias | Closed by cross-repo ruling: health-app GH#565 (the `land` guard is now a health-app stamp). The local alias is applied per `CLAUDE.md` § Fresh-clone setup. |
+| Q17 | Release buildType signed with the debug keystore | GH#81. Stamp, two-way, created and closed `not_planned`; the reminder is a `ROADMAP.md` Later line. |
+| Q18 | Scraper canary — the sole HRV path has no failure detection, and the 2026-08-16 read sh… | GH#82. Stamp, two-way, `pinned` (trigger: ring return). |
+| Q19 | `parseSleepTimingContentDesc` accepts a meridiem-less clock — a 12-hour phone clock sto… | GH#83. Stamp, two-way, `pinned` (needs a ring to capture the trigger condition). |
+| Q20 | `#18`'s `sourcePackage` forwarding is proven for 4 of 5 record types; HRV via Health Co… | GH#84. Verify (operator query first). |
+| Q21 | HC pagination fix (`#38`) + 30-day deep-sync: two operator-side post-deploy verificatio… | Recorded resolution, unchanged: DONE → #44 |
+| Q22 | HR lags ~6d because the #38 pagination fix has never run on a device (H1 CONFIRMED) | Recorded resolution, unchanged: DONE → #44 |
+| Q23 | `client.trigger` is accepted but not persisted; `health_connect_sync_events` has no tri… | Closed by cross-repo ruling: health-app GH#508 (`Q214`), stamped there as a one-way door (migration held). No HCA change; the field already ships. |
+| Q24 | Samsung scraper has no live device behind it (ring on warranty); its silence is expecte… | GH#85. Build, two-way, `pinned` (trigger: ring back in service). |
+| Q25 | Scheduled background sync went 23 h 48 m (any sync) and ~40 h (background) without deli… | GH#86. Verify (operator). |
+
+<details><summary>Q15's HCA-verified parity table (preserved from the deleted entry)</summary>
+
+| Artefact | Parity status (HCA-verified) |
+|----------|------------------------------|
+| shared loop block (`CLAUDE.md`) | **G1-governed** — byte-identity, measured, paired-obligation (health-app `#92`) |
+| `.github/workflows/governance-guard.yml` | mirrored byte-identical, **ad hoc** (`#24`) — under no named rule |
+| `scripts/check_governance_placeholders.py` | **was drifted, undeclared** — HCA carried the retracted "alias calls the same script" claim and the pre-repair `read()`; both fixed (`#29`). `read()` byte-identical; docstrings repo-local by design |
+| `.claude/commands/closeout.md` | **undeclared** — HCA 134 lines vs health-app 90 (both counted then) |
+| checker `main()` advisory string | **divergent by design** — HCA `"before the fast-forward"` vs health-app `"before it lands"`; left unreconciled |
+
+</details>
+
+**Rationale:** the flat store had no terminal state for "not decided" and priced closure as architecture; health-app moved its questions to typed issues and design docs (`#467`, `#468`). Leaving this repo on the old store would keep two grammars, and the shared block and the guard are propagated by byte-identity or code-identity, so the divergence would have kept costing a reconciliation step each time. Thirteen live entries is small enough to migrate whole; the 12 `DONE` entries already carry their closing decision and need no issue.
+
+**Status:** DONE once the PR carrying this entry merges (a PR cannot name its own merge SHA; read it with `git log --first-parent --grep=question-layer`). Number resolved at master max `#53`, re-read immediately before the merge. Nothing under `src/`, `android/` or `app.json` changed, so no Railway deploy check applies: this repo has no Railway services. The PR contains no schema migration and embeds no unratified call (the brief is a chat-approved triage), so it self-merges on green.
+
+**How you know:** a throwaway script (not committed) parsed `OPEN_QUESTIONS.md` at `3c2986b` and asserted 25 headings `^### Q[0-9]+ — … · STATE` (12 `DONE`, 10 `OPEN`, 3 `OWED`; no `## CLOSED` section), numbering 1 to 25 with no gap, and exactly one destination per heading (13 live = 3 + 3 + 4 + 2 + 1). The issue list read back from the REST API showed 7 non-PR issues, six open and GH#81 closed `not_planned`, with the labels above. Label colours and descriptions compared equal to health-app's. health-app `GH#523`, `GH#508` and `GH#565` were read live (titles `Q135`, `Q214` and the `land` stamp). Health-app `#470` read on master `b7743c3` (the parity bullet is in its shared block). The guard was compared by AST with docstrings removed and the advisory string masked: identical. `.github/workflows/governance-guard.yml` is byte-identical from `name:` down. The ruleset read live at `repos/{owner}/{repo}/rules/branches/master` is active with the required check `placeholder guard (POSIX)`, which supersedes the earlier `[]` reading.
+
+**Not verified:** that `stale.yml` closes nothing it should not at its first scheduled run (every issue here is new); the `Q20` query and the `Q25` commands (written from the source entries' column and package names, not run); that the work-queue facts in `ROADMAP.md` are current (`Q9` translated the vocabulary only).
+
+**Nits, not gates:** the imported shared block names `scripts\gen_governance_view.py` (absent from this repo; the step is optional) and says the stale action closes at 60 days where `stale.yml` says 53. Both are health-app-side wording; byte-identity is the gate here, so neither is edited in transit.
+
+**Do not revisit unless:** a `Qn` citation fails to resolve through the map above or `git show 3c2986b:OPEN_QUESTIONS.md`, or the open `fork` count here shows the tracker has become the old file (health-app `#467`'s trigger).

@@ -18,10 +18,10 @@ Rules whose correctness depends on unversioned config (CI checks, local aliases)
 repo-specific and live below END SHARED LOOP RULES in their own repo.
 
 ### The loop
-- The repo is the single source of truth for all volatile state.
+- The repo and its GitHub tracker (Issues) are the single source of truth for all volatile state.
 - Code is the only writer. Chat proposes; chat never commits.
 - The commit is the only sync point. An uncommitted decision is provisional.
-- Read-back: repo → chat via Projects mirror or attach. Chat keeps no editable copy.
+- Read-back: repo → chat via Projects mirror, attach, or the GitHub API (issues, design docs). Chat keeps no editable copy.
 - Kill-rule: decisions, open questions, roadmap, task state never live in project
   knowledge — orientation docs only.
 
@@ -35,14 +35,14 @@ repo-specific and live below END SHARED LOOP RULES in their own repo.
   flip it ready-for-review and self-merge on green the same turn. A PR merged in-turn ends
   its own subscription, so no check-in is scheduled. Session origin (harness vs local) never
   justifies an operator hand-off or a merge-watch. (Supersedes the Q125 two-lane convention.)
-- **Holds — do not self-merge, wait for explicit operator instruction:** a PR containing a
-  schema migration; anything the session was told to hold.
-- **Un-ratified decisions route to chat — the one warranted merge-time friction.** If a PR
-  embeds a call chat did not ratify (a resolved OPEN_QUESTION, a minted constraint/ordering
-  rule, or a data-meaning default), hold it, surface the *decision* — not the diff — for
-  ratification, and end the turn; a later session lands and closes it out. Implementing a
-  chat-approved brief with no new judgment is already ratified: self-merge. Raising a new
-  question needs no hold; resolving one does.
+- **Door class decides the hold.** A **one-way door** — a schema migration (a PR containing one);
+  a default that shapes stored rows (data-meaning); a cross-module contract change; anything the
+  session was told to hold — is not self-merged: it holds for explicit operator instruction,
+  whether raised or resolved. Everything else is a
+  **two-way door**: Code resolves it in-PR, records a *ruling* entry in `DECISIONS_LOG` (Decision ·
+  Reverse-by), and self-merges on green. The merge is the ratification; chat objects at the next
+  session open, by issue, if it disagrees. Resolving a two-way door needs no hold; a one-way door
+  does, whether raised or resolved.
 - Number-at-merge is unaffected: it resolves from master's max immediately before the merge
   Code itself performs.
 - This is deliberate. A future session finding Code self-merging must not reinstate a human
@@ -57,7 +57,8 @@ INSTRUCTION TO VERIFY, never a report of fact. Verify or STOP; never land on it.
 | Store | Holds | Discipline |
 |-------|-------|-----------|
 | `DECISIONS_LOG.md` | Architecture decisions | Append-only; supersede by new entry, never edit locked text. |
-| `OPEN_QUESTIONS.md` | Undecided forks | One `**State:**` per item: OPEN / OWED / DONE → #N. |
+| GitHub Issues (per repo) | Undecided forks, unknowns awaiting measurement, watch-points | Typed by label (`fork` / `stamp` / `verify` / `watch` / `design`); closed by `Closes #N` in the resolving PR or by the stale action (`abandoned`). Never mirrored into the tree (`GH#N` in prose; bare `#N` is a decision). |
+| `docs/design/NNNN-*.md` | Architecture-scale design docs (RFD-style) | `**State:**` ideation / discussion / committed / abandoned; own Unresolved-questions table, every row resolved or struck before `committed`. |
 | `ROADMAP.md` | Current sprint + horizon | Mutable; Code updates at close-out. |
 | `FEEDBACK.md` | Behavioural corrections, condensed verification rules | Read at session start. |
 | `FEEDBACK_ARCHIVE.md` | Full provenance essays | NOT read at session start. |
@@ -69,8 +70,23 @@ lab PDFs, `Stack`, `API_CONTRACTS`, `Hevy_Pattern`, `Readiness_Algorithm`.
 
 ### State vocabulary
 Work items: DONE (landed, SHA named) · BLOCKED (names blocker + owner) · OWED (settled,
-loop-close named) · UNSTARTED. No "in progress". Questions (`OPEN_QUESTIONS.md` only):
-OPEN · OWED · DONE → #N, under the label `**State:**`.
+loop-close named) · UNSTARTED. No "in progress". Issues: open (typed by label) · closed-resolved (`Closes #N`; a ruling or decision entry where a call was made) · closed-abandoned (stale action). Design docs: ideation · discussion · committed · abandoned, under `**State:**`.
+
+### Filing a question
+- Nothing is filed bare. Every issue body carries four fields: **Proposed answer** · **Alternative
+  it beats** · **Evidence that would settle it** · **Door** (one-way / two-way). If the evidence is a
+  check runnable this turn, run it — no issue exists.
+- Labels are the type: `fork` (operator ruling; surfaced at session open), `stamp` (proposed answer
+  stands; acted on by the next PR touching the area unless the operator objects), `verify` (names
+  the exact query or probe), `watch` (names the test/alert that guards it), `design` (pointer to a
+  `docs/design` doc), `pinned` (stale-exempt), `abandoned` (set by the stale action).
+- Architecture-scale items get a design doc, not an issue; the issue, if any, is a one-line pointer
+  labelled `design`.
+- A question survives only by being touched; the stale action closes the untouched at 60 days as
+  `abandoned`. Abandoned is a normal ending.
+- `build`: ruled, awaiting its trigger or capacity; the body names the trigger and the ruling entry.
+- **Citation form.** Bare `#N` in every store is a `DECISIONS_LOG` number. A GitHub issue or PR is
+  written `GH#N`. Never cite an issue bare.
 
 ### DECISIONS_LOG discipline
 - Entry format: **Decision · Rationale · Status · How you know · Do not revisit unless**.
@@ -80,13 +96,22 @@ OPEN · OWED · DONE → #N, under the label `**State:**`.
   re-reading master's max immediately before landing, re-resolve if master advances.
   Enforced by `scripts/check_governance_placeholders.py` via the repo hook
   (`git config core.hooksPath .githooks`, once per clone).
+- Two tiers under the same `### #N` heading. Decision (one-way doors and anything architectural):
+  Decision · Rationale · Status · How you know · Do not revisit unless. Ruling (two-way doors
+  resolved in-PR): `**Tier:** ruling` then Decision · Reverse-by — two lines, nothing else.
+  Number-at-merge and the guard apply to both.
 
 ### Session rituals
-- **Open:** report both maxima — decisions `^### #?[0-9]+`, questions `^#{2,3} Q[0-9]+`
-  (period-, sigil- and level-agnostic; the pinned forms return zero on one repo or the
-  other). Chat re-aims any brief against these.
+- **Open:** report the decisions max (`^### #?[0-9]+`) and the open `fork` issues, titles included:
+  `gh api "repos/{owner}/{repo}/issues?labels=fork&state=open" --jq ".[] | \"GH#\(.number) \(.title)\""`
+  (`gh` substitutes `{owner}/{repo}` from the current repo; locally `gh issue list --label fork --state open`;
+  the short form fails in a cloud session, where GraphQL is blocked). Chat re-aims any brief against these.
+  Optional at open, when a cold-start digest is wanted: `python scripts\gen_governance_view.py`
+  (reads master; output is gitignored under `build\`). Never run it at close-out — it would
+  digest master before this session's close-out merges.
 - **Chat close-out (`;cc`):** emits the pending-commit queue as canonical-format entries
-  flagged PENDING. Writes nothing to project knowledge.
+  flagged PENDING, then a one-line CHAT DISPOSITION (the GH# issues and `docs/design` docs served;
+  LIVE / PARKED / CLOSED; the title to rename the chat to, or DELETE). Writes nothing to project knowledge.
 - **Code close-out (`/closeout`):** reads the stores; reports actual commits
   (`git log --format="%ad %s" --date=short -10`); reconciles every PENDING item;
   branch terminal-state gate — every touched branch ends merged+deleted or in
@@ -125,6 +150,10 @@ OPEN · OWED · DONE → #N, under the label `**State:**`.
   lands (not one per session). Governance edits never interleave with feature work mid-session.
 - Full corrections live in `FEEDBACK.md`; full history in `DECISIONS_LOG.md` and
   `FEEDBACK_ARCHIVE.md`. This file points at them; it does not duplicate them.
+- **Parity artefacts beyond this block.** `.github/workflows/governance-guard.yml` is byte-identical
+  from `name:` down (the comment header is repo-local); `scripts/check_governance_placeholders.py` is
+  code-identical (docstrings and the `main()` advisory string are repo-local). Both are re-checked at
+  every shared-block propagation; `closeout.md` is repo-specific and not a parity artefact.
 
 ## END SHARED LOOP RULES — repo-specific below
 
@@ -217,9 +246,9 @@ committed, the other mode cannot see it and it does not exist.
 | `CLAUDE.md` | This contract. Conventions, architecture invariants. |
 | `closeout.md` | The single committed cold-resume handoff. Overwritten each `/closeout`. |
 
-In this repo, `OPEN_QUESTIONS.md` additionally tracks machine-checkable
-code-state defects (PENDING until resolved into a decision or a fix), and
-`FEEDBACK.md` is the friction log on the workflow and on Claude's behaviour.
+In this repo a machine-checkable code-state defect is an issue labelled `bug`
+(GitHub default) alongside the typed question labels, and `FEEDBACK.md` is the
+friction log on the workflow and on Claude's behaviour.
 
 ---
 
@@ -263,7 +292,11 @@ code-state defects (PENDING until resolved into a decision or a fix), and
   actual commits via `git log`, reconciles the pending queue, regenerates the
   handoff, overwrites the single `closeout.md`, and commits it.
 - **`;cc`** (Espanso, system-wide) — fires the chat-side closeout: emits a
-  pending-commit queue in canonical format flagged PENDING. Writes nothing.
+  pending-commit queue in canonical format flagged PENDING (decisions as
+  entries; questions as issue bodies with the four fields and a label, or a
+  `docs/design` doc for architecture-scale items, issues cited `GH#N`), then a
+  one-line CHAT DISPOSITION (the `GH#` issues and design docs served; LIVE /
+  PARKED / CLOSED; the title to rename the chat to). Writes nothing.
 - **`/compact`** is context compression, **not** a closeout. Different thing.
 
 A session is not done until `/closeout` has run and committed.

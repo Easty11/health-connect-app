@@ -14,14 +14,14 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
 
 ## Work queue
 
-- **Q2 — de-dup `validateNight()` — RESOLVED (`36df9a2`, on master).**
+- **Q2 — de-dup `validateNight()` — DONE (`36df9a2`, on master).**
   Landed via PR #5 rebase-merge; patch-identical to branch commit `84a06c6`
   (same patch-id). Re-verified 2026-07-02: `collapseSleepSessions()` collapses
   overlapping/duplicate `SleepSession` records to the longest per cluster
   (incl. transitive chains) with the non-duplicate path untouched.
 - **Q3 — wire `runDeepConfidence` into readiness / Banister.**
-  Unblocked by Q2's resolution; still gated by the threshold review
-  (DECISIONS_LOG #4 — tunables uncalibrated).
+  **BLOCKED** (blocker: the threshold review, DECISIONS_LOG #4 — tunables uncalibrated;
+  owner: Luke). Q2, which it waited on, is DONE.
   *Companion-rooted — the "could this run backend-side?" question is settled (PR #42,
   `src/SyncScreen.js`).* A DEV-only `SyncScreen` panel now runs `runDeepConfidence` for
   last night and renders per-segment `flag`/`confidence` on-device — the instrument for
@@ -42,7 +42,7 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
   is unbacked. Must wire before C3 lands: (1) add enum to `src/contract/`,
   (2) stamp context in `HRVCaptureModule.kt` event payload, (3) verify D2.
 - **HRV capture (`feat/hrv-capture`).** Native module + scraper + Polar override
-  parked (C3 unstaged). Unblocks after firewall gap above is closed.
+  C3 unstaged. **BLOCKED** (blocker: the HRV context-firewall item above; owner: Code).
   Follow-on: implement the `passive_overnight | calibration | session` context
   stamp end-to-end and prove the `session` → non-readiness routing
   (DECISIONS_LOG #6).
@@ -55,8 +55,8 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
   `SUFFICIENT`/`INSUFFICIENT` outcome into readiness: eyeball reason_codes over 3–4
   trusted nights, freeze the numbers (Luke on the values — don't mint solo), and bump
   `RULESET_VERSION` in the same commit. GATE-FIRST per the module header.
-- **Q5 — backend dual-field collapse.** Blocked on capturing a real sync payload
-  to drive the schema shape.
+- **Q5 — backend dual-field collapse.** **BLOCKED** (blocker: a captured real sync
+  payload to drive the schema shape; owner: operator).
 - **Scraper follow-ups (from 2026-06-25 sleep-capture session).**
   (1) SpO2 *lowest* — deferred; chose average-only. Needs a Blood-oxygen detail tap.
   (2) Derived sleep-efficiency provenance flag on the wire — a new `SyncPayload`
@@ -65,6 +65,12 @@ concern-split commits across PR #1 (deep-sleep) and `feat/hrv-capture` (HRV).
   light-sleep + efficiency are captured — needs Luke (don't mint a number solo).
   (4) SH-breakage tally toward #12 SDK-migration trigger: 3rd event 25-Jun-2026
   (home relayout, closed via 06d5a43). Not yet tripping.
+
+## Later
+
+- **Release signing (own keystore)** — reopen at first distribution (Q17 → GH#81, closed
+  `not_planned`). Release `buildType` is signed with the debug keystore, acceptable for
+  household sideloading only.
 
 ## Open / unverified (carry until proven)
 

@@ -11,18 +11,30 @@ summary; if a summary contradicts `CLAUDE.md`, `CLAUDE.md` wins.
 
 ---
 
-## ANCHOR — run this first, stop if it fails
+## ANCHOR — run this first
+
+**PRECONDITIONS** — the state `/closeout` needs, and how to reach it. A failure here is a
+step to take, not a reason to halt:
+- Rooted in `health-connect-app` (the one thing that cannot be fixed from inside; see the hard stop below).
+- On a work branch or `master`, fetched (`git fetch origin`), tree clean or holding only
+  close-out artifacts.
+- `core.hooksPath` → `.githooks` and the repo-local `land` alias set (the fresh-clone
+  commands in `CLAUDE.md`).
+- `gh api` reachable (REST form; GraphQL may be blocked in a cloud session).
+
+**HARD STOPS** — the only failures that abort. There is one: **wrong repo**.
 
 ```powershell
 $root = git rev-parse --show-toplevel
 if ($root -notmatch '[/\\]health-connect-app$') {
     throw "WRONG REPO: $root — /closeout aborted."
 }
-git branch --show-current   # confirm feat branch or master
+git branch --show-current   # confirm work branch or master
 ```
 
 If the root does not end in `\health-connect-app`, **stop immediately**. Do not write
-anything. Report the actual root and ask the user to switch to the correct repo.
+anything. Report the actual root and ask the user to switch to the correct repo. Every other
+precondition is met by acting on it (checkout, fetch, configure), not by stopping.
 
 ---
 
@@ -30,15 +42,26 @@ anything. Report the actual root and ask the user to switch to the correct repo.
 
 ### 1. Read the canonical stores
 
-Read all five in full before writing anything:
+Read all of these before writing anything:
 
-| File | Holds |
-|------|-------|
+| Store | Holds |
+|-------|-------|
 | `DECISIONS_LOG.md` | Append-only decision record |
-| `OPEN_QUESTIONS.md` | Machine-checkable code-state defects + unresolved questions |
+| GitHub Issues | Undecided forks, unknowns awaiting measurement, watch-points; typed by label |
+| `docs/design/` | Architecture-scale design docs (`**State:**` ideation / discussion / committed / abandoned) |
 | `ROADMAP.md` | Forward work + current sprint block (Code-owned) |
 | `FEEDBACK.md` | Friction log on workflow and Claude behaviour |
 | `CLAUDE.md` | Contract — conventions, architecture invariants |
+
+Issues, in the REST form that works in a cloud session (`gh` substitutes `{owner}/{repo}`
+from the current repo; GraphQL is blocked there):
+
+```powershell
+gh api "repos/{owner}/{repo}/issues?labels=fork&state=open" --jq ".[] | \"GH#\(.number) \(.title)\""
+gh api "repos/{owner}/{repo}/issues?state=all&since=<session-open-iso>" --jq ".[] | select(.pull_request == null) | \"GH#\(.number) \(.state) \(.title)\""
+```
+
+The first lists the open `fork` issues; the second, the issues touched this session.
 
 ### 2. Report actual commits this session
 
@@ -76,6 +99,12 @@ or discarded before close. If any touched branch is in undefined limbo — neith
 merged+deleted nor rowed in `BRANCHES.md` — **HALT** before writing `closeout.md`
 and resolve it first.
 
+**Sweep the open rows too (health-app `Q138`).** Not only this session's branches: for every
+`OWED` or `BLOCKED` `BRANCHES.md` row, check that the named branch exists on `origin`
+(`git ls-remote --heads origin <branch>`) and whether its work is on master
+(`git cherry origin/master <branch>` all `-`, or the row's SHA is an ancestor of master).
+List the rows that are landed-but-unflipped, and flip them in this same close-out.
+
 ### 5. Regenerate the ROADMAP.md sprint block
 
 Update the `## Sprint block` section of `ROADMAP.md` to reflect what landed this
@@ -101,13 +130,13 @@ sections:
 <item-by-item: landed (hash) or still provisional>
 
 ## Cold-resume handoff
-<current sprint state · open questions · single clearest next action>
+<current sprint state · open `fork` issues (step 1 REST form) and design docs not in a terminal state · single clearest next action>
 ```
 
 `closeout.md` is the **sole sink** for the close-out body — write it verbatim to the
 file. To stdout print **only a terse pointer**: path, branch, single next action, and
 the filenames of governance stores changed this session (`DECISIONS_LOG` /
-`OPEN_QUESTIONS` / `ROADMAP` / `FEEDBACK` / `Ideas`; names only, never contents).
+`ROADMAP` / `FEEDBACK` / `docs/design/`; names only, never contents).
 Do **not** emit governance-store text — pre-merge copy-back is `cat`/open of the
 changed store file on disk.
 
@@ -131,4 +160,4 @@ If the tree has unrelated uncommitted work, commit **only** the close-out artifa
 - **Windows / PowerShell syntax** in any commands you emit.
 - **Code is the only writer** — this command may commit; chat may not.
 - **Write nothing to project knowledge** (Claude.ai project files).
-- **ANCHOR must pass** before any write — wrong repo aborts unconditionally.
+- **The HARD STOP must not trip** before any write — wrong repo aborts unconditionally.
